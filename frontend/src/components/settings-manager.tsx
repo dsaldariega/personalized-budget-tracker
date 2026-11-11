@@ -2,9 +2,8 @@
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  AccountCircleOutlined, BackupOutlined, CheckCircleOutlineRounded, CloudDownloadOutlined,
-  CloudUploadOutlined, DeleteOutlineRounded, LockOutlined, PaletteOutlined, PersonOutlineRounded,
-  RefreshRounded, SecurityOutlined, SettingsOutlined,
+  BackupOutlined, CheckCircleOutlineRounded, CloudDownloadOutlined, CloudUploadOutlined,
+  LockOutlined, PaletteOutlined, PersonOutlineRounded, SecurityOutlined,
 } from "@mui/icons-material";
 import {
   Alert, Avatar, Box, Button, CircularProgress, Divider, MenuItem, Paper, Stack,
@@ -107,7 +106,7 @@ export function SettingsManager() {
   async function exportBackup() {
     if (!supabase || !userId) return;
     setExporting(true); setError(""); setNotice("");
-    const tables = ["profiles","accounts","transactions","budgets","savings_goals","loans","loan_payments","subscriptions","subscription_payments","activity_logs"];
+    const tables = ["profiles","accounts","transactions","budgets","savings_goals","loans","loan_payments","subscriptions","subscription_payments","activity_logs"] as const;
     const backup: Record<string, unknown> = { format: "BudgetNest backup", version: 1, exported_at: new Date().toISOString(), user_id: userId, data: {} };
     const data = backup.data as Record<string, unknown>;
     for (const table of tables) {
