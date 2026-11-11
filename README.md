@@ -314,7 +314,7 @@ The UI should prioritize:
 - consistent terminology
 - fast everyday workflows
 
-The application will retain a dark mode while also providing a polished light mode.
+The application opens in light mode by default, offers a vibrant multi-accent palette (violet, teal, coral, amber, and blue), and retains an optional dark mode. The selected appearance is stored in browser-local storage and shared by the root-level theme provider so it remains consistent while navigating between pages.
 
 ## Security principles
 
