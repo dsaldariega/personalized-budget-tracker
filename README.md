@@ -188,10 +188,14 @@ The dashboard implementation is committed to `dev`; manual acceptance testing is
 - [x] Record payments and maintain billing history
 - [x] Advance the next billing date after a recorded payment
 
+
+
+The About page now includes a product overview, feature guide, four-step getting-started walkthrough, FAQs for account balances, currencies, budgets, goals, loan/subscription payment tracking, CSV imports and backups, and a plain-language privacy note. The Settings page remains the source of truth for data export and import controls.
+
 ### Phase 9 — Activity & Settings
 - [x] Searchable activity timeline with type and date filters
 - [x] Profile name and default currency settings
-- [x] Persist light/dark appearance preference in the browser
+- [x] Persist light/dark appearance preference in a server-readable cookie to avoid theme flashes
 - [x] Export full account data as a JSON backup
 - [x] Export transactions as Excel-compatible CSV
 - [x] Import income and expense transactions from CSV with validation and duplicate detection
