@@ -51,27 +51,28 @@ function budgetWindow(budget: Budget, todayValue = today()) {
   const anchor = parseDate(budget.start_date);
   const current = parseDate(todayValue);
   if (current < anchor) return { start: budget.start_date, end: budget.end_date ?? budget.start_date, state: "upcoming" as const };
-  if (budget.end_date && current > parseDate(budget.end_date)) return { start: budget.start_date, end: budget.end_date, state: "ended" as const };
-  if (budget.period === "custom") return { start: budget.start_date, end: budget.end_date ?? budget.start_date, state: "active" as const };
+  const expired = Boolean(budget.end_date && current > parseDate(budget.end_date));
+  const reference = expired ? parseDate(budget.end_date!) : current;
+  if (budget.period === "custom") return { start: budget.start_date, end: budget.end_date ?? budget.start_date, state: expired ? "ended" as const : "active" as const };
   let start = anchor;
   let end = anchor;
   if (budget.period === "weekly") {
-    const elapsed = Math.floor((current.getTime() - anchor.getTime()) / 86400000);
+    const elapsed = Math.floor((reference.getTime() - anchor.getTime()) / 86400000);
     start = addDays(anchor, Math.floor(elapsed / 7) * 7);
     end = addDays(start, 6);
   } else if (budget.period === "monthly") {
-    const months = (current.getUTCFullYear() - anchor.getUTCFullYear()) * 12 + current.getUTCMonth() - anchor.getUTCMonth();
+    const months = (reference.getUTCFullYear() - anchor.getUTCFullYear()) * 12 + reference.getUTCMonth() - anchor.getUTCMonth();
     const candidate = monthDate(anchor.getUTCFullYear(), anchor.getUTCMonth() + months, anchor.getUTCDate());
-    start = candidate > current ? monthDate(anchor.getUTCFullYear(), anchor.getUTCMonth() + months - 1, anchor.getUTCDate()) : candidate;
+    start = candidate > reference ? monthDate(anchor.getUTCFullYear(), anchor.getUTCMonth() + months - 1, anchor.getUTCDate()) : candidate;
     end = addDays(monthDate(start.getUTCFullYear(), start.getUTCMonth() + 1, anchor.getUTCDate()), -1);
   } else {
-    const years = current.getUTCFullYear() - anchor.getUTCFullYear();
+    const years = reference.getUTCFullYear() - anchor.getUTCFullYear();
     const candidate = yearDate(anchor.getUTCFullYear() + years, anchor.getUTCMonth(), anchor.getUTCDate());
-    start = candidate > current ? yearDate(anchor.getUTCFullYear() + years - 1, anchor.getUTCMonth(), anchor.getUTCDate()) : candidate;
+    start = candidate > reference ? yearDate(anchor.getUTCFullYear() + years - 1, anchor.getUTCMonth(), anchor.getUTCDate()) : candidate;
     end = addDays(yearDate(start.getUTCFullYear() + 1, anchor.getUTCMonth(), anchor.getUTCDate()), -1);
   }
   if (budget.end_date && end > parseDate(budget.end_date)) end = parseDate(budget.end_date);
-  return { start: dateString(start), end: dateString(end), state: "active" as const };
+  return { start: dateString(start), end: dateString(end), state: expired ? "ended" as const : "active" as const };
 }
 function money(amount: number, currency: string) {
   try { return new Intl.NumberFormat("en-PH", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount); }
@@ -192,7 +193,7 @@ export function BudgetsManager() {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) { setError("Your session has expired. Please sign in again."); setSaving(false); return; }
     const account = accounts.find(a => a.id === value.account_id);
-    if (!account || account.is_archived) { setError("Choose an active account."); setSaving(false); return; }
+    if (!account || (account.is_archived && (!editing || editing.account_id !== account.id))) { setError("Choose an active account."); setSaving(false); return; }
     const payload = {
       user_id: user.id, account_id: value.account_id, name: value.name,
       category: value.category, amount: Number(value.amount), period: value.period,
@@ -280,7 +281,7 @@ export function BudgetsManager() {
                 <Chip size="small" variant="outlined" label={periodLabel(budget.period)} />
               </Stack>
               <Typography variant="h5" fontWeight={850} letterSpacing={-0.5}>{money(spent, account?.currency ?? "PHP")} <Typography component="span" color="text.secondary" variant="body2" fontWeight={500}>of {money(Number(budget.amount), account?.currency ?? "PHP")}</Typography></Typography>
-              <LinearProgress variant="determinate" value={window.state === "active" ? progress : 0} color={spent > Number(budget.amount) ? "error" : progress >= 80 ? "warning" : "primary"} sx={{ height: 9, borderRadius: 99, mt: 1.6, bgcolor: "action.hover" }} />
+              <LinearProgress variant="determinate" value={window.state === "upcoming" ? 0 : progress} color={spent > Number(budget.amount) ? "error" : progress >= 80 ? "warning" : "primary"} sx={{ height: 9, borderRadius: 99, mt: 1.6, bgcolor: "action.hover" }} />
               <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1.2 }}>
                 <Typography variant="caption" color="text.secondary">{window.state === "upcoming" ? `Begins ${dateLabel(window.start)}` : window.state === "ended" ? `Ended ${dateLabel(window.end)}` : `${dateLabel(window.start)} – ${dateLabel(window.end)}`}</Typography>
                 <Typography variant="body2" fontWeight={750} color={remaining < 0 ? "error.main" : "text.primary"}>{window.state === "active" ? remaining >= 0 ? `${money(remaining, account?.currency ?? "PHP")} left` : `${money(Math.abs(remaining), account?.currency ?? "PHP")} over` : window.state === "upcoming" ? "Not started" : "Completed period"}</Typography>
@@ -293,7 +294,7 @@ export function BudgetsManager() {
         <MenuItem onClick={() => menu && openEdit(menu.budget)}><EditOutlined fontSize="small" sx={{ mr: 1 }} /> Edit budget</MenuItem>
         <MenuItem sx={{ color: "error.main" }} onClick={() => { setDeleteTarget(menu?.budget ?? null); setMenu(null); }}><DeleteOutlineRounded fontSize="small" sx={{ mr: 1 }} /> Delete budget</MenuItem>
       </Menu>
-      <BudgetDialog open={dialogOpen} accounts={accounts.filter(a => !a.is_archived)} initial={form} saving={saving} onClose={() => setDialogOpen(false)} onSave={saveBudget} />
+      <BudgetDialog open={dialogOpen} accounts={accounts.filter(a => !a.is_archived || a.id === editing?.account_id)} initial={form} saving={saving} onClose={() => setDialogOpen(false)} onSave={saveBudget} />
       <Dialog open={Boolean(deleteTarget)} onClose={() => !saving && setDeleteTarget(null)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 800 }}>Delete this budget?</DialogTitle>
         <DialogContent><Typography variant="body2" color="text.secondary">This removes the budget limit. Your transactions will not be affected.</Typography></DialogContent>
