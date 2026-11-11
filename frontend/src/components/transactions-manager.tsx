@@ -218,7 +218,7 @@ export function TransactionsManager() {
     });
     return Array.from(totals, ([currency, amount]) => money(amount, currency)).join(" · ") || "—";
   };
-  const balanceFor = (account: Account) => account.opening_balance + transactions.filter((t) => t.account_id === account.id).reduce((sum, t) => {
+  const balanceFor = (account: Account) => Number(account.opening_balance) + transactions.filter((t) => t.account_id === account.id).reduce((sum, t) => {
     if (t.transaction_type === "income" || (t.transaction_type === "transfer" && t.transfer_direction === "in")) return sum + Number(t.amount);
     return sum - Number(t.amount);
   }, 0);
