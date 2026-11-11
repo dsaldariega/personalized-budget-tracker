@@ -185,11 +185,14 @@ The intended deployment model is:
 - [x] Advance the next billing date after a recorded payment
 
 ### Phase 9 — Activity & Settings
-- [ ] Activity log
-- [ ] Excel import
-- [ ] Excel export
-- [ ] Profile/settings
-- [ ] Privacy controls
+- [x] Searchable activity timeline with type and date filters
+- [x] Profile name and default currency settings
+- [x] Persist light/dark appearance preference in the browser
+- [x] Export full account data as a JSON backup
+- [x] Export transactions as Excel-compatible CSV
+- [x] Import income and expense transactions from CSV with validation and duplicate detection
+- [x] Privacy and data ownership information
+- [ ] Secure server-side account deletion workflow
 
 ### Phase 10 — Production hardening
 - [ ] Validation
@@ -258,6 +261,8 @@ Budgets are linked to one account and an expense category. Spending is calculate
 Loans are linked to one account and store the original principal, annual interest rate, term, start date, optional due date, notes, and status. Repayments are stored separately in the owner-scoped `loan_payments` table with an explicit principal/interest breakdown; outstanding principal is calculated from recorded principal repayments. The monthly installment is an estimate using a fixed-rate amortization formula and is not a lender-generated payment schedule. Loan repayments do not automatically create account transactions or change account balances.
 
 Subscriptions are linked to one account and store the service name, recurring amount, billing frequency (weekly, monthly, quarterly, or yearly), next billing date, category, notes, and active/inactive status. The page estimates monthly recurring costs, highlights due-soon and overdue services, and lets users record payments with a billing date, paid date, amount, and optional notes. Recording a payment advances the next billing date by one frequency interval. Payment history is stored separately in the owner-scoped `subscription_payments` table; it does not create a transaction or change the linked account balance. Deleting a subscription also deletes its payment history.
+
+The Activity Log reads the owner-scoped `activity_logs` table and provides a searchable timeline with activity-type and date filters. Settings allow users to update their profile name and default currency, and store the selected light/dark theme in browser-local storage. The data export downloads a complete JSON backup of the user's BudgetNest tables plus an Excel-compatible CSV of transactions. CSV import currently supports income and expense transactions; the importer validates account name/currency, dates, amounts, and categories, skips exact duplicates, and intentionally excludes transfers so paired transfer records cannot become unbalanced. Account deletion is not offered as a client-side action; it requires a trusted server-side workflow to remove the Supabase Auth identity and related data safely.
 
 Savings goals are linked to one account and track a target amount, current saved amount, optional target date, and active/paused/completed status. Progress is maintained as a goal value and does not automatically create transactions or change the linked account balance. The existing `savings_goals` table and owner-scoped RLS policy are used; no additional database migration is required.
 
