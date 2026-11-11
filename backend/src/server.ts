@@ -37,7 +37,8 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.get("/api/me", authenticate, (_req, res) => {
-  res.json({ user: res.locals.user });
+  const user = res.locals.user as { id: string; email?: string };
+  res.json({ user: { id: user.id, email: user.email ?? null } });
 });
 
 app.use("/api/accounts", authenticate, accountsRouter);
