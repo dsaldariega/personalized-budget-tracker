@@ -4,8 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AccountBalanceWalletOutlined, ArrowDownwardRounded, ArrowUpwardRounded,
-  CalendarMonthRounded, CategoryRounded, EventRepeatRounded, RefreshRounded,
-  SavingsOutlined, ShowChartRounded, TrendingUpRounded, WalletOutlined,
+  EventRepeatRounded, RefreshRounded, SavingsOutlined, ShowChartRounded, WalletOutlined,
 } from "@mui/icons-material";
 import {
   Alert, Avatar, Box, Button, Card, CardContent, Chip, CircularProgress,
@@ -182,12 +181,21 @@ export function DashboardManager() {
   const periodTransactions = range ? transactions.filter(t => t.transaction_date >= range.start && t.transaction_date <= range.end && t.transaction_type !== "transfer" && (selectedCurrency === "all" || accountMap.get(t.account_id)?.currency === selectedCurrency)) : [];
   const income = periodTransactions.filter(t => t.transaction_type === "income").reduce((sum, t) => sum + Number(t.amount), 0);
   const expenses = periodTransactions.filter(t => t.transaction_type === "expense").reduce((sum, t) => sum + Number(t.amount), 0);
-  const net = income - expenses;
   const activeGoals = goals.filter(goal => goal.status === "active" && (selectedCurrency === "all" || accountMap.get(goal.account_id)?.currency === selectedCurrency));
-  const goalsSaved = activeGoals.reduce((sum, goal) => sum + Number(goal.current_amount), 0);
-  const goalsTarget = activeGoals.reduce((sum, goal) => sum + Number(goal.target_amount), 0);
-  const formatSelected = (amount: number) => selectedCurrency === "all" ? money(amount, currencies.length === 1 ? currencies[0] : "PHP") : money(amount, selectedCurrency);
-  const balanceByCurrency = currencies.map(currency => ({
+  const incomeByCurrency = currencies.map(currency => ({
+    currency,
+    amount: periodTransactions.filter(t => t.transaction_type === "income" && accountMap.get(t.account_id)?.currency === currency).reduce((sum, t) => sum + Number(t.amount), 0),
+  })).filter(item => item.amount > 0);
+  const expenseByCurrency = currencies.map(currency => ({
+    currency,
+    amount: periodTransactions.filter(t => t.transaction_type === "expense" && accountMap.get(t.account_id)?.currency === currency).reduce((sum, t) => sum + Number(t.amount), 0),
+  })).filter(item => item.amount > 0);
+  const goalsByCurrency = currencies.map(currency => ({
+    currency,
+    saved: activeGoals.filter(goal => accountMap.get(goal.account_id)?.currency === currency).reduce((sum, goal) => sum + Number(goal.current_amount), 0),
+    target: activeGoals.filter(goal => accountMap.get(goal.account_id)?.currency === currency).reduce((sum, goal) => sum + Number(goal.target_amount), 0),
+  })).filter(item => item.saved > 0 || item.target > 0);
+  const balanceByCurrency = currencies.filter(currency => selectedCurrency === "all" || currency === selectedCurrency).map(currency => ({
     currency,
     total: balances.filter(account => account.currency === currency).reduce((sum, account) => sum + account.balance, 0),
   }));
@@ -205,14 +213,19 @@ export function DashboardManager() {
     });
   }, [now, transactions, selectedCurrency, accountMap]);
   const categoryRows = useMemo(() => {
-    const totals = new Map<string, number>();
+    const totals = new Map<string, { name: string; amount: number; currency: string }>();
     periodTransactions.filter(t => t.transaction_type === "expense").forEach(t => {
-      const category = t.category?.trim() || "Uncategorized";
-      totals.set(category, (totals.get(category) ?? 0) + Number(t.amount));
+      const name = t.category?.trim() || "Uncategorized";
+      const currency = accountMap.get(t.account_id)?.currency ?? "PHP";
+      const key = `${currency}::${name}`;
+      const current = totals.get(key) ?? { name, amount: 0, currency };
+      current.amount += Number(t.amount);
+      totals.set(key, current);
     });
-    return Array.from(totals, ([name, amount]) => ({ name, amount })).sort((a, b) => b.amount - a.amount).slice(0, 5);
-  }, [periodTransactions]);
-  const categoryTotal = categoryRows.reduce((sum, row) => sum + row.amount, 0);
+    return Array.from(totals.values()).sort((a, b) => b.amount - a.amount).slice(0, 5);
+  }, [periodTransactions, accountMap]);
+  const categoryTotalsByCurrency = new Map<string, number>();
+  categoryRows.forEach(row => categoryTotalsByCurrency.set(row.currency, (categoryTotalsByCurrency.get(row.currency) ?? 0) + row.amount));
   const budgetRows = budgets.filter(b => selectedCurrency === "all" || accountMap.get(b.account_id)?.currency === selectedCurrency).map(budget => {
     const window = now ? budgetWindow(budget, now) : null;
     const spent = window ? transactions.filter(t => t.account_id === budget.account_id && t.transaction_type === "expense" && t.category?.toLowerCase() === budget.category.toLowerCase() && t.transaction_date >= window.start && t.transaction_date <= window.end).reduce((sum, t) => sum + Number(t.amount), 0) : 0;
@@ -258,15 +271,15 @@ export function DashboardManager() {
         </CardContent></Card></Grid>
         <Grid size={{ xs: 12, sm: 6, xl: 3 }}><Card sx={{ height: "100%" }}><CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between"><Typography variant="body2" color="text.secondary" fontWeight={650}>Income</Typography><Avatar variant="rounded" sx={{ bgcolor: "rgba(37,167,122,.12)", color: "#25A77A" }}><ArrowDownwardRounded /></Avatar></Stack>
-          <Typography variant="h5" fontWeight={850} sx={{ mt: 1.7 }}>{formatSelected(income)}</Typography><Typography variant="caption" color="text.secondary">{periodOptions.find(p => p.value === period)?.label} · {periodTransactions.filter(t => t.transaction_type === "income").length} entries</Typography>
+          {selectedCurrency === "all" && currencies.length > 1 ? (incomeByCurrency.length ? incomeByCurrency.map(item => <Typography key={item.currency} variant="h6" fontWeight={850} sx={{ mt: 1 }}>{money(item.amount, item.currency)}</Typography>) : <Typography variant="h5" fontWeight={850} sx={{ mt: 1.7 }}>—</Typography>) : <Typography variant="h5" fontWeight={850} sx={{ mt: 1.7 }}>{money(income, selectedCurrency === "all" ? defaultCurrency : selectedCurrency)}</Typography>}<Typography variant="caption" color="text.secondary">{periodOptions.find(p => p.value === period)?.label} · {periodTransactions.filter(t => t.transaction_type === "income").length} entries</Typography>
         </CardContent></Card></Grid>
         <Grid size={{ xs: 12, sm: 6, xl: 3 }}><Card sx={{ height: "100%" }}><CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between"><Typography variant="body2" color="text.secondary" fontWeight={650}>Expenses</Typography><Avatar variant="rounded" sx={{ bgcolor: "rgba(240,139,101,.14)", color: "#E47B59" }}><ArrowUpwardRounded /></Avatar></Stack>
-          <Typography variant="h5" fontWeight={850} sx={{ mt: 1.7 }}>{formatSelected(expenses)}</Typography><Typography variant="caption" color="text.secondary">{periodOptions.find(p => p.value === period)?.label} · {periodTransactions.filter(t => t.transaction_type === "expense").length} entries</Typography>
+          {selectedCurrency === "all" && currencies.length > 1 ? (expenseByCurrency.length ? expenseByCurrency.map(item => <Typography key={item.currency} variant="h6" fontWeight={850} sx={{ mt: 1 }}>{money(item.amount, item.currency)}</Typography>) : <Typography variant="h5" fontWeight={850} sx={{ mt: 1.7 }}>—</Typography>) : <Typography variant="h5" fontWeight={850} sx={{ mt: 1.7 }}>{money(expenses, selectedCurrency === "all" ? defaultCurrency : selectedCurrency)}</Typography>}<Typography variant="caption" color="text.secondary">{periodOptions.find(p => p.value === period)?.label} · {periodTransactions.filter(t => t.transaction_type === "expense").length} entries</Typography>
         </CardContent></Card></Grid>
         <Grid size={{ xs: 12, sm: 6, xl: 3 }}><Card sx={{ height: "100%" }}><CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between"><Typography variant="body2" color="text.secondary" fontWeight={650}>Active savings goals</Typography><Avatar variant="rounded" sx={{ bgcolor: "rgba(65,157,208,.13)", color: "#419DD0" }}><SavingsOutlined /></Avatar></Stack>
-          <Typography variant="h5" fontWeight={850} sx={{ mt: 1.7 }}>{activeGoals.length}</Typography><Typography variant="caption" color="text.secondary">{formatSelected(goalsSaved)} saved toward {formatSelected(goalsTarget)}</Typography>
+          <Typography variant="h5" fontWeight={850} sx={{ mt: 1.7 }}>{activeGoals.length}</Typography>{selectedCurrency === "all" && currencies.length > 1 ? <Stack spacing={0.2} sx={{ mt: 0.5 }}>{goalsByCurrency.map(item => <Typography key={item.currency} variant="caption" color="text.secondary">{money(item.saved, item.currency)} saved / {money(item.target, item.currency)} target</Typography>)}</Stack> : <Typography variant="caption" color="text.secondary">{money(activeGoals.reduce((sum, goal) => sum + Number(goal.current_amount), 0), selectedCurrency === "all" ? defaultCurrency : selectedCurrency)} saved toward {money(activeGoals.reduce((sum, goal) => sum + Number(goal.target_amount), 0), selectedCurrency === "all" ? defaultCurrency : selectedCurrency)}</Typography>}
         </CardContent></Card></Grid>
       </Grid>
 
@@ -276,7 +289,7 @@ export function DashboardManager() {
             <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1} sx={{ mb: 1 }}>
               <Box><Typography fontWeight={800} fontSize={16}>Cash flow</Typography><Typography variant="body2" color="text.secondary">Income vs expenses over the last six months</Typography></Box><ShowChartRounded color="action" />
             </Stack>
-            {chartRows.some(r => r.income || r.expense) ? <CashFlowChart rows={chartRows} currency={selectedCurrency === "all" ? (currencies.length === 1 ? currencies[0] : "mixed currencies") : selectedCurrency} /> : <EmptyState title="Your cash flow starts here" detail="Add income and expense transactions to see how money moves over time." href="/transactions" action="Add a transaction" />}
+            {selectedCurrency === "all" && currencies.length > 1 ? <Alert severity="info">Choose a currency above to view cash flow without combining different currencies.</Alert> : chartRows.some(r => r.income || r.expense) ? <CashFlowChart rows={chartRows} currency={selectedCurrency === "all" ? defaultCurrency : selectedCurrency} /> : <EmptyState title="Your cash flow starts here" detail="Add income and expense transactions to see how money moves over time." href="/transactions" action="Add a transaction" />}
           </Paper>
         </Grid>
         <Grid size={{ xs: 12, lg: 4 }}>
@@ -284,8 +297,8 @@ export function DashboardManager() {
             <SectionTitle title="Spending by category" href="/transactions" action="Transactions" />
             {categoryRows.length ? <Stack spacing={1.7}>
               {categoryRows.map(row => <Box key={row.name}>
-                <Stack direction="row" justifyContent="space-between" spacing={1} sx={{ mb: 0.6 }}><Typography variant="body2" fontWeight={650} noWrap>{row.name}</Typography><Typography variant="body2" fontWeight={750}>{formatSelected(row.amount)}</Typography></Stack>
-                <LinearProgress variant="determinate" value={categoryTotal ? row.amount / categoryTotal * 100 : 0} sx={{ height: 8, borderRadius: 99, bgcolor: "action.hover", "& .MuiLinearProgress-bar": { borderRadius: 99 } }} />
+                <Stack direction="row" justifyContent="space-between" spacing={1} sx={{ mb: 0.6 }}><Typography variant="body2" fontWeight={650} noWrap>{row.name}</Typography><Typography variant="body2" fontWeight={750}>{money(row.amount, row.currency)}</Typography></Stack>
+                <LinearProgress variant="determinate" value={(categoryTotalsByCurrency.get(row.currency) ?? 0) ? row.amount / (categoryTotalsByCurrency.get(row.currency) ?? 1) * 100 : 0} sx={{ height: 8, borderRadius: 99, bgcolor: "action.hover", "& .MuiLinearProgress-bar": { borderRadius: 99 } }} />
               </Box>)}
             </Stack> : <EmptyState title="No spending yet" detail="Expense categories will appear here after you record spending." href="/transactions" action="Add an expense" />}
           </Paper>
