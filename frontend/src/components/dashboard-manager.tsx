@@ -274,7 +274,7 @@ export function DashboardManager() {
             <MenuItem value="all">All currencies</MenuItem>{currencies.map(currency => <MenuItem key={currency} value={currency}>{currency}</MenuItem>)}
           </Select>
         </FormControl>}
-        <Button variant="contained" component={Link} href="/transactions" sx={{ textTransform: "none" }}>Add transaction</Button>
+        <Button variant="contained" component={Link} href="/transactions" sx={{ bgcolor: "primary.main", color: "primary.contrastText", fontWeight: 750, textTransform: "none", "&:hover": { bgcolor: "primary.dark" }, "&:focus-visible": { outline: "3px solid", outlineColor: "primary.light", outlineOffset: 2 } }}>Add transaction</Button>
         <Button color="inherit" variant="outlined" onClick={() => void loadData()} disabled={loading} aria-label="Refresh dashboard"><RefreshRounded /></Button>
       </Stack>
     </Stack>
