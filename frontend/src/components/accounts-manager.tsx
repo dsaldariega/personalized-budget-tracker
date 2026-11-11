@@ -338,6 +338,11 @@ export function AccountsManager() {
       setError(updateError.message);
       return;
     }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) await supabase.from("activity_logs").insert({
+      user_id: user.id, action: account.is_archived ? "account.restored" : "account.archived",
+      entity_type: "account", entity_id: account.id, details: { name: account.name },
+    });
     setNotice(account.is_archived ? "Account restored." : "Account archived.");
     await loadAccounts();
   }
@@ -356,6 +361,11 @@ export function AccountsManager() {
       setDeleteTarget(null);
       return;
     }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) await supabase.from("activity_logs").insert({
+      user_id: user.id, action: "account.deleted", entity_type: "account",
+      entity_id: deleteTarget.id, details: { name: deleteTarget.name },
+    });
     setDeleteTarget(null);
     setNotice("Account deleted.");
     setSaving(false);
