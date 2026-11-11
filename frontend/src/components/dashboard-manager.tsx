@@ -146,9 +146,26 @@ export function DashboardManager() {
     setLoading(true); setError("");
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) { setError("Your session could not be verified. Please sign in again."); setLoading(false); return; }
+    const fetchAllTransactions = async () => {
+      const rows: Transaction[] = [];
+      const pageSize = 1000;
+      for (let offset = 0; ; offset += pageSize) {
+        const result = await supabase
+          .from("transactions")
+          .select("id,account_id,transaction_type,amount,category,description,transaction_date,transfer_direction")
+          .eq("user_id", user.id)
+          .order("transaction_date", { ascending: false })
+          .range(offset, offset + pageSize - 1);
+        if (result.error) return { data: null, error: result.error };
+        const page = (result.data ?? []) as Transaction[];
+        rows.push(...page);
+        if (page.length < pageSize) break;
+      }
+      return { data: rows, error: null };
+    };
     const [accountResult, transactionResult, budgetResult, goalResult, subscriptionResult] = await Promise.all([
       supabase.from("accounts").select("id,name,currency,opening_balance,is_archived,account_type").eq("user_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("transactions").select("id,account_id,transaction_type,amount,category,description,transaction_date,transfer_direction").eq("user_id", user.id).order("transaction_date", { ascending: false }).range(0, 4999),
+      fetchAllTransactions(),
       supabase.from("budgets").select("id,account_id,name,category,amount,period,start_date,end_date").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("savings_goals").select("id,account_id,name,target_amount,current_amount,target_date,status").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("subscriptions").select("id,account_id,name,amount,billing_frequency,next_billing_date,is_active").eq("user_id", user.id).eq("is_active", true).order("next_billing_date", { ascending: true }),
