@@ -3,15 +3,15 @@
 import { useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
-  AccountBalanceWalletOutlined, AssessmentOutlined, AutorenewOutlined, ChevronLeft,
+  AccountBalanceWalletOutlined, AssessmentOutlined, AutorenewOutlined,
   DashboardOutlined, DarkModeOutlined, InfoOutlined, KeyboardArrowDown, LightModeOutlined,
   MenuRounded, NotificationsNoneOutlined, SavingsOutlined, SettingsOutlined,
   SwapHorizOutlined, TrendingUpOutlined, AccountCircleOutlined, CloseRounded
 } from "@mui/icons-material";
 import {
-  AppBar, Avatar, Badge, Box, Button, Chip, Divider, Drawer, IconButton, List,
+  Alert, AppBar, Avatar, Badge, Box, Button, Divider, Drawer, IconButton, List,
   ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, Toolbar,
-  Tooltip, Typography, useMediaQuery, useTheme
+  Snackbar, Tooltip, Typography, useMediaQuery, useTheme
 } from "@mui/material";
 import { useThemeMode } from "@/components/theme-provider";
 
@@ -144,14 +144,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <KeyboardArrowDown fontSize="small" />
             </Button>
             <Menu anchorEl={accountMenu} open={Boolean(accountMenu)} onClose={() => setAccountMenu(null)}>
-              <MenuItem onClick={() => setAccountMenu(null)}><AccountCircleOutlined fontSize="small" sx={{ mr: 1 }} /> Sign in / Create account</MenuItem>
+              <MenuItem disabled><AccountCircleOutlined fontSize="small" sx={{ mr: 1 }} /> Sign in / Create account · coming soon</MenuItem>
               <MenuItem onClick={() => setAccountMenu(null)} disabled>Profile settings (coming soon)</MenuItem>
             </Menu>
-            <Menu anchorEl={null} open={noticeOpen} onClose={() => setNoticeOpen(false)}>
-              <MenuItem onClick={() => setNoticeOpen(false)}>You’re all caught up.</MenuItem>
-            </Menu>
+
           </Toolbar>
         </AppBar>
+        <Snackbar open={noticeOpen} autoHideDuration={3000} onClose={() => setNoticeOpen(false)} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
+          <Alert severity="info" variant="filled" onClose={() => setNoticeOpen(false)}>You’re all caught up.</Alert>
+        </Snackbar>
         <Box component="main" sx={{ width: "100%", maxWidth: 1600, mx: "auto", px: { xs: 2, sm: 3, xl: 4 }, py: { xs: 3, md: 4 }, flexGrow: 1 }}>
           {children}
         </Box>
