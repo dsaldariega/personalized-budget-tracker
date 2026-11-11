@@ -3,7 +3,6 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Google } from "@mui/icons-material";
 import {
   Alert, Box, Button, Divider, Paper, Stack, TextField, Typography
 } from "@mui/material";
@@ -72,26 +71,6 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     setLoading(false);
   }
 
-  async function handleGoogleSignIn() {
-    if (!supabase) {
-      setMessage({ type: "info", text: "Supabase is not configured yet. Add the project URL and publishable key first." });
-      return;
-    }
-
-    setLoading(true);
-    setMessage(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(destination)}`
-      }
-    });
-
-    if (error) {
-      setMessage({ type: "error", text: error.message });
-      setLoading(false);
-    }
-  }
 
   return (
     <Paper sx={{ width: "100%", maxWidth: 440, p: { xs: 3, sm: 4 }, borderRadius: 4 }}>
@@ -107,18 +86,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
 
         {message && <Alert severity={message.type}>{message.text}</Alert>}
 
-        <Button
-          fullWidth
-          variant="outlined"
-          startIcon={<Google />}
-          onClick={handleGoogleSignIn}
-          disabled={loading || !supabase}
-          sx={{ py: 1.25, textTransform: "none", borderColor: "divider", color: "text.primary" }}
-        >
-          Continue with Google
-        </Button>
-
-        <Divider><Typography variant="caption" color="text.secondary">OR CONTINUE WITH EMAIL</Typography></Divider>
+        <Divider><Typography variant="caption" color="text.secondary">CONTINUE WITH EMAIL</Typography></Divider>
 
         <Box component="form" onSubmit={handleSubmit}>
           <Stack spacing={2}>
