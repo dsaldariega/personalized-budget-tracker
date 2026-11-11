@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { usePathname } from "next/navigation";
@@ -105,7 +106,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 return (
                   <ListItemButton
                     key={item.href}
-                    component="a"
+                    component={Link}
                     href={item.href}
                     selected={selected}
                     onClick={() => setMobileOpen(false)}
