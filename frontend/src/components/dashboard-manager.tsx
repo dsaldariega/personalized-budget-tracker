@@ -167,10 +167,9 @@ export function DashboardManager() {
   useEffect(() => { void loadData(); }, [loadData]);
   const accountMap = useMemo(() => new Map(accounts.map(account => [account.id, account])), [accounts]);
   const currencies = useMemo(() => Array.from(new Set(accounts.filter(a => !a.is_archived).map(a => a.currency))).sort(), [accounts]);
-  useEffect(() => {
-    if (currencyFilter !== "all" && !currencies.includes(currencyFilter)) setCurrencyFilter("all");
-  }, [currencyFilter, currencies]);
-  const selectedCurrency = currencyFilter === "all" ? (currencies.length === 1 ? currencies[0] : "all") : currencyFilter;
+  const selectedCurrency = currencyFilter === "all" || !currencies.includes(currencyFilter)
+    ? (currencies.length === 1 ? currencies[0] : "all")
+    : currencyFilter;
   const activeAccounts = accounts.filter(account => !account.is_archived && (selectedCurrency === "all" || account.currency === selectedCurrency));
   const balances = activeAccounts.map(account => ({
     ...account,
@@ -254,7 +253,7 @@ export function DashboardManager() {
           </Select>
         </FormControl>
         {currencies.length > 1 && <FormControl size="small" sx={{ minWidth: 115 }}>
-          <Select value={currencyFilter} onChange={event => setCurrencyFilter(event.target.value)} aria-label="Currency filter">
+          <Select value={selectedCurrency} onChange={event => setCurrencyFilter(event.target.value)} aria-label="Currency filter">
             <MenuItem value="all">All currencies</MenuItem>{currencies.map(currency => <MenuItem key={currency} value={currency}>{currency}</MenuItem>)}
           </Select>
         </FormControl>}
