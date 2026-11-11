@@ -3,10 +3,10 @@
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BackupOutlined, CheckCircleOutlineRounded, CloudDownloadOutlined, CloudUploadOutlined,
-  LockOutlined, PaletteOutlined, PersonOutlineRounded, SecurityOutlined,
+  DeleteOutlineRounded, LockOutlined, PaletteOutlined, PersonOutlineRounded, SecurityOutlined,
 } from "@mui/icons-material";
 import {
-  Alert, Avatar, Box, Button, CircularProgress, DeleteOutlineRounded, Divider, MenuItem, Paper, Stack,
+  Alert, Avatar, Box, Button, CircularProgress, Divider, MenuItem, Paper, Stack,
   TextField, Typography,
 } from "@mui/material";
 import { createClient } from "@/lib/supabase/client";
