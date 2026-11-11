@@ -29,9 +29,16 @@ type SubscriptionForm = {
   account_id: string; name: string; amount: string; billing_frequency: Frequency;
   next_billing_date: string; category: string; notes: string; is_active: boolean;
 };
+function todayLocal() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 const emptyForm = (): SubscriptionForm => ({
   account_id: "", name: "", amount: "", billing_frequency: "monthly",
-  next_billing_date: new Date().toISOString().slice(0, 10),
+  next_billing_date: todayLocal(),
   category: "Entertainment", notes: "", is_active: true,
 });
 const categories = ["Entertainment", "Music", "Video streaming", "Cloud storage", "Software", "Gaming", "Utilities", "Membership", "Other"];
@@ -135,7 +142,7 @@ export function SubscriptionsManager() {
   const [deleteTarget, setDeleteTarget] = useState<Subscription | null>(null);
   const [paymentTarget, setPaymentTarget] = useState<Subscription | null>(null);
   const [historyTarget, setHistoryTarget] = useState<Subscription | null>(null);
-  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().slice(0, 10));
+  const [paymentDate, setPaymentDate] = useState(todayLocal());
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentNotes, setPaymentNotes] = useState("");
   const [search, setSearch] = useState("");
@@ -218,7 +225,7 @@ export function SubscriptionsManager() {
     setNotice(is_active ? "Subscription resumed." : "Subscription paused."); await loadData();
   }
   function openPayment(subscription: Subscription) {
-    setPaymentTarget(subscription); setPaymentDate(new Date().toISOString().slice(0, 10));
+    setPaymentTarget(subscription); setPaymentDate(todayLocal());
     setPaymentAmount(String(subscription.amount)); setPaymentNotes("");
     setMenu(null);
   }
