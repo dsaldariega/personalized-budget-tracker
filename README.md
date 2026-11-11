@@ -174,11 +174,15 @@ The intended deployment model is:
 - [x] View and delete payment history; update loan status
 
 ### Phase 8 — Subscriptions
-- [ ] Recurring service setup
-- [ ] Billing frequency
-- [ ] Account assignment
-- [ ] Next billing date
-- [ ] Active/inactive status
+- [x] Create, edit, and delete recurring services linked to one account
+- [x] Weekly, monthly, quarterly, and yearly billing frequencies
+- [x] Set and manage the next billing date
+- [x] Categorize subscriptions and add optional notes
+- [x] Pause and resume subscriptions
+- [x] Estimate monthly recurring cost by currency
+- [x] Highlight upcoming and overdue billing dates
+- [x] Record payments and maintain billing history
+- [x] Advance the next billing date after a recorded payment
 
 ### Phase 9 — Activity & Settings
 - [ ] Activity log
@@ -252,6 +256,8 @@ The transaction workflow records income and expenses against one account. Transf
 Budgets are linked to one account and an expense category. Spending is calculated from expense transactions that match both the selected account and category within the current budget period. Weekly, monthly, and yearly budgets repeat from their configured start date; custom budgets use an explicit start and end date. Editing or deleting a transaction automatically changes the calculated budget progress the next time the page data is refreshed. The existing `budgets` table and its owner-scoped RLS policy are used; no additional database migration is required for the budget manager.
 
 Loans are linked to one account and store the original principal, annual interest rate, term, start date, optional due date, notes, and status. Repayments are stored separately in the owner-scoped `loan_payments` table with an explicit principal/interest breakdown; outstanding principal is calculated from recorded principal repayments. The monthly installment is an estimate using a fixed-rate amortization formula and is not a lender-generated payment schedule. Loan repayments do not automatically create account transactions or change account balances.
+
+Subscriptions are linked to one account and store the service name, recurring amount, billing frequency (weekly, monthly, quarterly, or yearly), next billing date, category, notes, and active/inactive status. The page estimates monthly recurring costs, highlights due-soon and overdue services, and lets users record payments with a billing date, paid date, amount, and optional notes. Recording a payment advances the next billing date by one frequency interval. Payment history is stored separately in the owner-scoped `subscription_payments` table; it does not create a transaction or change the linked account balance. Deleting a subscription also deletes its payment history.
 
 Savings goals are linked to one account and track a target amount, current saved amount, optional target date, and active/paused/completed status. Progress is maintained as a goal value and does not automatically create transactions or change the linked account balance. The existing `savings_goals` table and owner-scoped RLS policy are used; no additional database migration is required.
 
