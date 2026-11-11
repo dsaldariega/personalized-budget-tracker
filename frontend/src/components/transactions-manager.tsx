@@ -192,6 +192,10 @@ export function TransactionsManager() {
       ? await supabase.from("transactions").delete().eq("transfer_group_id", deleteTarget.transfer_group_id)
       : await supabase.from("transactions").delete().eq("id", deleteTarget.id);
     if (deleteResult.error) { setError(deleteResult.error.message); setSaving(false); setDeleteTarget(null); return; }
+    await supabase.from("activity_logs").insert({
+      user_id: deleteTarget.user_id, action: "transaction.deleted", entity_type: "transaction",
+      entity_id: deleteTarget.id, details: { transaction_type: deleteTarget.transaction_type, amount: Number(deleteTarget.amount), category: deleteTarget.category, transfer: Boolean(deleteTarget.transfer_group_id) },
+    });
     setDeleteTarget(null); setNotice(deleteTarget.transfer_group_id ? "Transfer deleted from both accounts." : "Transaction deleted."); setSaving(false); await loadData();
   }
 
