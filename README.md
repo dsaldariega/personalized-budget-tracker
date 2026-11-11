@@ -158,11 +158,12 @@ The intended deployment model is:
 - [x] Search and filter budgets by account and period
 
 ### Phase 6 — Goals
-- [ ] Savings goal creation
-- [ ] Account assignment
-- [ ] Target amount
-- [ ] Progress tracking
-- [ ] Goal completion
+- [x] Create, edit, and delete savings goals
+- [x] Link each goal to one account
+- [x] Set target amount, current saved amount, and optional target date
+- [x] Track progress with percentage and remaining amount
+- [x] Pause, resume, and complete goals
+- [x] Search and filter goals by account and status
 
 ### Phase 7 — Loans
 - [ ] Loan creation
@@ -250,6 +251,8 @@ The initial database migration is `supabase/migrations/20261111000000_initial_bu
 The transaction workflow records income and expenses against one account. Transfers are stored as two matching transaction rows (outflow and inflow) sharing a transfer group ID, so both account balances update without treating the transfer as income or spending. Transfers currently require the source and destination accounts to use the same currency. The transfer-direction and transfer-group constraints are added by `20261111000002_add_transaction_transfer_direction.sql` and `20261111000003_enforce_transfer_direction_value.sql`.
 
 Budgets are linked to one account and an expense category. Spending is calculated from expense transactions that match both the selected account and category within the current budget period. Weekly, monthly, and yearly budgets repeat from their configured start date; custom budgets use an explicit start and end date. Editing or deleting a transaction automatically changes the calculated budget progress the next time the page data is refreshed. The existing `budgets` table and its owner-scoped RLS policy are used; no additional database migration is required for the budget manager.
+
+Savings goals are linked to one account and track a target amount, current saved amount, optional target date, and active/paused/completed status. Progress is maintained as a goal value and does not automatically create transactions or change the linked account balance. The existing `savings_goals` table and owner-scoped RLS policy are used; no additional database migration is required.
 
 The app currently supports email/password sign-up, email/password sign-in, Google OAuth initiation, PKCE callback exchange, session refresh, protected application routes, and sign out. If email confirmation is enabled in Supabase, new users must confirm their email before their first sign-in.
 
