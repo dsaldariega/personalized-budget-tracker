@@ -5,7 +5,7 @@ import {
   ShowChartRounded, SubscriptionsOutlined, TrendingUpRounded, WalletOutlined,
 } from "@mui/icons-material";
 import {
-  Accordion, AccordionDetails, AccordionSummary, Box, Chip, Grid, Paper, Stack, Typography,
+  Accordion, AccordionDetails, AccordionSummary, Box, Grid, Paper, Stack, Typography,
 } from "@mui/material";
 import ExpandMoreRounded from "@mui/icons-material/ExpandMoreRounded";
 
@@ -74,7 +74,7 @@ export default function AboutPage() {
         <Box sx={{ position: "absolute", width: 260, height: 260, borderRadius: "50%", border: "1px solid rgba(255,255,255,.18)", right: -75, top: -110 }} />
         <Box sx={{ position: "absolute", width: 190, height: 190, borderRadius: "50%", border: "1px solid rgba(255,255,255,.16)", right: 10, bottom: -130 }} />
         <Stack spacing={2} sx={{ position: "relative", maxWidth: 720 }}>
-          <Chip icon={<AutoAwesomeOutlined sx={{ color: "inherit !important" }} />} label="A little more clarity, every day" sx={{ alignSelf: "flex-start", color: "#fff", bgcolor: "rgba(255,255,255,.15)", fontWeight: 700 }} />
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ alignSelf: "flex-start", px: 1.5, py: 0.8, borderRadius: 99, color: "#fff", bgcolor: "rgba(255,255,255,.15)", fontWeight: 700, fontSize: 13 }}><AutoAwesomeOutlined sx={{ fontSize: 18 }} /><Typography component="span" variant="body2" fontWeight={700}>A little more clarity, every day</Typography></Stack>
           <Typography variant="h3" fontWeight={850} letterSpacing={-1.5} sx={{ fontSize: { xs: 34, md: 48 }, lineHeight: 1.08 }}>
             Your money, with a little more clarity.
           </Typography>
