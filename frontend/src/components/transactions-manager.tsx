@@ -60,6 +60,7 @@ function TransactionDialog({
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const amount = Number(form.amount);
+    if (!form.transaction_date) return setFormError("Choose a transaction date.");
     if (!form.account_id) return setFormError("Choose an account for this transaction.");
     if (!Number.isFinite(amount) || amount <= 0) return setFormError("Enter an amount greater than zero.");
     if (form.transaction_type === "transfer" && !form.destination_account_id) return setFormError("Choose a destination account.");
@@ -187,13 +188,10 @@ export function TransactionsManager() {
   async function deleteTransaction() {
     if (!supabase || !deleteTarget) return;
     setSaving(true); setError("");
-    let result;
-    if (deleteTarget.transfer_group_id) {
-      result = await supabase.from("transactions").delete().eq("transfer_group_id", deleteTarget.transfer_group_id);
-    } else {
-      result = await supabase.from("transactions").delete().eq("id", deleteTarget.id);
-    }
-    if (result.error) { setError(result.error.message); setSaving(false); setDeleteTarget(null); return; }
+    const deleteResult = deleteTarget.transfer_group_id
+      ? await supabase.from("transactions").delete().eq("transfer_group_id", deleteTarget.transfer_group_id)
+      : await supabase.from("transactions").delete().eq("id", deleteTarget.id);
+    if (deleteResult.error) { setError(deleteResult.error.message); setSaving(false); setDeleteTarget(null); return; }
     setDeleteTarget(null); setNotice(deleteTarget.transfer_group_id ? "Transfer deleted from both accounts." : "Transaction deleted."); setSaving(false); await loadData();
   }
 
