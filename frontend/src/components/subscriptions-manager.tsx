@@ -247,9 +247,19 @@ export function SubscriptionsManager() {
   async function deletePayment(payment: Payment) {
     if (!supabase) return;
     setSaving(true); setError("");
-    const result = await supabase.from("subscription_payments").delete().eq("id", payment.id);
+    const result = await supabase.from("subscription_payments").delete().eq("id", payment.id).eq("user_id", historyTarget ? subscriptions.find(s => s.id === historyTarget.id)?.user_id ?? "" : "");
     if (result.error) setError(result.error.message);
-    else { setNotice("Payment history entry deleted. Review the next billing date if this was the latest payment."); await loadData(); }
+    else {
+      const subscription = subscriptions.find(s => s.id === payment.subscription_id);
+      if (subscription && subscription.next_billing_date === addBillingPeriod(payment.billing_date, subscription.billing_frequency)) {
+        const rollback = await supabase.from("subscriptions").update({ next_billing_date: payment.billing_date }).eq("id", subscription.id).eq("user_id", subscription.user_id);
+        if (rollback.error) setError("Payment history deleted, but the next billing date could not be rolled back: " + rollback.error.message);
+        else setNotice("Payment history deleted and the next billing date was restored.");
+      } else {
+        setNotice("Payment history entry deleted. The next billing date was left unchanged because a later cycle may already have been processed.");
+      }
+      await loadData();
+    }
     setSaving(false);
   }
 
