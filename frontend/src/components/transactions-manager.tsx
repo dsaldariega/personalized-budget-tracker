@@ -230,7 +230,7 @@ export function TransactionsManager() {
     <Stack spacing={3}>
       <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between" spacing={2}>
         <Box><Typography variant="h4" fontWeight={800} letterSpacing={-0.8}>Transactions</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>Track every peso coming in, going out, or moving between accounts.</Typography></Box>
-        <Button variant="contained" startIcon={<AddRounded />} onClick={openCreate} disabled={activeAccounts.length === 0}>Add transaction</Button>
+        <Button variant="contained" color="primary" startIcon={<AddRounded />} onClick={openCreate} disabled={activeAccounts.length === 0} sx={{ bgcolor: "primary.main", color: "primary.contrastText", "&:hover": { bgcolor: "primary.dark" }, "&.Mui-disabled": { bgcolor: "action.disabledBackground", color: "action.disabled" } }}>Add transaction</Button>
       </Stack>
       {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
       {notice && <Alert severity="success" onClose={() => setNotice("")}>{notice}</Alert>}
@@ -259,7 +259,7 @@ export function TransactionsManager() {
       </Stack>
       {loading ? <Paper sx={{ minHeight: 220, display: "grid", placeItems: "center", borderRadius: 3 }}><CircularProgress size={28} /></Paper> : filtered.length === 0 ? (
         <Paper variant="outlined" sx={{ p: { xs: 3, md: 5 }, minHeight: 240, display: "grid", placeItems: "center", textAlign: "center", borderRadius: 3 }}>
-          <Stack alignItems="center" spacing={1.2} sx={{ maxWidth: 390 }}><Avatar variant="rounded" sx={{ width: 58, height: 58, bgcolor: "action.hover", color: "text.secondary" }}><SwapHorizRounded fontSize="large" /></Avatar><Typography fontWeight={750} fontSize={18}>{transactions.length ? "No matching transactions" : "Your money story starts here"}</Typography><Typography color="text.secondary" variant="body2">{transactions.length ? "Try changing or clearing your filters." : "Record your first income, expense, or transfer to see your account balances update."}</Typography>{!transactions.length && activeAccounts.length > 0 && <Button variant="contained" startIcon={<AddRounded />} onClick={openCreate} sx={{ mt: 1 }}>Add your first transaction</Button>}</Stack>
+          <Stack alignItems="center" spacing={1.2} sx={{ maxWidth: 390 }}><Avatar variant="rounded" sx={{ width: 58, height: 58, bgcolor: "action.hover", color: "text.secondary" }}><SwapHorizRounded fontSize="large" /></Avatar><Typography fontWeight={750} fontSize={18}>{transactions.length ? "No matching transactions" : "Your money story starts here"}</Typography><Typography color="text.secondary" variant="body2">{transactions.length ? "Try changing or clearing your filters." : "Record your first income, expense, or transfer to see your account balances update."}</Typography>{!transactions.length && activeAccounts.length > 0 && <Button variant="contained" color="primary" startIcon={<AddRounded />} onClick={openCreate} sx={{ mt: 1, bgcolor: "primary.main", color: "primary.contrastText", "&:hover": { bgcolor: "primary.dark" } }}>Add your first transaction</Button>}</Stack>
         </Paper>
       ) : (
         <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3 }}>
