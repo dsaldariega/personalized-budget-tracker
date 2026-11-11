@@ -2,14 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  AccountBalanceWalletOutlined, AddCardOutlined, AutorenewRounded, CalendarMonthRounded,
-  DeleteOutlineRounded, EditOutlined, FilterAltOffRounded, HistoryRounded, RefreshRounded,
-  SearchRounded, SwapHorizRounded, TrendingUpRounded,
+  AccountBalanceWalletOutlined, AddCardOutlined, AutorenewRounded, HistoryRounded,
+  RefreshRounded, SearchRounded, SwapHorizRounded, TrendingUpRounded,
 } from "@mui/icons-material";
 import {
-  Alert, Avatar, Box, Button, Chip, CircularProgress, IconButton, MenuItem, Paper,
-  Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField,
-  Tooltip, Typography,
+  Alert, Avatar, Box, Button, CircularProgress, MenuItem, Paper, Stack, Table,
+  TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography,
 } from "@mui/material";
 import { createClient } from "@/lib/supabase/client";
 
@@ -32,6 +30,8 @@ const actionLabels: Record<string, string> = {
   "subscription.updated": "Updated a subscription", "subscription.deleted": "Deleted a subscription",
   "subscription.status_updated": "Changed a subscription status",
   "subscription.payment_recorded": "Recorded a subscription payment",
+  "profile.updated": "Updated profile settings",
+  "data.transactions_imported": "Imported transactions",
 };
 function titleCase(value: string) {
   return value.replace(/[._-]/g, " ").replace(/\b\w/g, letter => letter.toUpperCase());
@@ -68,7 +68,6 @@ export function ActivityManager() {
   const [search, setSearch] = useState("");
   const [entityFilter, setEntityFilter] = useState("all");
   const [periodFilter, setPeriodFilter] = useState("30");
-  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!supabase) { setError("Supabase is not configured. Check your environment variables."); setLoading(false); return; }
@@ -84,7 +83,7 @@ export function ActivityManager() {
     if (entityFilter !== "all") query = query.eq("entity_type", entityFilter);
     const { data, error: queryError } = await query;
     if (queryError) setError(queryError.message); else setItems((data ?? []) as Activity[]);
-    setLoading(false); setRefreshing(false);
+    setLoading(false); 
   }, [supabase, entityFilter, periodFilter]);
   useEffect(() => { void load(); }, [load]);
 
@@ -98,7 +97,7 @@ export function ActivityManager() {
     <Stack spacing={3}>
       <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "stretch", sm: "center" }} spacing={2}>
         <Box><Typography variant="h4" fontWeight={800} letterSpacing={-0.8}>Activity Log</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>A clear timeline of the changes you make across BudgetNest.</Typography></Box>
-        <Button variant="outlined" startIcon={<RefreshRounded />} onClick={() => { setRefreshing(true); void load(); }} disabled={loading}>Refresh activity</Button>
+        <Button variant="outlined" startIcon={<RefreshRounded />} onClick={() => void load()} disabled={loading}>Refresh activity</Button>
       </Stack>
       {error && <Alert severity="error">{error}</Alert>}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2,minmax(0,1fr))" }, gap: 2 }}>
