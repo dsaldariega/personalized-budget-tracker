@@ -25,6 +25,8 @@ create index subscription_payments_user_paid_date_idx
   on public.subscription_payments(user_id, paid_date desc);
 create index subscription_payments_subscription_date_idx
   on public.subscription_payments(subscription_id, billing_date desc);
+create index subscription_payments_subscription_user_idx
+  on public.subscription_payments(subscription_id, user_id);
 
 alter table public.subscription_payments enable row level security;
 
