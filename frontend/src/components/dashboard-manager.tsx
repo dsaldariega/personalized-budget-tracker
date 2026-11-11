@@ -283,7 +283,7 @@ export function DashboardManager() {
     {loading ? <Paper variant="outlined" sx={{ minHeight: 360, display: "grid", placeItems: "center", borderRadius: 3 }}><CircularProgress /></Paper> : <>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, sm: 6, xl: 3 }}><Card sx={{ height: "100%" }}><CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between"><Typography variant="body2" color="text.secondary" fontWeight={650}>Current balance</Typography><Avatar variant="rounded" sx={{ bgcolor: "rgba(126,107,245,.12)", color: "#806CF2" }}><AccountBalanceWalletOutlined /></Avatar></Stack>
+          <Stack direction="row" alignItems="center" justifyContent="space-between"><Typography variant="body2" color="text.secondary" fontWeight={650}>Current balance</Typography><Avatar variant="rounded" sx={{ bgcolor: "rgba(217,54,80,.12)", color: "primary.main" }}><AccountBalanceWalletOutlined /></Avatar></Stack>
           {balanceByCurrency.length ? balanceByCurrency.map(item => <Typography key={item.currency} variant="h5" fontWeight={850} sx={{ mt: 1.7 }}>{money(item.total, item.currency)}</Typography>) : <Typography variant="h5" fontWeight={850} sx={{ mt: 1.7 }}>{money(0, defaultCurrency)}</Typography>}
           <Typography variant="caption" color="text.secondary">{activeAccounts.length} active {activeAccounts.length === 1 ? "account" : "accounts"} · based on all transactions</Typography>
         </CardContent></Card></Grid>
