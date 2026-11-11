@@ -111,15 +111,22 @@ export function SettingsManager() {
     const data = backup.data as Record<string, unknown>;
     for (const table of tables) {
       const column = table === "profiles" ? "id" : "user_id";
-      const { data: rows, error: queryError } = await supabase.from(table).select("*").eq(column, userId);
-      if (queryError) { setError("Could not export " + table + ": " + queryError.message); setExporting(false); return; }
-      data[table] = rows ?? [];
+      const allRows: Record<string, unknown>[] = [];
+      let offset = 0;
+      while (true) {
+        const { data: rows, error: queryError } = await supabase.from(table).select("*").eq(column, userId).order("created_at", { ascending: true }).range(offset, offset + 999);
+        if (queryError) { setError("Could not export " + table + ": " + queryError.message); setExporting(false); return; }
+        allRows.push(...(rows ?? []));
+        if (!rows || rows.length < 1000) break;
+        offset += 1000;
+      }
+      data[table] = allRows;
     }
     downloadFile("budgetnest-backup-" + localDateStamp() + ".json", JSON.stringify(backup, null, 2), "application/json;charset=utf-8");
     const tx = (data.transactions ?? []) as Transaction[];
     const accountRows = (data.accounts ?? []) as Account[];
     const names = new Map(accountRows.map(a => [a.id, a.name]));
-    const csvRows = tx.map(item => ({
+    const csvRows = tx.filter(item => item.transaction_type !== "transfer").map(item => ({
       account_name: names.get(item.account_id) ?? "", currency: accountRows.find(a => a.id === item.account_id)?.currency ?? "",
       transaction_type: item.transaction_type, amount: item.amount, category: item.category ?? "",
       description: item.description ?? "", transaction_date: item.transaction_date,
@@ -215,7 +222,7 @@ export function SettingsManager() {
           <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>
             <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 2 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><BackupOutlined /></Avatar><Box><Typography variant="h6" fontWeight={800}>Data backup & transfer</Typography><Typography variant="body2" color="text.secondary">Download a copy of your data or import transactions from a spreadsheet.</Typography></Box></Stack>
             <Stack spacing={2}>
-              <Alert severity="info">The backup is a JSON file containing your profile and financial records. The accompanying transaction CSV can be opened and edited in Microsoft Excel or Google Sheets. Import currently accepts income and expense CSV rows; transfers should be recreated in the app to preserve both sides.</Alert>
+              <Alert severity="info">The backup is a JSON file containing your profile and financial records. The accompanying transaction CSV can be opened and edited in Microsoft Excel or Google Sheets. It includes income and expense rows; transfers are preserved in the JSON backup and should be recreated in the app to preserve both sides.</Alert>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} flexWrap="wrap">
                 <Button variant="contained" startIcon={exporting ? <CircularProgress size={17} color="inherit" /> : <CloudDownloadOutlined />} onClick={() => void exportBackup()} disabled={exporting || importing}>{exporting ? "Preparing backup…" : "Export my data"}</Button>
                 <Button variant="outlined" component="label" startIcon={importing ? <CircularProgress size={17} /> : <CloudUploadOutlined />} disabled={importing || exporting}>{importing ? "Importing…" : "Import transactions CSV"}<input ref={fileRef} hidden type="file" accept=".csv,text/csv" onChange={importTransactions} /></Button>
