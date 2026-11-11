@@ -70,7 +70,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     router.refresh();
   }
 
-  if (pathname === "/login" || pathname === "/register") return <>{children}</>;
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"), { noSsr: true });
   const { mode, toggleMode } = useThemeMode();
@@ -81,6 +80,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     () => navGroups.flatMap((group) => group.items).find((item) => item.href === pathname)?.label ?? "BudgetNest",
     [pathname]
   );
+
+  if (pathname === "/login" || pathname === "/register") return <>{children}</>;
 
   const sidebar = (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "background.paper" }}>
