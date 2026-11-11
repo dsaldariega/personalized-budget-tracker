@@ -120,7 +120,8 @@ The intended deployment model is:
 - [x] Google OAuth initiation and PKCE callback handling
 - [x] Session refresh and protected routes via Next.js Proxy
 - [x] Authenticated user menu and sign out
-- [ ] Configure dedicated BudgetNest Supabase project
+- [x] Create dedicated BudgetNest Supabase project (Singapore region)
+- [x] Apply initial PostgreSQL schema and owner-scoped RLS policies
 - [ ] Configure Google OAuth credentials and redirect URLs
 - [ ] Verify end-to-end auth with live credentials
 
@@ -227,9 +228,9 @@ Fill in the required Supabase values when authentication/database work is enable
 
 BudgetNest must use its **own Supabase project**. Do not reuse the DLMSF project or its credentials.
 
-1. Create a separate Supabase project for BudgetNest.
-2. In the Supabase project, open **Connect** and copy the Project URL and Publishable key.
-3. Add them to `frontend/.env.local`:
+1. Use the dedicated `budgetnest-supabase` project (project ref: `tsroovpuqjaopyzhxuop`, region: Singapore).
+2. The project URL is `https://tsroovpuqjaopyzhxuop.supabase.co`. Its publishable key was provided in the setup conversation; retrieve it from Supabase **Project Settings → API Keys** if needed.
+3. Add the project URL and publishable key to `frontend/.env.local`:
 
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
@@ -241,6 +242,8 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
    - Your deployed BudgetNest origin followed by `/auth/callback` when a deployment exists.
 5. Under **Authentication → Providers**, enable Google when Google OAuth credentials are ready. Add the Google Client ID and Client Secret, and configure the Supabase callback URL shown on that provider page in Google Cloud.
 6. Restart the frontend after changing environment variables.
+
+The initial database migration is `supabase/migrations/20261111000000_initial_budgetnest_schema.sql`. It creates profiles, accounts, transactions, budgets, savings goals, loans, subscriptions, and activity logs with owner-scoped RLS. Account-linked records use composite foreign keys to ensure the referenced account belongs to the same user. The migration has been applied to the dedicated project.
 
 The app currently supports email/password sign-up, email/password sign-in, Google OAuth initiation, PKCE callback exchange, session refresh, protected application routes, and sign out. If email confirmation is enabled in Supabase, new users must confirm their email before their first sign-in.
 
