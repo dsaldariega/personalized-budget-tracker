@@ -22,29 +22,42 @@ export async function updateSession(request: NextRequest) {
           response.cookies.set(name, value, options);
         });
         Object.entries(headers).forEach(([key, value]) => response.headers.set(key, value));
-      }
-    }
+      },
+    },
   });
 
   // Keep this immediately after client creation: it refreshes and validates the cookie session.
-  const { data: { claims } } = await supabase.auth.getClaims();
+  // A missing/invalid session can return null data, so read claims defensively.
+  const { data, error } = await supabase.auth.getClaims();
+  if (error) {
+    console.error("[BudgetNest] Unable to verify the Supabase session:", error.message);
+  }
+  const claims = data?.claims ?? null;
+
+  const pathname = request.nextUrl.pathname;
+  const isLoginRoute = pathname === "/login";
+  const isRegisterRoute = pathname === "/register";
   const isPublicRoute =
-    request.nextUrl.pathname === "/login" ||
-    request.nextUrl.pathname === "/register" ||
-    request.nextUrl.pathname.startsWith("/auth/");
+    isLoginRoute || isRegisterRoute || pathname.startsWith("/auth/");
 
   if (!claims && !isPublicRoute) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
-    redirectUrl.searchParams.set("next", request.nextUrl.pathname);
+    redirectUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (claims && (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/register")) {
+  if (claims && (isLoginRoute || isRegisterRoute)) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/";
     redirectUrl.search = "";
-    return NextResponse.redirect(redirectUrl);
+
+    const redirectResponse = NextResponse.redirect(redirectUrl);
+    // Preserve any refreshed auth cookies when redirecting away from an auth page.
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie);
+    });
+    return redirectResponse;
   }
 
   return response;
