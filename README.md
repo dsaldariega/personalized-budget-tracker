@@ -140,15 +140,17 @@ The intended deployment model is:
 - [x] Live account balance calculations
 
 ### Phase 4 — Dashboard
-- [x] Live total balances calculated from opening balances and transactions
-- [x] Income and expense summaries with selectable reporting periods
-- [x] Six-month cash-flow comparison
-- [x] Spending breakdown by category
-- [x] Current-cycle budget progress and over-budget indicators
-- [x] Upcoming and overdue recurring subscription payments
-- [x] Savings goal progress
-- [x] Recent transaction history
-- [x] Currency-aware summaries that never combine unlike currencies
+- [ ] Live total balances calculated from opening balances and transactions
+- [ ] Income and expense summaries with selectable reporting periods
+- [ ] Six-month cash-flow comparison
+- [ ] Spending breakdown by category
+- [ ] Current-cycle budget progress and over-budget indicators
+- [ ] Upcoming and overdue recurring subscription payments
+- [ ] Savings goal progress
+- [ ] Recent transaction history
+- [ ] Currency-aware summaries that never combine unlike currencies
+
+The dashboard implementation is committed to `dev`; manual acceptance testing is pending.
 
 ### Phase 5 — Budgets
 - [x] Create, edit, and delete budgets
