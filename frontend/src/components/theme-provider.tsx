@@ -88,6 +88,35 @@ export function ThemeProvider({
       },
       MuiPaper: { styleOverrides: { root: { backgroundImage: "none" } } },
       MuiButton: { defaultProps: { disableRipple: true } },
+      MuiInputLabel: {
+        styleOverrides: {
+          root: { lineHeight: 1.4375, "&.MuiInputLabel-sizeSmall": { lineHeight: 1.4 } },
+        },
+      },
+      MuiOutlinedInput: {
+        styleOverrides: {
+          root: {
+            minHeight: 56,
+            alignItems: "center",
+            "&.MuiInputBase-sizeSmall": { minHeight: 40 },
+            "&.MuiInputBase-multiline": { minHeight: "unset", alignItems: "flex-start" },
+          },
+          input: {
+            boxSizing: "content-box",
+            lineHeight: "1.4375em",
+            padding: "16.5px 14px",
+            "&.MuiInputBase-inputSizeSmall": { padding: "8.5px 14px" },
+            "&::placeholder": { opacity: 0.62 },
+          },
+          inputMultiline: {
+            padding: "12px 14px",
+            lineHeight: 1.5,
+          },
+          notchedOutline: {
+            borderColor: mode === "dark" ? "rgba(230,235,255,0.20)" : "rgba(34,42,74,0.20)",
+          },
+        },
+      },
     },
   }), [mode]);
 
