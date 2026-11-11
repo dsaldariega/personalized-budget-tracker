@@ -7,7 +7,7 @@ import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { usePathname } from "next/navigation";
 import {
   AccountBalanceWalletOutlined, AssessmentOutlined, AutorenewOutlined,
-  DashboardOutlined, DarkModeOutlined, InfoOutlined, KeyboardArrowDown, LightModeOutlined,
+  DashboardOutlined, DarkModeOutlined, HistoryRounded, InfoOutlined, KeyboardArrowDown, LightModeOutlined,
   MenuRounded, NotificationsNoneOutlined, SavingsOutlined, SettingsOutlined,
   SwapHorizOutlined, TrendingUpOutlined, AccountCircleOutlined, CloseRounded
 } from "@mui/icons-material";
@@ -32,7 +32,7 @@ const navGroups = [
     { label: "Subscriptions", href: "/subscriptions", icon: <AutorenewOutlined /> }
   ] },
   { label: "PREFERENCES", items: [
-    { label: "Activity Log", href: "/activity", icon: <SwapHorizOutlined /> },
+    { label: "Activity Log", href: "/activity", icon: <HistoryRounded /> },
     { label: "Settings", href: "/settings", icon: <SettingsOutlined /> },
     { label: "About", href: "/about", icon: <InfoOutlined /> }
   ] }
