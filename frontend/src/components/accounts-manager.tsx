@@ -210,6 +210,7 @@ function AccountDialog({
 export function AccountsManager() {
   const supabase = useMemo(() => createClient(), []);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [defaultCurrency, setDefaultCurrency] = useState("PHP");
   const [transactions, setTransactions] = useState<BalanceTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -238,7 +239,7 @@ export function AccountsManager() {
       return;
     }
 
-    const [accountResult, transactionResult] = await Promise.all([
+    const [accountResult, transactionResult, profileResult] = await Promise.all([
       supabase
         .from("accounts")
         .select("id, name, account_type, currency, opening_balance, is_archived, created_at")
@@ -248,12 +249,14 @@ export function AccountsManager() {
         .from("transactions")
         .select("account_id, transaction_type, amount, transfer_direction")
         .eq("user_id", user.id),
+      supabase.from("profiles").select("default_currency").eq("id", user.id).maybeSingle(),
     ]);
 
     if (accountResult.error) setError(accountResult.error.message);
     else setAccounts((accountResult.data ?? []) as Account[]);
     if (transactionResult.error) setError(transactionResult.error.message);
     else setTransactions((transactionResult.data ?? []) as BalanceTransaction[]);
+    if (!profileResult.error && profileResult.data?.default_currency) setDefaultCurrency(profileResult.data.default_currency);
     setLoading(false);
   }, [supabase]);
 
@@ -263,7 +266,7 @@ export function AccountsManager() {
 
   function openCreate() {
     setEditingAccount(null);
-    setFormSeed(emptyForm);
+    setFormSeed({ ...emptyForm, currency: defaultCurrency });
     setDialogOpen(true);
   }
 
