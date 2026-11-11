@@ -166,13 +166,12 @@ The intended deployment model is:
 - [x] Search and filter goals by account and status
 
 ### Phase 7 — Loans
-- [ ] Loan creation
-- [ ] Account assignment
-- [ ] Principal
-- [ ] Interest
-- [ ] Terms
-- [ ] Payment tracking
-- [ ] Remaining balance
+- [x] Create, edit, and delete loans linked to one account
+- [x] Record principal, annual interest rate, term, start date, and due date
+- [x] Estimate equal monthly installments
+- [x] Record repayments with principal and interest breakdown
+- [x] Calculate outstanding principal and repayment progress
+- [x] View and delete payment history; update loan status
 
 ### Phase 8 — Subscriptions
 - [ ] Recurring service setup
@@ -251,6 +250,8 @@ The initial database migration is `supabase/migrations/20261111000000_initial_bu
 The transaction workflow records income and expenses against one account. Transfers are stored as two matching transaction rows (outflow and inflow) sharing a transfer group ID, so both account balances update without treating the transfer as income or spending. Transfers currently require the source and destination accounts to use the same currency. The transfer-direction and transfer-group constraints are added by `20261111000002_add_transaction_transfer_direction.sql` and `20261111000003_enforce_transfer_direction_value.sql`.
 
 Budgets are linked to one account and an expense category. Spending is calculated from expense transactions that match both the selected account and category within the current budget period. Weekly, monthly, and yearly budgets repeat from their configured start date; custom budgets use an explicit start and end date. Editing or deleting a transaction automatically changes the calculated budget progress the next time the page data is refreshed. The existing `budgets` table and its owner-scoped RLS policy are used; no additional database migration is required for the budget manager.
+
+Loans are linked to one account and store the original principal, annual interest rate, term, start date, optional due date, notes, and status. Repayments are stored separately in the owner-scoped `loan_payments` table with an explicit principal/interest breakdown; outstanding principal is calculated from recorded principal repayments. The monthly installment is an estimate using a fixed-rate amortization formula and is not a lender-generated payment schedule. Loan repayments do not automatically create account transactions or change account balances.
 
 Savings goals are linked to one account and track a target amount, current saved amount, optional target date, and active/paused/completed status. Progress is maintained as a goal value and does not automatically create transactions or change the linked account balance. The existing `savings_goals` table and owner-scoped RLS policy are used; no additional database migration is required.
 
