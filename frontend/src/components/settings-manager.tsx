@@ -216,9 +216,10 @@ export function SettingsManager() {
             <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 2 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><BackupOutlined /></Avatar><Box><Typography variant="h6" fontWeight={800}>Data backup & transfer</Typography><Typography variant="body2" color="text.secondary">Download a copy of your data or import transactions from a spreadsheet.</Typography></Box></Stack>
             <Stack spacing={2}>
               <Alert severity="info">The backup is a JSON file containing your profile and financial records. The accompanying transaction CSV can be opened and edited in Microsoft Excel or Google Sheets. Import currently accepts income and expense CSV rows; transfers should be recreated in the app to preserve both sides.</Alert>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} flexWrap="wrap">
                 <Button variant="contained" startIcon={exporting ? <CircularProgress size={17} color="inherit" /> : <CloudDownloadOutlined />} onClick={() => void exportBackup()} disabled={exporting || importing}>{exporting ? "Preparing backup…" : "Export my data"}</Button>
                 <Button variant="outlined" component="label" startIcon={importing ? <CircularProgress size={17} /> : <CloudUploadOutlined />} disabled={importing || exporting}>{importing ? "Importing…" : "Import transactions CSV"}<input ref={fileRef} hidden type="file" accept=".csv,text/csv" onChange={importTransactions} /></Button>
+                <Button color="inherit" onClick={() => downloadFile("budgetnest-transaction-import-template.csv", "\\uFEFFaccount_name,currency,transaction_type,amount,category,description,transaction_date\\r\\n", "text/csv;charset=utf-8")} disabled={importing || exporting}>Download CSV template</Button>
               </Stack>
               {importSummary && <Alert severity="success" icon={<CheckCircleOutlineRounded />}>{importSummary}</Alert>}
               <Typography variant="caption" color="text.secondary">Import requirements: account_name, currency, transaction_type, amount, category, description, transaction_date. Duplicate income/expense rows are skipped. Maximum file size: 5 MB / 5,000 rows.</Typography>
