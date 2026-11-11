@@ -14,18 +14,28 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const theme = useMemo(() => createTheme({
     palette: {
       mode,
-      primary: { main: "#7c5cff" },
-      secondary: { main: "#26c6da" },
+      primary: { main: mode === "dark" ? "#9A88FF" : "#6B55D9" },
+      secondary: { main: "#26AFA6" },
       background: mode === "dark"
-        ? { default: "#0b0d12", paper: "#121620" }
-        : { default: "#f6f7fb", paper: "#ffffff" },
+        ? { default: "#0C0E13", paper: "#151922" }
+        : { default: "#F5F6F8", paper: "#FFFFFF" },
+      divider: mode === "dark" ? "rgba(255,255,255,0.09)" : "rgba(24,32,45,0.09)",
       shape: { borderRadius: 14 }
     },
-    typography: { fontFamily: "Inter, system-ui, sans-serif" }
+    typography: {
+      fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      h4: { fontSize: "clamp(1.65rem, 3vw, 2.15rem)" },
+      button: { fontWeight: 650 }
+    },
+    components: {
+      MuiCard: { styleOverrides: { root: { border: "1px solid", borderColor: mode === "dark" ? "rgba(255,255,255,0.07)" : "rgba(24,32,45,0.07)", boxShadow: "none" } } },
+      MuiPaper: { styleOverrides: { root: { backgroundImage: "none" } } },
+      MuiButton: { defaultProps: { disableRipple: true } }
+    }
   }), [mode]);
 
   return (
-    <ThemeContext.Provider value={{ mode, toggleMode: () => setMode((m) => m === "dark" ? "light" : "dark") }}>
+    <ThemeContext.Provider value={{ mode, toggleMode: () => setMode((current) => current === "dark" ? "light" : "dark") }}>
       <MuiThemeProvider theme={theme}>
         <CssBaseline />
         {children}
