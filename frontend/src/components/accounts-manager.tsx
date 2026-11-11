@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   AccountBalanceOutlined,
   AddRounded,
@@ -41,7 +41,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { createClient } from "@/lib/supabase/client";
+import { apiRequest } from "@/lib/api";
 
 type AccountType = "cash" | "bank" | "e_wallet" | "credit" | "investment" | "other";
 
@@ -208,7 +208,6 @@ function AccountDialog({
 }
 
 export function AccountsManager() {
-  const supabase = useMemo(() => createClient(), []);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [defaultCurrency, setDefaultCurrency] = useState("PHP");
   const [transactions, setTransactions] = useState<BalanceTransaction[]>([]);
@@ -224,41 +223,23 @@ export function AccountsManager() {
   const [notice, setNotice] = useState("");
 
   const loadAccounts = useCallback(async () => {
-    if (!supabase) {
-      setError("Supabase is not configured. Check your frontend environment variables.");
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
     setError("");
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      setError("Your session could not be verified. Please sign in again.");
+    try {
+      const result = await apiRequest<{
+        accounts: Account[];
+        transactions: BalanceTransaction[];
+        defaultCurrency: string;
+      }>("/accounts");
+      setAccounts(result.accounts);
+      setTransactions(result.transactions);
+      setDefaultCurrency(result.defaultCurrency || "PHP");
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load accounts.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const [accountResult, transactionResult, profileResult] = await Promise.all([
-      supabase
-        .from("accounts")
-        .select("id, name, account_type, currency, opening_balance, is_archived, created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("transactions")
-        .select("account_id, transaction_type, amount, transfer_direction")
-        .eq("user_id", user.id),
-      supabase.from("profiles").select("default_currency").eq("id", user.id).maybeSingle(),
-    ]);
-
-    if (accountResult.error) setError(accountResult.error.message);
-    else setAccounts((accountResult.data ?? []) as Account[]);
-    if (transactionResult.error) setError(transactionResult.error.message);
-    else setTransactions((transactionResult.data ?? []) as BalanceTransaction[]);
-    if (!profileResult.error && profileResult.data?.default_currency) setDefaultCurrency(profileResult.data.default_currency);
-    setLoading(false);
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     void loadAccounts();
@@ -283,17 +264,9 @@ export function AccountsManager() {
   }
 
   async function saveAccount(value: AccountForm) {
-    if (!supabase) return;
     setSaving(true);
     setError("");
     setNotice("");
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      setError("Your session has expired. Please sign in again.");
-      setSaving(false);
-      return;
-    }
 
     const payload = {
       name: value.name,
@@ -302,74 +275,60 @@ export function AccountsManager() {
       opening_balance: Number(value.opening_balance),
     };
 
-    const result = editingAccount
-      ? await supabase.from("accounts").update(payload).eq("id", editingAccount.id).eq("user_id", user.id)
-      : await supabase.from("accounts").insert({ ...payload, user_id: user.id });
+    try {
+      if (editingAccount) {
+        await apiRequest(`/accounts/${encodeURIComponent(editingAccount.id)}`, {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        });
+      } else {
+        await apiRequest("/accounts", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      }
 
-    if (result.error) {
-      setError(result.error.message);
+      setDialogOpen(false);
+      setNotice(editingAccount ? "Account updated." : "Account added.");
+      await loadAccounts();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Unable to save account.");
+    } finally {
       setSaving(false);
-      return;
     }
-
-    await supabase.from("activity_logs").insert({
-      user_id: user.id,
-      action: editingAccount ? "account.updated" : "account.created",
-      entity_type: "account",
-      entity_id: editingAccount?.id ?? null,
-      details: { name: value.name, account_type: value.account_type },
-    });
-
-    setDialogOpen(false);
-    setNotice(editingAccount ? "Account updated." : "Account added.");
-    setSaving(false);
-    await loadAccounts();
   }
 
   async function toggleArchive(account: Account) {
-    if (!supabase) return;
     setActiveMenu(null);
-    const { error: updateError } = await supabase
-      .from("accounts")
-      .update({ is_archived: !account.is_archived })
-      .eq("id", account.id);
-
-    if (updateError) {
-      setError(updateError.message);
-      return;
+    try {
+      await apiRequest(`/accounts/${encodeURIComponent(account.id)}/archive`, {
+        method: "PATCH",
+        body: JSON.stringify({ archived: !account.is_archived }),
+      });
+      setNotice(account.is_archived ? "Account restored." : "Account archived.");
+      await loadAccounts();
+    } catch (archiveError) {
+      setError(archiveError instanceof Error ? archiveError.message : "Unable to update account status.");
     }
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) await supabase.from("activity_logs").insert({
-      user_id: user.id, action: account.is_archived ? "account.restored" : "account.archived",
-      entity_type: "account", entity_id: account.id, details: { name: account.name },
-    });
-    setNotice(account.is_archived ? "Account restored." : "Account archived.");
-    await loadAccounts();
   }
 
   async function deleteAccount() {
-    if (!supabase || !deleteTarget) return;
+    if (!deleteTarget) return;
     setSaving(true);
-    const { error: deleteError } = await supabase.from("accounts").delete().eq("id", deleteTarget.id);
-    if (deleteError) {
-      setError(
-        deleteError.code === "23503"
-          ? "This account is linked to financial records and cannot be deleted. Archive it instead."
-          : deleteError.message
-      );
-      setSaving(false);
+    setError("");
+    try {
+      await apiRequest<void>(`/accounts/${encodeURIComponent(deleteTarget.id)}`, {
+        method: "DELETE",
+      });
       setDeleteTarget(null);
-      return;
+      setNotice("Account deleted.");
+      await loadAccounts();
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Unable to delete account.");
+      setDeleteTarget(null);
+    } finally {
+      setSaving(false);
     }
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) await supabase.from("activity_logs").insert({
-      user_id: user.id, action: "account.deleted", entity_type: "account",
-      entity_id: deleteTarget.id, details: { name: deleteTarget.name },
-    });
-    setDeleteTarget(null);
-    setNotice("Account deleted.");
-    setSaving(false);
-    await loadAccounts();
   }
 
   const visibleAccounts = accounts.filter((account) => showArchived || !account.is_archived);
