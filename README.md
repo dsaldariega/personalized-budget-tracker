@@ -126,18 +126,18 @@ The intended deployment model is:
 - [ ] Verify end-to-end auth with live credentials
 
 ### Phase 2 — Accounts
-- [ ] Create/edit/archive account
-- [ ] Currency support
-- [ ] Starting/current balance
-- [ ] Account overview
+- [x] Create/edit/archive account
+- [x] Currency support
+- [x] Starting/current balance
+- [x] Account overview
 
 ### Phase 3 — Transactions
-- [ ] Income transactions
-- [ ] Expense transactions
-- [ ] Transfer transactions
-- [ ] Categories
-- [ ] Transaction history
-- [ ] Account balance calculations
+- [x] Income transactions
+- [x] Expense transactions
+- [x] Paired account-to-account transfers (same currency)
+- [x] Income and expense categories
+- [x] Transaction history with search and filters
+- [x] Live account balance calculations
 
 ### Phase 4 — Dashboard
 - [ ] Total balance
@@ -244,6 +244,8 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
 6. Restart the frontend after changing environment variables.
 
 The initial database migration is `supabase/migrations/20261111000000_initial_budgetnest_schema.sql`. It creates profiles, accounts, transactions, budgets, savings goals, loans, subscriptions, and activity logs with owner-scoped RLS. Account-linked records use composite foreign keys to ensure the referenced account belongs to the same user. The migration has been applied to the dedicated project.
+
+The transaction workflow records income and expenses against one account. Transfers are stored as two matching transaction rows (outflow and inflow) sharing a transfer group ID, so both account balances update without treating the transfer as income or spending. Transfers currently require the source and destination accounts to use the same currency. The transfer-direction and transfer-group constraints are added by `20261111000002_add_transaction_transfer_direction.sql` and `20261111000003_enforce_transfer_direction_value.sql`.
 
 The app currently supports email/password sign-up, email/password sign-in, Google OAuth initiation, PKCE callback exchange, session refresh, protected application routes, and sign out. If email confirmation is enabled in Supabase, new users must confirm their email before their first sign-in.
 
