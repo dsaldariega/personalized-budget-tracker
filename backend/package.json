@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tsx watch src/dev.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/dev.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -22,5 +22,6 @@
     "@types/node": "^22.15.0",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0"
-  }
+  },
+  "type": "module"
 }
