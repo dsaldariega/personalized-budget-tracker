@@ -112,7 +112,9 @@ The intended deployment model is:
 - [x] Backend starter
 - [x] MUI theme foundation
 - [x] Dark/light mode
-- [ ] Application sidebar
+- [x] Application sidebar and responsive mobile drawer
+- [x] Top navigation, guest account menu, notifications placeholder
+- [x] Dashboard and section route scaffolds
 - [ ] Authentication
 - [ ] Protected application routes
 
