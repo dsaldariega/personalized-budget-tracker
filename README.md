@@ -115,8 +115,14 @@ The intended deployment model is:
 - [x] Application sidebar and responsive mobile drawer
 - [x] Top navigation, guest account menu, notifications placeholder
 - [x] Dashboard and section route scaffolds
-- [ ] Authentication
-- [ ] Protected application routes
+- [x] Supabase browser/server clients with cookie-based SSR sessions
+- [x] Email/password registration and login UI
+- [x] Google OAuth initiation and PKCE callback handling
+- [x] Session refresh and protected routes via Next.js Proxy
+- [x] Authenticated user menu and sign out
+- [ ] Configure dedicated BudgetNest Supabase project
+- [ ] Configure Google OAuth credentials and redirect URLs
+- [ ] Verify end-to-end auth with live credentials
 
 ### Phase 2 — Accounts
 - [ ] Create/edit/archive account
@@ -214,6 +220,31 @@ backend/.env.example  → backend/.env
 ```
 
 Fill in the required Supabase values when authentication/database work is enabled.
+
+
+
+### Supabase authentication setup
+
+BudgetNest must use its **own Supabase project**. Do not reuse the DLMSF project or its credentials.
+
+1. Create a separate Supabase project for BudgetNest.
+2. In the Supabase project, open **Connect** and copy the Project URL and Publishable key.
+3. Add them to `frontend/.env.local`:
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
+```
+
+4. In Supabase **Authentication → URL Configuration**, set the Site URL to your local app during development (`http://localhost:3000`) and add these Redirect URLs:
+   - `http://localhost:3000/auth/callback`
+   - Your deployed BudgetNest origin followed by `/auth/callback` when a deployment exists.
+5. Under **Authentication → Providers**, enable Google when Google OAuth credentials are ready. Add the Google Client ID and Client Secret, and configure the Supabase callback URL shown on that provider page in Google Cloud.
+6. Restart the frontend after changing environment variables.
+
+The app currently supports email/password sign-up, email/password sign-in, Google OAuth initiation, PKCE callback exchange, session refresh, protected application routes, and sign out. If email confirmation is enabled in Supabase, new users must confirm their email before their first sign-in.
+
+The frontend uses `@supabase/ssr` with cookie-based sessions. Only the publishable key belongs in the frontend environment. Never add a Supabase secret/service-role key to a `NEXT_PUBLIC_` variable or commit real credentials.
 
 ### Run
 
