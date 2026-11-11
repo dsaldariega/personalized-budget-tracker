@@ -1,102 +1,111 @@
 "use client";
 
 import {
-  AccountBalanceWallet,
-  ArrowUpward,
-  DarkMode,
-  LightMode,
-  Menu,
-  Savings,
-  TrendingDown
+  AccountBalanceWalletOutlined, ArrowDownwardRounded, ArrowUpwardRounded,
+  MoreHorizRounded, SavingsOutlined, TrendingUpRounded
 } from "@mui/icons-material";
 import {
-  AppBar,
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Container,
-  CssBaseline,
-  Grid,
-  IconButton,
-  Paper,
-  Stack,
-  Toolbar,
-  Typography
+  Box, Button, Card, CardContent, Chip, Grid, LinearProgress, Paper,
+  Stack, Typography
 } from "@mui/material";
-import { useThemeMode } from "@/components/theme-provider";
 
-const cards = [
-  { title: "Total Balance", value: "₱0.00", icon: <AccountBalanceWallet />, note: "Across all accounts" },
-  { title: "This Month", value: "₱0.00", icon: <TrendingDown />, note: "Total spending" },
-  { title: "Income", value: "₱0.00", icon: <ArrowUpward />, note: "This month" },
-  { title: "Savings Goals", value: "0", icon: <Savings />, note: "Active goals" }
+const metrics = [
+  { label: "Total balance", amount: "₱0.00", detail: "Across all accounts", icon: <AccountBalanceWalletOutlined />, tone: "#8B7BFF" },
+  { label: "Income this month", amount: "₱0.00", detail: "No income recorded yet", icon: <ArrowDownwardRounded />, tone: "#35B78A" },
+  { label: "Spent this month", amount: "₱0.00", detail: "No expenses recorded yet", icon: <ArrowUpwardRounded />, tone: "#E6A34A" },
+  { label: "Savings goals", amount: "0 active", detail: "Start with a goal in mind", icon: <SavingsOutlined />, tone: "#48A9D6" }
 ];
 
-export default function Home() {
-  const { mode, toggleMode } = useThemeMode();
+function SectionHeading({ title, action }: { title: string; action?: string }) {
+  return <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.8 }}>
+    <Typography fontWeight={750} fontSize={16}>{title}</Typography>
+    {action && <Button size="small" sx={{ textTransform: "none" }}>{action}</Button>}
+  </Stack>;
+}
 
+export default function DashboardPage() {
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <AppBar position="sticky" elevation={0} color="transparent">
-        <Toolbar sx={{ borderBottom: 1, borderColor: "divider" }}>
-          <IconButton edge="start"><Menu /></IconButton>
-          <Typography variant="h6" sx={{ ml: 1, fontWeight: 800, flexGrow: 1 }}>
-            BudgetNest
-          </Typography>
-          <Chip label="Dashboard" variant="outlined" sx={{ mr: 1 }} />
-          <IconButton onClick={toggleMode} aria-label="toggle theme">
-            {mode === "dark" ? <LightMode /> : <DarkMode />}
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Stack spacing={1} sx={{ mb: 4 }}>
-          <Typography variant="h3" fontWeight={800}>Good evening 👋</Typography>
-          <Typography color="text.secondary">
-            A clear view of your money, without the spreadsheet headache.
-          </Typography>
+    <Stack spacing={3}>
+      <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} spacing={2}>
+        <Box>
+          <Typography variant="h4" fontWeight={800} letterSpacing={-1}>Your money at a glance.</Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.7 }}>A simple overview to help you stay in control.</Typography>
+        </Box>
+        <Stack direction="row" spacing={1}>
+          <Chip label="November 2026" variant="outlined" />
+          <Button variant="contained" disableElevation sx={{ textTransform: "none", borderRadius: 2.5 }} href="/transactions">Add transaction</Button>
         </Stack>
+      </Stack>
 
-        <Grid container spacing={2}>
-          {cards.map((card) => (
-            <Grid key={card.title} size={{ xs: 12, sm: 6, lg: 3 }}>
-              <Card>
-                <CardContent>
-                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                    <Box>
-                      <Typography color="text.secondary" variant="body2">{card.title}</Typography>
-                      <Typography variant="h5" fontWeight={800} sx={{ mt: 1 }}>{card.value}</Typography>
-                    </Box>
-                    <Box sx={{ color: "primary.main" }}>{card.icon}</Box>
-                  </Stack>
-                  <Typography variant="caption" color="text.secondary">{card.note}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+      <Grid container spacing={2}>
+        {metrics.map((metric) => (
+          <Grid key={metric.label} size={{ xs: 12, sm: 6, xl: 3 }}>
+            <Card sx={{ height: "100%" }}>
+              <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                  <Typography variant="body2" color="text.secondary" fontWeight={600}>{metric.label}</Typography>
+                  <Box sx={{ width: 38, height: 38, display: "grid", placeItems: "center", borderRadius: 2.5, color: metric.tone, bgcolor: `${metric.tone}18` }}>{metric.icon}</Box>
+                </Stack>
+                <Typography variant="h4" fontWeight={800} letterSpacing={-0.8} sx={{ mt: 2 }}>{metric.amount}</Typography>
+                <Typography variant="caption" color="text.secondary">{metric.detail}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
 
-        <Grid container spacing={2} sx={{ mt: 0 }}>
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Paper sx={{ p: 3, minHeight: 300 }}>
-              <Typography variant="h6" fontWeight={700}>Spending overview</Typography>
-              <Typography color="text.secondary" sx={{ mt: 1 }}>
-                Transactions will populate this view once your accounts and spending are connected.
-              </Typography>
-            </Paper>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 3, minHeight: 300 }}>
-              <Typography variant="h6" fontWeight={700}>Accounts</Typography>
-              <Typography color="text.secondary" sx={{ mt: 1 }}>
-                No accounts yet. Add your first bank or financial account to get started.
-              </Typography>
-            </Paper>
-          </Grid>
+      <Grid container spacing={2.5}>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Paper sx={{ p: { xs: 2.5, md: 3 }, minHeight: 330 }}>
+            <SectionHeading title="Cash flow" action="View transactions" />
+            <Stack direction="row" spacing={3} sx={{ mb: 2 }}>
+              <Box><Typography variant="caption" color="text.secondary">Income</Typography><Typography fontWeight={750}>₱0.00</Typography></Box>
+              <Box><Typography variant="caption" color="text.secondary">Expenses</Typography><Typography fontWeight={750}>₱0.00</Typography></Box>
+            </Stack>
+            <Box sx={{ height: 190, display: "grid", placeItems: "center", borderRadius: 3, bgcolor: "action.hover", textAlign: "center", px: 2 }}>
+              <Box>
+                <TrendingUpRounded sx={{ fontSize: 32, color: "text.disabled", mb: 1 }} />
+                <Typography fontWeight={650}>Your cash flow will appear here</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Add a transaction to start building your monthly picture.</Typography>
+              </Box>
+            </Box>
+          </Paper>
         </Grid>
-      </Container>
-    </Box>
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Paper sx={{ p: { xs: 2.5, md: 3 }, minHeight: 330 }}>
+            <SectionHeading title="Budget progress" action="All budgets" />
+            <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 240, textAlign: "center" }}>
+              <Box sx={{ width: 62, height: 62, borderRadius: "50%", bgcolor: "action.hover", display: "grid", placeItems: "center", mb: 1.5 }}>
+                <SavingsOutlined sx={{ color: "text.secondary", fontSize: 29 }} />
+              </Box>
+              <Typography fontWeight={650}>No budgets yet</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 230, mt: 0.5 }}>Create a budget to give your spending a little direction.</Typography>
+              <Button href="/budgets" sx={{ mt: 1.5, textTransform: "none" }}>Create a budget</Button>
+            </Stack>
+          </Paper>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Paper sx={{ p: 3, minHeight: 230 }}>
+            <SectionHeading title="Your accounts" action="Manage accounts" />
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ py: 2 }}>
+              <Box sx={{ width: 42, height: 42, display: "grid", placeItems: "center", borderRadius: 2.5, bgcolor: "action.hover" }}><AccountBalanceWalletOutlined color="action" /></Box>
+              <Box sx={{ flexGrow: 1 }}>
+                <Typography fontWeight={650}>No accounts connected</Typography>
+                <Typography variant="caption" color="text.secondary">Add a bank, e-wallet, or cash account.</Typography>
+              </Box>
+              <Button href="/accounts" size="small" sx={{ textTransform: "none" }}>Add</Button>
+            </Stack>
+          </Paper>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Paper sx={{ p: 3, minHeight: 230 }}>
+            <SectionHeading title="Recent activity" action="Activity log" />
+            <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 130, textAlign: "center" }}>
+              <Typography color="text.secondary" variant="body2">Nothing to show just yet. Your recent activity will live here.</Typography>
+            </Stack>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Stack>
   );
 }
