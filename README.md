@@ -270,6 +270,10 @@ The Activity Log reads the owner-scoped `activity_logs` table and provides a sea
 
 Savings goals are linked to one account and track a target amount, current saved amount, optional target date, and active/paused/completed status. Progress is maintained as a goal value and does not automatically create transactions or change the linked account balance. The existing `savings_goals` table and owner-scoped RLS policy are used; no additional database migration is required.
 
+
+
+Theme preference is persisted in a server-readable `budgetnest-theme` cookie (with the existing localStorage preference migrated for returning users). The root layout reads the cookie before rendering so the selected light or dark theme is used on the initial page paint and remains consistent across route navigation and refreshes. The primary accent uses a red/rose palette, complemented by teal, green, orange, and blue semantic colors.
+
 The dashboard reads the signed-in user's accounts, transactions, budgets, savings goals, and active subscriptions directly from Supabase under the existing owner-scoped RLS policies. It calculates live account balances from opening balances plus income, expenses, and paired transfer directions; excludes transfers from income/expense totals and cash-flow comparisons; and provides this month, last month, last 90 days, and this year reporting periods. The six-month cash-flow chart, category spending, current budget-cycle progress, upcoming subscription dates, savings progress, and recent transactions are all derived from the saved records. Multi-currency totals remain separated by currency, and users can filter dashboard views to a single currency for comparable charts and category summaries.
 
 The app currently supports email/password sign-up, email/password sign-in, Google OAuth initiation, PKCE callback exchange, session refresh, protected application routes, and sign out. If email confirmation is enabled in Supabase, new users must confirm their email before their first sign-in.
