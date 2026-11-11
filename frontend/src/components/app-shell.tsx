@@ -1,6 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
+import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { usePathname } from "next/navigation";
 import {
   AccountBalanceWalletOutlined, AssessmentOutlined, AutorenewOutlined,
@@ -37,6 +40,37 @@ const navGroups = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+
+  useEffect(() => {
+    const supabase = createSupabaseClient();
+    if (!supabase) {
+      setAuthReady(true);
+      return;
+    }
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      setAuthReady(true);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setAuthReady(true);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function handleSignOut() {
+    const supabase = createSupabaseClient();
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    setAccountMenu(null);
+    router.replace("/login");
+    router.refresh();
+  }
+
+  if (pathname === "/login" || pathname === "/register") return <>{children}</>;
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"), { noSsr: true });
   const { mode, toggleMode } = useThemeMode();
@@ -136,16 +170,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </IconButton>
             </Tooltip>
             <Button onClick={(event) => setAccountMenu(event.currentTarget)} color="inherit" sx={{ minWidth: 0, px: 1, textTransform: "none", borderRadius: 3 }}>
-              <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main", fontSize: 13, mr: 1 }}>G</Avatar>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main", fontSize: 13, mr: 1 }}>{user?.email?.[0]?.toUpperCase() ?? "G"}</Avatar>
               <Box sx={{ display: { xs: "none", sm: "block" }, textAlign: "left", mr: 0.5 }}>
-                <Typography variant="body2" fontWeight={700} lineHeight={1.2}>Guest</Typography>
-                <Typography variant="caption" color="text.secondary">Local preview</Typography>
+                <Typography variant="body2" fontWeight={700} lineHeight={1.2}>{user?.user_metadata?.full_name ?? (user?.email ? user.email.split("@")[0] : "Guest")}</Typography>
+                <Typography variant="caption" color="text.secondary">{user?.email ?? (authReady ? "Not signed in" : "Checking session…")}</Typography>
               </Box>
               <KeyboardArrowDown fontSize="small" />
             </Button>
             <Menu anchorEl={accountMenu} open={Boolean(accountMenu)} onClose={() => setAccountMenu(null)}>
-              <MenuItem disabled><AccountCircleOutlined fontSize="small" sx={{ mr: 1 }} /> Sign in / Create account · coming soon</MenuItem>
-              <MenuItem onClick={() => setAccountMenu(null)} disabled>Profile settings (coming soon)</MenuItem>
+              {user ? (
+                <MenuItem onClick={handleSignOut}>Sign out</MenuItem>
+              ) : (
+                <MenuItem component="a" href="/login" onClick={() => setAccountMenu(null)}><AccountCircleOutlined fontSize="small" sx={{ mr: 1 }} /> Sign in / Create account</MenuItem>
+              )}
             </Menu>
 
           </Toolbar>
