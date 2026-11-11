@@ -165,9 +165,11 @@ export function DashboardManager() {
   }, [supabase]);
 
   useEffect(() => { void loadData(); }, [loadData]);
-
   const accountMap = useMemo(() => new Map(accounts.map(account => [account.id, account])), [accounts]);
   const currencies = useMemo(() => Array.from(new Set(accounts.filter(a => !a.is_archived).map(a => a.currency))).sort(), [accounts]);
+  useEffect(() => {
+    if (currencyFilter !== "all" && !currencies.includes(currencyFilter)) setCurrencyFilter("all");
+  }, [currencyFilter, currencies]);
   const selectedCurrency = currencyFilter === "all" ? (currencies.length === 1 ? currencies[0] : "all") : currencyFilter;
   const activeAccounts = accounts.filter(account => !account.is_archived && (selectedCurrency === "all" || account.currency === selectedCurrency));
   const balances = activeAccounts.map(account => ({
@@ -296,7 +298,7 @@ export function DashboardManager() {
           <Paper variant="outlined" sx={{ p: { xs: 2, md: 2.8 }, height: "100%", borderRadius: 3 }}>
             <SectionTitle title="Spending by category" href="/transactions" action="Transactions" />
             {categoryRows.length ? <Stack spacing={1.7}>
-              {categoryRows.map(row => <Box key={row.name}>
+              {categoryRows.map(row => <Box key={`${row.currency}-${row.name}`}>
                 <Stack direction="row" justifyContent="space-between" spacing={1} sx={{ mb: 0.6 }}><Typography variant="body2" fontWeight={650} noWrap>{row.name}</Typography><Typography variant="body2" fontWeight={750}>{money(row.amount, row.currency)}</Typography></Stack>
                 <LinearProgress variant="determinate" value={(categoryTotalsByCurrency.get(row.currency) ?? 0) ? row.amount / (categoryTotalsByCurrency.get(row.currency) ?? 1) * 100 : 0} sx={{ height: 8, borderRadius: 99, bgcolor: "action.hover", "& .MuiLinearProgress-bar": { borderRadius: 99 } }} />
               </Box>)}
