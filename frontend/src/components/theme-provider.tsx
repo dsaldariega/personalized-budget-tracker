@@ -32,8 +32,19 @@ export function ThemeProvider({
   const [mode, setMode] = useState<ThemeMode>(initialMode);
 
   useEffect(() => {
-    persistTheme(mode);
-  }, [mode]);
+    // Migrate the previous localStorage-only preference once. After this,
+    // the server-readable cookie is the source used for first paint.
+    const cookieExists = document.cookie.split("; ").some(item => item.startsWith(`${THEME_COOKIE_KEY}=`));
+    if (!cookieExists) {
+      const legacyMode = window.localStorage.getItem(THEME_STORAGE_KEY);
+      if (legacyMode === "light" || legacyMode === "dark") {
+        persistTheme(legacyMode);
+        if (legacyMode !== initialMode) setMode(legacyMode);
+        return;
+      }
+    }
+    persistTheme(initialMode);
+  }, [initialMode]);
 
   const theme = useMemo(() => createTheme({
     palette: {
