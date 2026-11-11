@@ -3,14 +3,18 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "tsx watch src/dev.ts",
     "build": "tsc",
     "start": "node dist/server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "@supabase/supabase-js": "2.114.0",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
