@@ -62,6 +62,13 @@ type AccountForm = {
   opening_balance: string;
 };
 
+type BalanceTransaction = {
+  account_id: string;
+  transaction_type: "income" | "expense" | "transfer";
+  amount: number;
+  transfer_direction: "in" | "out" | null;
+};
+
 const accountTypes: { value: AccountType; label: string }[] = [
   { value: "cash", label: "Cash" },
   { value: "bank", label: "Bank account" },
@@ -203,6 +210,7 @@ function AccountDialog({
 export function AccountsManager() {
   const supabase = useMemo(() => createClient(), []);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [transactions, setTransactions] = useState<BalanceTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -230,17 +238,22 @@ export function AccountsManager() {
       return;
     }
 
-    const { data, error: queryError } = await supabase
-      .from("accounts")
-      .select("id, name, account_type, currency, opening_balance, is_archived, created_at")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+    const [accountResult, transactionResult] = await Promise.all([
+      supabase
+        .from("accounts")
+        .select("id, name, account_type, currency, opening_balance, is_archived, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("transactions")
+        .select("account_id, transaction_type, amount, transfer_direction")
+        .eq("user_id", user.id),
+    ]);
 
-    if (queryError) {
-      setError(queryError.message);
-    } else {
-      setAccounts((data ?? []) as Account[]);
-    }
+    if (accountResult.error) setError(accountResult.error.message);
+    else setAccounts((accountResult.data ?? []) as Account[]);
+    if (transactionResult.error) setError(transactionResult.error.message);
+    else setTransactions((transactionResult.data ?? []) as BalanceTransaction[]);
     setLoading(false);
   }, [supabase]);
 
@@ -348,10 +361,16 @@ export function AccountsManager() {
 
   const visibleAccounts = accounts.filter((account) => showArchived || !account.is_archived);
   const activeAccounts = accounts.filter((account) => !account.is_archived);
-  const totalStartingBalance = activeAccounts.reduce((sum, account) => sum + Number(account.opening_balance), 0);
+  const currentBalance = (account: Account) => Number(account.opening_balance) + transactions
+    .filter((transaction) => transaction.account_id === account.id)
+    .reduce((sum, transaction) => {
+      if (transaction.transaction_type === "income" || (transaction.transaction_type === "transfer" && transaction.transfer_direction === "in")) return sum + Number(transaction.amount);
+      return sum - Number(transaction.amount);
+    }, 0);
+  const totalCurrentBalance = activeAccounts.reduce((sum, account) => sum + currentBalance(account), 0);
   const currencies = new Set(activeAccounts.map((account) => account.currency));
   const summaryBalance = currencies.size <= 1
-    ? formatMoney(totalStartingBalance, activeAccounts[0]?.currency ?? "PHP")
+    ? formatMoney(totalCurrentBalance, activeAccounts[0]?.currency ?? "PHP")
     : "Multiple currencies";
 
   return (
@@ -383,7 +402,7 @@ export function AccountsManager() {
           <Stack direction="row" alignItems="center" spacing={1.2}>
             <Avatar variant="rounded" sx={{ bgcolor: "action.hover", color: "success.main", width: 42, height: 42 }}><AttachMoneyRounded /></Avatar>
             <Box>
-              <Typography variant="caption" color="text.secondary">Combined starting balance</Typography>
+              <Typography variant="caption" color="text.secondary">Combined current balance</Typography>
               <Typography variant="h5" fontWeight={800} sx={{ fontSize: { xs: 21, sm: 24 } }}>{summaryBalance}</Typography>
             </Box>
           </Stack>
@@ -435,9 +454,9 @@ export function AccountsManager() {
                   <IconButton size="small" aria-label={`Actions for ${account.name}`} onClick={(event) => setActiveMenu({ element: event.currentTarget, account })}><MoreHorizRounded /></IconButton>
                 </Stack>
                 <Divider sx={{ my: 2 }} />
-                <Typography variant="caption" color="text.secondary">Starting balance</Typography>
+                <Typography variant="caption" color="text.secondary">Current balance</Typography>
                 <Typography variant="h5" fontWeight={800} letterSpacing={-0.5} sx={{ mt: 0.35 }}>
-                  {formatMoney(Number(account.opening_balance), account.currency)}
+                  {formatMoney(currentBalance(account), account.currency)}
                 </Typography>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 2 }}>
                   <Chip size="small" label={account.currency} variant="outlined" />
