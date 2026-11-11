@@ -81,7 +81,7 @@ personalized-budget-tracker/
 - Supabase Auth
 - Row Level Security (RLS)
 
-The frontend will never contain a Supabase service-role key.
+The frontend will never contain a Supabase service-role key. The Express API verifies the user's Supabase access token and uses a user-scoped Supabase client with the publishable key, so existing RLS policies remain active.
 
 ### Deployment
 
@@ -296,7 +296,75 @@ Expected services:
 - Backend: http://localhost:4000
 - API health check: http://localhost:4000/api/health
 
-## Git workflow
+
+
+## Backend API foundation
+
+The Express API is deployed as a separate Vercel project using `backend/` as its Root Directory. Vercel detects the Express application through `backend/src/server.ts`, which exports the Express app as its default export. Local development uses `backend/src/dev.ts` to start the same app on port 4000.
+
+The first migrated workflow is **Accounts**. The Accounts screen now calls the Express API rather than querying the Supabase tables directly.
+
+### API routes
+
+| Method | Route | Purpose |
+| --- | --- | --- |
+| GET | `/api/health` | Public service health check |
+| GET | `/api/me` | Verify the bearer token and return the signed-in user |
+| GET | `/api/accounts` | Load the user's accounts, balance transactions, and default currency |
+| POST | `/api/accounts` | Create an account |
+| PUT | `/api/accounts/:id` | Update an account |
+| PATCH | `/api/accounts/:id/archive` | Archive or restore an account |
+| DELETE | `/api/accounts/:id` | Delete an account when no linked records prevent deletion |
+
+All account routes require an `Authorization: Bearer <Supabase access token>` header. The API verifies the token with Supabase Auth, then creates a Supabase client using the publishable key and that user's access token. It does **not** use the service-role key. Database operations therefore continue to run under the signed-in user's identity and the existing RLS policies.
+
+The API also applies Helmet security headers, an explicit frontend-origin allowlist, JSON request-size limits, basic per-instance rate limiting, request validation, and centralized error responses. RLS and database constraints remain the final ownership and relationship enforcement layer.
+
+### Environment variables
+
+Frontend (`frontend/.env.local`, and the Vercel frontend project):
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
+NEXT_PUBLIC_API_URL=http://localhost:4000/api
+```
+
+For the deployed frontend, set `NEXT_PUBLIC_API_URL` to the deployed backend origin plus `/api`, for example `https://budgetnest-api.vercel.app/api`.
+
+Backend (`backend/.env`, and the Vercel backend project):
+
+```dotenv
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
+FRONTEND_URLS=http://localhost:3000
+PORT=4000
+```
+
+For the deployed backend, set `FRONTEND_URLS` to the exact frontend production origin. Multiple origins can be comma-separated, for example the local origin and the production frontend origin. Do not add a service-role key for this user-scoped API foundation.
+
+### Gradual migration plan
+
+Accounts is the first API-backed module and serves as the implementation pattern. Transactions, budgets, goals, loans, subscriptions, dashboard reads, activity, and settings will be migrated in separate steps. Until each module is migrated and tested, it continues using the existing Supabase browser client and RLS policies. Authentication remains managed by Supabase Auth in the frontend; the API receives the user's access token for each protected request.
+
+### Local verification
+
+From the repository root:
+
+```bash
+npm install
+npm run install:all
+```
+
+Set the frontend and backend environment files, then run:
+
+```bash
+npm run dev
+```
+
+Verify the backend health endpoint at `http://localhost:4000/api/health`, then sign in to BudgetNest and test account listing, creation, editing, archiving/restoring, and deletion of an unlinked account. Also verify that an unauthenticated request to `/api/accounts` returns HTTP 401.
+
+\n## Git workflow
 
 Development happens on `dev`.
 
