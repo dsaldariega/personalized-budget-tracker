@@ -23,10 +23,6 @@ type GoalForm = {
   account_id: string; name: string; target_amount: string;
   current_amount: string; target_date: string; status: GoalStatus;
 };
-const today = () => {
-  const d = new Date();
-  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
-};
 const emptyForm = (): GoalForm => ({
   account_id: "", name: "", target_amount: "", current_amount: "0",
   target_date: "", status: "active",
@@ -58,7 +54,6 @@ function GoalDialog({
     if (!Number.isFinite(target) || target <= 0) return setFormError("Enter a target amount greater than zero.");
     if (!Number.isFinite(current) || current < 0) return setFormError("Enter a valid amount already saved.");
     if (current > target) return setFormError("The amount saved cannot exceed the target. Increase the target amount if needed.");
-    if (form.target_date && form.target_date < today()) return setFormError("Choose today or a future target date.");
     onSave({ ...form, name: form.name.trim(), target_amount: String(target), current_amount: String(current), status: current >= target ? "completed" : form.status });
   }
   return (
