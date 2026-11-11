@@ -71,7 +71,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up("lg"), { noSsr: true });
+  const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const { mode, toggleMode } = useThemeMode();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountMenu, setAccountMenu] = useState<HTMLElement | null>(null);
