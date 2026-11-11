@@ -2,10 +2,10 @@
 
 import {
   AccountBalanceWalletOutlined, ArrowDownwardRounded, ArrowUpwardRounded,
-  MoreHorizRounded, SavingsOutlined, TrendingUpRounded
+  SavingsOutlined, TrendingUpRounded
 } from "@mui/icons-material";
 import {
-  Box, Button, Card, CardContent, Chip, Grid, LinearProgress, Paper,
+  Box, Button, Card, CardContent, Chip, Grid, Paper,
   Stack, Typography
 } from "@mui/material";
 
