@@ -1,10 +1,13 @@
 import { createClient } from "@/lib/supabase/client";
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api").replace(/\/$/, "");
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = (configuredApiUrl ?? (process.env.NODE_ENV === "development" ? "http://localhost:4000/api" : "")).replace(/\/$/, "");
 
 type ApiError = Error & { status?: number };
 
 export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  if (!API_URL) throw new Error("The API URL is not configured. Set NEXT_PUBLIC_API_URL for this environment.");
+
   const supabase = createClient();
   if (!supabase) throw new Error("Supabase is not configured. Check your frontend environment variables.");
 
@@ -13,14 +16,14 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     throw new Error("Your session has expired. Please sign in again.");
   }
 
+  const headers = new Headers(init.headers);
+  headers.set("Accept", "application/json");
+  if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  headers.set("Authorization", `Bearer ${session.access_token}`);
+
   const response = await fetch(`${API_URL}${path.startsWith("/") ? path : `/${path}`}`, {
     ...init,
-    headers: {
-      Accept: "application/json",
-      ...(init.body ? { "Content-Type": "application/json" } : {}),
-      ...init.headers,
-      Authorization: `Bearer ${session.access_token}`,
-    },
+    headers,
     cache: "no-store",
   });
 
