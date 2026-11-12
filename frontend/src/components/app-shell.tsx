@@ -84,29 +84,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (!authReady) return;
     let active = true;
     setDismissedIds([]);
-    setNotificationsLoading(true);
 
-    Promise.all([
-      apiRequest<{ accounts: Array<{ id: string; currency?: string }>; budgets: Array<any>; expenses: Array<any> }>("/budgets"),
-      apiRequest<{ accounts: Array<{ id: string; currency?: string }>; goals: Array<any> }>("/goals"),
-      apiRequest<{ subscriptions: Array<any> }>("/subscriptions"),
-    ]).then(([budgetData, goalData, subscriptionData]) => {
-      if (!active) return;
-      setNotifications(buildNotifications({
-        accounts: budgetData.accounts?.length ? budgetData.accounts : goalData.accounts ?? [],
-        budgets: budgetData.budgets ?? [],
-        expenses: budgetData.expenses ?? [],
-        goals: goalData.goals ?? [],
-        subscriptions: subscriptionData.subscriptions ?? [],
-      }));
-    }).catch((error) => {
-      console.error("Unable to load notifications:", error);
-      if (active) setNotifications([]);
-    }).finally(() => {
-      if (active) setNotificationsLoading(false);
-    });
+    const loadNotifications = () => {
+      setNotificationsLoading(true);
+      Promise.all([
+        apiRequest<{ accounts: Array<{ id: string; currency?: string }>; budgets: Array<any>; expenses: Array<any> }>("/budgets"),
+        apiRequest<{ accounts: Array<{ id: string; currency?: string }>; goals: Array<any> }>("/goals"),
+        apiRequest<{ subscriptions: Array<any> }>("/subscriptions"),
+      ]).then(([budgetData, goalData, subscriptionData]) => {
+        if (!active) return;
+        setNotifications(buildNotifications({
+          accounts: budgetData.accounts?.length ? budgetData.accounts : goalData.accounts ?? [],
+          budgets: budgetData.budgets ?? [],
+          expenses: budgetData.expenses ?? [],
+          goals: goalData.goals ?? [],
+          subscriptions: subscriptionData.subscriptions ?? [],
+        }));
+      }).catch((error) => {
+        console.error("Unable to load notifications:", error);
+        if (active) setNotifications([]);
+      }).finally(() => {
+        if (active) setNotificationsLoading(false);
+      });
+    };
 
-    return () => { active = false; };
+    loadNotifications();
+    window.addEventListener("budgetnest:data-changed", loadNotifications);
+    return () => {
+      active = false;
+      window.removeEventListener("budgetnest:data-changed", loadNotifications);
+    };
   }, [authReady, user?.id]);
 
   const visibleNotifications = notifications.filter(item => !dismissedIds.includes(item.id));
