@@ -67,7 +67,7 @@ export function ThemeProvider({
       info: { main: mode === "dark" ? "#70BFFF" : "#328DD8" },
       background: mode === "dark"
         ? { default: "#111426", paper: "#1A1F35" }
-        : { default: "#F7F8FC", paper: "#FFFFFF" },
+        : { default: "#F8F7FA", paper: "#FFFFFF" },
       divider: mode === "dark" ? "rgba(230,235,255,0.10)" : "rgba(34,42,74,0.09)",
     },
     shape: { borderRadius: 14 },
@@ -80,14 +80,50 @@ export function ThemeProvider({
       MuiCard: {
         styleOverrides: {
           root: {
+            position: "relative",
+            overflow: "hidden",
             border: "1px solid",
-            borderColor: mode === "dark" ? "rgba(230,235,255,0.08)" : "rgba(34,42,74,0.08)",
-            boxShadow: "0 5px 24px rgba(38, 45, 85, 0.035)",
+            borderColor: mode === "dark" ? "rgba(230,235,255,0.09)" : "rgba(34,42,74,0.075)",
+            borderRadius: 18,
+            boxShadow: mode === "dark" ? "0 8px 28px rgba(0,0,0,0.16)" : "0 6px 24px rgba(38, 45, 85, 0.045)",
+            transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
+            "&:hover": {
+              transform: "translateY(-3px)",
+              borderColor: mode === "dark" ? "rgba(255,130,146,0.30)" : "rgba(217,54,80,0.20)",
+              boxShadow: mode === "dark" ? "0 12px 32px rgba(0,0,0,0.24)" : "0 12px 30px rgba(38, 45, 85, 0.085)",
+            },
           },
         },
       },
-      MuiPaper: { styleOverrides: { root: { backgroundImage: "none" } } },
-      MuiButton: { defaultProps: { disableRipple: true } },
+      MuiPaper: {
+        styleOverrides: {
+          root: { backgroundImage: "none" },
+          rounded: { borderRadius: 18 },
+        },
+      },
+      MuiAppBar: {
+        styleOverrides: {
+          root: {
+            backdropFilter: "blur(16px)",
+            backgroundColor: mode === "dark" ? "rgba(17,20,38,0.88)" : "rgba(250,249,252,0.88)",
+          },
+        },
+      },
+      MuiButton: {
+        defaultProps: { disableRipple: true },
+        styleOverrides: {
+          root: { borderRadius: 11, minHeight: 38, fontWeight: 700 },
+          contained: {
+            boxShadow: mode === "dark" ? "0 5px 16px rgba(217,54,80,0.18)" : "0 5px 14px rgba(217,54,80,0.16)",
+            "&:hover": { boxShadow: "0 8px 20px rgba(217,54,80,0.22)" },
+          },
+        },
+      },
+      MuiChip: {
+        styleOverrides: {
+          root: { borderRadius: 9, fontWeight: 700 },
+        },
+      },
       MuiInputLabel: {
         styleOverrides: {
           root: { lineHeight: 1.4375, "&.MuiInputLabel-sizeSmall": { lineHeight: 1.4 } },
