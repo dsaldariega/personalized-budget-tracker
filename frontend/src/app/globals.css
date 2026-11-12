@@ -52,7 +52,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .dashboard-page .MuiPaper-outlined {
-  border-color: var(--mui-palette-divider);
+  border-color: var(--mui-palette-divider, rgba(34, 42, 74, 0.09));
 }
 
 .MuiButton-root:focus-visible,
