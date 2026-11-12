@@ -196,7 +196,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Snackbar open={noticeOpen} autoHideDuration={3000} onClose={() => setNoticeOpen(false)} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
           <Alert severity="info" variant="filled" onClose={() => setNoticeOpen(false)}>You’re all caught up.</Alert>
         </Snackbar>
-        <Box component="main" sx={{ width: "100%", maxWidth: 1600, mx: "auto", px: { xs: 2, sm: 3, xl: 4 }, py: { xs: 3, md: 4 }, flexGrow: 1 }}>
+        <Box
+          key={pathname}
+          component="main"
+          className="page-transition"
+          sx={{ width: "100%", maxWidth: 1600, mx: "auto", px: { xs: 2, sm: 3, xl: 4 }, py: { xs: 3, md: 4 }, flexGrow: 1 }}
+        >
           {children}
         </Box>
         <Box component="footer" sx={{ px: 3, py: 2, borderTop: 1, borderColor: "divider" }}>
