@@ -83,6 +83,14 @@ personalized-budget-tracker/
 
 The frontend will never contain a Supabase service-role key. The Express API verifies the user's Supabase access token and uses a user-scoped Supabase client with the publishable key, so existing RLS policies remain active.
 
+### Authentication setup
+
+- New registrations require a unique username (3–24 lowercase letters, numbers, or underscores), a unique email address, and a password.
+- Users can sign in with either their username or email address.
+- Usernames are stored in `public.profiles`; the auth trigger creates the profile when a Supabase Auth user is registered.
+- Apply all SQL files in `supabase/migrations/` to the BudgetNest Supabase project before testing username sign-in. In particular, apply `20261112000000_add_profile_usernames.sql`.
+- Email is collected as an account identifier; BudgetNest does not require email verification or send confirmation emails. Disable **Confirm email** in Supabase Dashboard → Authentication → Providers → Email so registration returns a session and users can enter the app immediately. Supabase will not verify that the mailbox itself exists.
+
 ### Backend API migration
 
 The backend is being adopted gradually while the frontend continues to use Supabase directly for modules that have not yet migrated.
@@ -370,7 +378,7 @@ The migrated workflows are **Accounts**, **Transactions**, **Budgets**, **Saving
 | POST | `/api/subscriptions/:id/payments` | Record a payment and advance the next billing date |
 | DELETE | `/api/subscriptions/:id/payments/:paymentId` | Delete a payment and restore the billing date when safe |
 
-All account routes require an `Authorization: Bearer <Supabase access token>` header. The API verifies the token with Supabase Auth, then creates a Supabase client using the publishable key and that user's access token. It does **not** use the service-role key. Database operations therefore continue to run under the signed-in user's identity and the existing RLS policies.
+All protected data routes require an `Authorization: Bearer <Supabase access token>` header. The API verifies the token with Supabase Auth, then creates a Supabase client using the publishable key and that user's access token. These database operations run under the signed-in user's identity and existing RLS policies. The service-role key is reserved for the username-to-email lookup in the public login endpoint.
 
 The API also applies Helmet security headers, an explicit frontend-origin allowlist, JSON request-size limits, basic per-instance rate limiting, request validation, and centralized error responses. RLS and database constraints remain the final ownership and relationship enforcement layer.
 
@@ -391,11 +399,12 @@ Backend (`backend/.env`, and the Vercel backend project):
 ```dotenv
 SUPABASE_URL=https://your-project-ref.supabase.co
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 FRONTEND_URL=http://localhost:3000
 PORT=4000
 ```
 
-For the deployed backend, set `FRONTEND_URL` to the exact frontend origin allowed to call the API. This setting accepts one origin; use `http://localhost:3000` for local development and your deployed frontend origin for the Vercel environment. Do not add a service-role key for this user-scoped API foundation.
+For the deployed backend, set `FRONTEND_URL` to the exact frontend origin allowed to call the API. This setting accepts one origin; use `http://localhost:3000` for local development and your deployed frontend origin for the Vercel environment. The service-role key is used only for the narrowly scoped username lookup described above; do not use it for ordinary user-scoped data operations.
 
 ### Gradual migration plan
 
