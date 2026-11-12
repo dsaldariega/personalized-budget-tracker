@@ -48,7 +48,7 @@ export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: bo
       if (isRegister) {
         const normalizedUsername = username.trim().toLowerCase();
         const normalizedEmail = email.trim().toLowerCase();
-        const authEmail = normalizedEmail || `${normalizedUsername}@users.budgetnest.local`;
+        const authEmail = normalizedEmail;
 
         const { data, error } = await supabase.auth.signUp({
           email: authEmail,
@@ -173,12 +173,13 @@ export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: bo
                   fullWidth
                 />
                 <TextField
-                  label="Email address (optional)"
+                  label="Email address"
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   autoComplete="email"
-                  helperText="Optional. You can sign in with your username without an email address."
+                  helperText="Required. Used as an account identifier; no confirmation email is sent."
+                  required
                   fullWidth
                 />
               </>
