@@ -68,11 +68,12 @@ function normalizeImportDate(value: string): { value?: string; error?: string } 
   match = input.match(/^([0-9]{1,2})[/-]([0-9]{1,2})[/-]([0-9]{4})$/);
   if (match) {
     const first = Number(match[1]), second = Number(match[2]), year = Number(match[3]);
-    // Philippine date convention is DD/MM/YYYY; infer MM/DD/YYYY when only that order is valid.
-    const day = first > 12 ? first : second > 12 ? second : first;
-    const month = first > 12 ? second : second > 12 ? first : second;
+    // For ambiguous slash/dash dates, use MM/DD/YYYY. If the first value
+    // cannot be a month, treat the input as DD/MM/YYYY instead.
+    const month = first > 12 ? second : first;
+    const day = first > 12 ? first : second;
     const result = valid(year, month, day);
-    return result ? { value: result } : { error: "Enter a real date (DD/MM/YYYY or YYYY-MM-DD)." };
+    return result ? { value: result } : { error: "Enter a real date (MM/DD/YYYY or YYYY-MM-DD)." };
   }
   if (/^[0-9]+(?:\.[0-9]+)?$/.test(input)) {
     const serial = Number(input);
@@ -81,7 +82,7 @@ function normalizeImportDate(value: string): { value?: string; error?: string } 
       return { value: date.toISOString().slice(0, 10) };
     }
   }
-  return { error: "Use YYYY-MM-DD or DD/MM/YYYY for the transaction date." };
+  return { error: "Use YYYY-MM-DD or MM/DD/YYYY for the transaction date." };
 }
 function localDateStamp() {
   const now = new Date();
