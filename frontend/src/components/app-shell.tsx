@@ -8,7 +8,8 @@ import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { usePathname } from "next/navigation";
 import { AuthModal } from "@/components/auth-modal";
 import { apiRequest } from "@/lib/api";
-import { AppNotification, buildNotifications } from "@/lib/notifications";
+import { buildNotifications } from "@/lib/notifications";
+import type { AppNotification } from "@/lib/notifications";
 import {
   AccountBalanceWalletOutlined, AssessmentOutlined, AutorenewOutlined,
   DashboardOutlined, DarkModeOutlined, HistoryRounded, InfoOutlined, KeyboardArrowDown, LightModeOutlined,
@@ -48,6 +49,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [notificationAnchor, setNotificationAnchor] = useState<HTMLElement | null>(null);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
 
   useEffect(() => {
     const supabase = createSupabaseClient();
@@ -116,10 +121,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { mode, toggleMode } = useThemeMode();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountMenu, setAccountMenu] = useState<HTMLElement | null>(null);
-  const [notificationAnchor, setNotificationAnchor] = useState<HTMLElement | null>(null);
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
-  const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const pageTitle = useMemo(
     () => navGroups.flatMap((group) => group.items).find((item) => item.href === pathname)?.label ?? "BudgetNest",
