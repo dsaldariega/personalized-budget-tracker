@@ -7,6 +7,7 @@ import transactionsRouter from "./routes/transactions.js";
 import budgetsRouter from "./routes/budgets.js";
 import goalsRouter from "./routes/goals.js";
 import loansRouter from "./routes/loans.js";
+import subscriptionsRouter from "./routes/subscriptions.js";
 import { authenticate } from "./middleware/authenticate.js";
 
 const app = express();
@@ -50,6 +51,7 @@ app.use("/api/transactions", authenticate, transactionsRouter);
 app.use("/api/budgets", authenticate, budgetsRouter);
 app.use("/api/goals", authenticate, goalsRouter);
 app.use("/api/loans", authenticate, loansRouter);
+app.use("/api/subscriptions", authenticate, subscriptionsRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Route not found." });
