@@ -349,7 +349,7 @@ Expected services:
 
 The Express API is deployed as a separate Vercel project using `backend/` as its Root Directory. Vercel detects the Express application through `backend/src/server.ts`, which exports the Express app as its default export. Local development uses `backend/src/dev.ts` to start the same app on port 4000.
 
-The migrated workflows are **Accounts**, **Transactions**, **Budgets**, **Savings Goals**, and **Loans**. These screens call the Express API rather than querying their feature tables directly from the browser.
+The migrated workflows are **Accounts**, **Transactions**, **Budgets**, **Savings Goals**, **Loans**, and **Subscriptions**. These screens call the Express API rather than querying their feature tables directly from the browser.
 
 ### API routes
 
@@ -362,6 +362,13 @@ The migrated workflows are **Accounts**, **Transactions**, **Budgets**, **Saving
 | PUT | `/api/accounts/:id` | Update an account |
 | PATCH | `/api/accounts/:id/archive` | Archive or restore an account |
 | DELETE | `/api/accounts/:id` | Delete an account when no linked records prevent deletion |
+| GET | `/api/subscriptions` | Load the user's accounts, subscriptions, and payment history |
+| POST | `/api/subscriptions` | Create a subscription linked to an active account |
+| PUT | `/api/subscriptions/:id` | Update a subscription |
+| PATCH | `/api/subscriptions/:id/status` | Pause or resume a subscription |
+| DELETE | `/api/subscriptions/:id` | Delete a subscription and its payment history |
+| POST | `/api/subscriptions/:id/payments` | Record a payment and advance the next billing date |
+| DELETE | `/api/subscriptions/:id/payments/:paymentId` | Delete a payment and restore the billing date when safe |
 
 All account routes require an `Authorization: Bearer <Supabase access token>` header. The API verifies the token with Supabase Auth, then creates a Supabase client using the publishable key and that user's access token. It does **not** use the service-role key. Database operations therefore continue to run under the signed-in user's identity and the existing RLS policies.
 
@@ -392,7 +399,7 @@ For the deployed backend, set `FRONTEND_URLS` to the exact frontend production o
 
 ### Gradual migration plan
 
-Accounts was the first API-backed module. Transactions, Budgets, Savings Goals, and Loans are now migrated. Subscriptions, dashboard reads, activity, and settings will be migrated in separate steps. Until each module is migrated and tested, it continues using the existing Supabase browser client and RLS policies. Authentication remains managed by Supabase Auth in the frontend; the API receives the user's access token for each protected request.
+Accounts was the first API-backed module. Transactions, Budgets, Savings Goals, and Loans are now migrated. Dashboard reads, activity, and settings will be migrated in separate steps. Until each module is migrated and tested, it continues using the existing Supabase browser client and RLS policies. Authentication remains managed by Supabase Auth in the frontend; the API receives the user's access token for each protected request.
 
 ### Local verification
 
