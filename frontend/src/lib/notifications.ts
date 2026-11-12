@@ -45,14 +45,24 @@ function budgetRange(budget: Budget, today: Date) {
     return { start: dateOnly(start), end: budget.end_date && end > parseDate(budget.end_date) ? budget.end_date : dateOnly(end) };
   }
   if (budget.period === "monthly") {
-    const months = (today.getUTCFullYear() - anchor.getUTCFullYear()) * 12 + today.getUTCMonth() - anchor.getUTCMonth();
-    const start = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + months, Math.min(anchor.getUTCDate(), new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + months + 1, 0)).getUTCDate())));
+    let months = (today.getUTCFullYear() - anchor.getUTCFullYear()) * 12 + today.getUTCMonth() - anchor.getUTCMonth();
+    const makeStart = (offset: number) => new Date(Date.UTC(
+      anchor.getUTCFullYear(), anchor.getUTCMonth() + offset,
+      Math.min(anchor.getUTCDate(), new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + offset + 1, 0)).getUTCDate()),
+    ));
+    if (today < makeStart(months)) months -= 1;
+    const start = makeStart(months);
     const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 0));
     return { start: dateOnly(start), end: budget.end_date && end > parseDate(budget.end_date) ? budget.end_date : dateOnly(end) };
   }
-  const years = today.getUTCFullYear() - anchor.getUTCFullYear();
-  const start = new Date(Date.UTC(anchor.getUTCFullYear() + years, anchor.getUTCMonth(), Math.min(anchor.getUTCDate(), new Date(Date.UTC(anchor.getUTCFullYear() + years, anchor.getUTCMonth() + 1, 0)).getUTCDate())));
-  const nextStart = new Date(Date.UTC(start.getUTCFullYear() + 1, start.getUTCMonth(), Math.min(start.getUTCDate(), new Date(Date.UTC(start.getUTCFullYear() + 1, start.getUTCMonth() + 1, 0)).getUTCDate())));
+  let years = today.getUTCFullYear() - anchor.getUTCFullYear();
+  const makeYearStart = (offset: number) => new Date(Date.UTC(
+    anchor.getUTCFullYear() + offset, anchor.getUTCMonth(),
+    Math.min(anchor.getUTCDate(), new Date(Date.UTC(anchor.getUTCFullYear() + offset, anchor.getUTCMonth() + 1, 0)).getUTCDate()),
+  ));
+  if (today < makeYearStart(years)) years -= 1;
+  const start = makeYearStart(years);
+  const nextStart = makeYearStart(years + 1);
   const end = new Date(nextStart);
   end.setUTCDate(end.getUTCDate() - 1);
   return { start: dateOnly(start), end: budget.end_date && end > parseDate(budget.end_date) ? budget.end_date : dateOnly(end) };
