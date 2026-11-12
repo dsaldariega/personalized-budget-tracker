@@ -153,7 +153,7 @@ export function AuthForm({ mode }: { mode: AuthMode; modal?: boolean }) {
                 <TextField
                   label="Username"
                   value={username}
-                  onChange={(event) => setUsername(event.target.value.replace(/\\s/g, "").toLowerCase())}
+                  onChange={(event) => setUsername(event.target.value.replace(/\s/g, "").toLowerCase())}
                   autoComplete="username"
                   placeholder="e.g. dan_saldariega"
                   helperText="3–24 characters: letters, numbers, and underscores."
