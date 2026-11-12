@@ -26,7 +26,7 @@ type Subscription = {
   is_active: boolean; account_id: string;
 };
 
-const dateOnly = (date: Date) => date.toISOString().slice(0, 10);
+const dateOnly = (date: Date) => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
 const parseDate = (value: string) => new Date(`${value}T00:00:00.000Z`);
 const dayDiff = (a: Date, b: Date) => Math.floor((b.getTime() - a.getTime()) / 86400000);
 const money = (value: number, currency = "PHP") =>
@@ -52,7 +52,9 @@ function budgetRange(budget: Budget, today: Date) {
   }
   const years = today.getUTCFullYear() - anchor.getUTCFullYear();
   const start = new Date(Date.UTC(anchor.getUTCFullYear() + years, anchor.getUTCMonth(), Math.min(anchor.getUTCDate(), new Date(Date.UTC(anchor.getUTCFullYear() + years, anchor.getUTCMonth() + 1, 0)).getUTCDate())));
-  const end = new Date(Date.UTC(start.getUTCFullYear(), 11, 31));
+  const nextStart = new Date(Date.UTC(start.getUTCFullYear() + 1, start.getUTCMonth(), Math.min(start.getUTCDate(), new Date(Date.UTC(start.getUTCFullYear() + 1, start.getUTCMonth() + 1, 0)).getUTCDate())));
+  const end = new Date(nextStart);
+  end.setUTCDate(end.getUTCDate() - 1);
   return { start: dateOnly(start), end: budget.end_date && end > parseDate(budget.end_date) ? budget.end_date : dateOnly(end) };
 }
 
@@ -92,7 +94,7 @@ export function buildNotifications(data: {
   }
 
   for (const goal of data.goals) {
-    if (goal.status !== "active" || Number(goal.target_amount) <= 0) continue;
+    if (goal.status === "paused" || Number(goal.target_amount) <= 0) continue;
     const percent = Number(goal.current_amount) / Number(goal.target_amount) * 100;
     const milestone = [100, 75, 50, 25].find(value => percent >= value);
     if (!milestone) continue;
@@ -111,13 +113,14 @@ export function buildNotifications(data: {
     if (!subscription.is_active || !subscription.next_billing_date) continue;
     const due = parseDate(subscription.next_billing_date);
     const days = dayDiff(today, due);
-    if (days < 0 || days > 3) continue;
+    if (days < -7 || days > 3) continue;
+    const overdue = days < 0;
     notifications.push({
       id: `subscription:${subscription.id}:${subscription.next_billing_date}`,
       type: "subscription",
-      severity: days === 0 ? "warning" : "info",
-      title: days === 0 ? "Subscription due today" : "Upcoming subscription payment",
-      message: `${subscription.name} (${money(Number(subscription.amount), currencyByAccount.get(subscription.account_id))}) is ${days === 0 ? "due today" : `due in ${days} day${days === 1 ? "" : "s"}`}.`,
+      severity: overdue || days === 0 ? "warning" : "info",
+      title: overdue ? "Subscription payment overdue" : days === 0 ? "Subscription due today" : "Upcoming subscription payment",
+      message: `${subscription.name} (${money(Number(subscription.amount), currencyByAccount.get(subscription.account_id))}) is ${overdue ? `${Math.abs(days)} day${days === -1 ? "" : "s"} overdue` : days === 0 ? "due today" : `due in ${days} day${days === 1 ? "" : "s"}`}.`,
       href: "/subscriptions",
       createdAt: new Date().toISOString(),
     });
