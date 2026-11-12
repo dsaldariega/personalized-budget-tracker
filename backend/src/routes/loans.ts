@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 const router = Router();
-const loanSelect = "id,user_id,account_id,name,principal_amount,monthly_interest_rate,term_months,start_date,due_date,notes,status,created_at";
+const loanSelect = "id,user_id,account_id,name,principal_amount,monthly_interest_rate,interest_type,term_months,start_date,due_date,notes,status,created_at";
 const paymentSelect = "id,user_id,loan_id,amount,principal_paid,interest_paid,payment_date,notes,allocation_method,created_at";
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -12,14 +12,12 @@ const loanSchema = z.object({
   name: z.string().trim().min(1).max(100),
   principal_amount: z.number().finite().positive().max(999999999999.99),
   monthly_interest_rate: z.number().finite().min(0).max(100),
+  interest_type: z.enum(["flat_rate", "reducing_balance"]).default("reducing_balance"),
   term_months: z.number().int().min(1).max(600),
   start_date: dateSchema,
-  due_date: dateSchema.nullable(),
+  due_date: dateSchema.nullable().optional(),
   notes: z.string().max(500).nullable(),
   status: z.enum(["active", "paid", "paused"]),
-}).refine(v => !v.due_date || v.due_date >= v.start_date, {
-  message: "The due date cannot be before the start date.",
-  path: ["due_date"],
 });
 const paymentSchema = z.object({
   amount: z.number().finite().positive().max(999999999999.99),
@@ -30,7 +28,8 @@ const statusSchema = z.object({ status: z.enum(["active", "paid", "paused"]) });
 
 type LoanRecord = {
   id: string; user_id: string; principal_amount: number | string;
-  monthly_interest_rate: number | string; start_date: string; status: "active" | "paid" | "paused";
+  monthly_interest_rate: number | string; interest_type?: "flat_rate" | "reducing_balance";
+  term_months: number; start_date: string; status: "active" | "paid" | "paused";
 };
 type PaymentRecord = {
   id: string; loan_id: string; amount: number | string; principal_paid: number | string;
@@ -40,6 +39,14 @@ type PaymentRecord = {
 
 function context(res: import("express").Response) {
   return { supabase: res.locals.supabase as SupabaseClient, user: res.locals.user as User };
+}
+function calculateDueDate(startDate: string, months: number) {
+  const [year, month, day] = startDate.split("-").map(Number);
+  const targetMonth = month - 1 + months;
+  const targetYear = year + Math.floor(targetMonth / 12);
+  const normalizedMonth = targetMonth % 12;
+  const lastDay = new Date(Date.UTC(targetYear, normalizedMonth + 1, 0)).getUTCDate();
+  return [targetYear, String(normalizedMonth + 1).padStart(2, "0"), String(Math.min(day, lastDay)).padStart(2, "0")].join("-");
 }
 function roundMoney(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
@@ -59,36 +66,36 @@ function orderedPayments(payments: PaymentRecord[]) {
 function paymentPlan(loan: LoanRecord, payments: PaymentRecord[], recalculateAutomatic = false) {
   let outstandingPrincipal = roundMoney(Number(loan.principal_amount));
   let accruedInterest = 0;
+  let flatInterestAccrued = 0;
+  let totalInterestPaid = 0;
   let accrualDate = loan.start_date;
+  const originalPrincipal = Number(loan.principal_amount);
   const monthlyRate = Number(loan.monthly_interest_rate) / 100;
+  const totalFlatInterest = roundMoney(originalPrincipal * monthlyRate * Number(loan.term_months));
+  const isFlat = loan.interest_type === "flat_rate";
   const allocations: Array<{ id: string; principal_paid: number; interest_paid: number }> = [];
-
   for (const payment of orderedPayments(payments)) {
-    if (payment.payment_date < loan.start_date) {
-      return { error: "A payment date cannot be before the loan start date." } as const;
-    }
-    accruedInterest = roundMoney(
-      accruedInterest + outstandingPrincipal * monthlyRate * monthsBetween(accrualDate, payment.payment_date),
-    );
-
+    if (payment.payment_date < loan.start_date) return { error: "A payment date cannot be before the loan start date." } as const;
+    const elapsed = monthsBetween(accrualDate, payment.payment_date);
+    if (isFlat) {
+      flatInterestAccrued = roundMoney(Math.min(totalFlatInterest, flatInterestAccrued + originalPrincipal * monthlyRate * elapsed));
+      accruedInterest = roundMoney(Math.max(0, flatInterestAccrued - totalInterestPaid));
+    } else accruedInterest = roundMoney(accruedInterest + outstandingPrincipal * monthlyRate * elapsed);
     let principalPaid = roundMoney(Number(payment.principal_paid));
     let interestPaid = roundMoney(Number(payment.interest_paid));
     if (recalculateAutomatic && payment.allocation_method === "automatic") {
       const amount = roundMoney(Number(payment.amount));
       interestPaid = roundMoney(Math.min(amount, accruedInterest));
       principalPaid = roundMoney(Math.min(Math.max(0, amount - interestPaid), outstandingPrincipal));
-      if (amount > interestPaid + principalPaid + 0.009) {
-        return { error: `Payment on ${payment.payment_date} exceeds the remaining principal and accrued interest. Delete later payments first or review this payment.` } as const;
-      }
+      if (amount > interestPaid + principalPaid + 0.009) return { error: `Payment on ${payment.payment_date} exceeds the remaining principal and accrued interest. Delete later payments first or review this payment.` } as const;
       allocations.push({ id: payment.id, principal_paid: principalPaid, interest_paid: interestPaid });
     }
-
+    totalInterestPaid = roundMoney(totalInterestPaid + interestPaid);
     accruedInterest = roundMoney(Math.max(0, accruedInterest - interestPaid));
     outstandingPrincipal = roundMoney(Math.max(0, outstandingPrincipal - principalPaid));
     accrualDate = payment.payment_date;
   }
-
-  return { allocations, outstandingPrincipal, accruedInterest, lastPaymentDate: accrualDate } as const;
+  return { allocations, outstandingPrincipal, accruedInterest, flatInterestAccrued, totalInterestPaid, lastPaymentDate: accrualDate } as const;
 }
 async function logActivity(
   supabase: SupabaseClient,
@@ -121,9 +128,10 @@ async function loadPayments(supabase: SupabaseClient, userId: string, loanId: st
     .order("payment_date").order("created_at");
 }
 async function updateLoanPaymentStatus(
-  supabase: SupabaseClient, userId: string, loan: LoanRecord, plan: { outstandingPrincipal: number; accruedInterest: number },
+  supabase: SupabaseClient, userId: string, loan: LoanRecord, plan: { outstandingPrincipal: number; accruedInterest: number; totalInterestPaid?: number },
 ) {
-  const status = plan.outstandingPrincipal <= 0.009 && plan.accruedInterest <= 0.009
+  const flatInterestRemaining = loan.interest_type === "flat_rate" ? Math.max(0, roundMoney(Number(loan.principal_amount) * Number(loan.monthly_interest_rate) / 100 * Number(loan.term_months)) - (plan.totalInterestPaid ?? 0)) : plan.accruedInterest;
+  const status = plan.outstandingPrincipal <= 0.009 && flatInterestRemaining <= 0.009
     ? "paid"
     : loan.status === "paid" ? "active" : loan.status;
   if (status === loan.status) return;
@@ -163,8 +171,9 @@ router.post("/", async (req, res) => {
     res.status(400).json({ error: "Choose an active account that belongs to you." });
     return;
   }
+  const dueDate = calculateDueDate(parsed.data.start_date, parsed.data.term_months);
   const { data, error } = await supabase.from("loans")
-    .insert({ ...parsed.data, user_id: user.id })
+    .insert({ ...parsed.data, due_date: dueDate, user_id: user.id })
     .select(loanSelect).single();
   if (error) {
     res.status(400).json({ error: "Unable to create loan.", details: error.message });
@@ -189,6 +198,11 @@ router.put("/:id", async (req, res) => {
     res.status(lookupError ? 500 : 404).json({ error: "Loan not found.", details: lookupError?.message });
     return;
   }
+  const { data: history, error: historyError } = await loadPayments(supabase, user.id, existing.id);
+  if (historyError) { res.status(500).json({ error: "Unable to verify loan repayment history.", details: historyError.message }); return; }
+  const hasPayments = (history ?? []).length > 0;
+  const termsChanged = Number(existing.principal_amount) !== parsed.data.principal_amount || Number(existing.monthly_interest_rate) !== parsed.data.monthly_interest_rate || Number(existing.term_months) !== parsed.data.term_months || existing.start_date !== parsed.data.start_date || (existing.interest_type ?? "reducing_balance") !== parsed.data.interest_type;
+  if (hasPayments && termsChanged) { res.status(409).json({ error: "Loan calculation details cannot be changed after repayments have been recorded. Keep the original terms or create a separate loan record." }); return; }
   const account = await accountIsAvailable(
     supabase, user.id, parsed.data.account_id, existing.account_id === parsed.data.account_id,
   );
@@ -200,7 +214,8 @@ router.put("/:id", async (req, res) => {
     res.status(400).json({ error: "Choose an active account that belongs to you." });
     return;
   }
-  const { data, error } = await supabase.from("loans").update(parsed.data)
+  const dueDate = calculateDueDate(parsed.data.start_date, parsed.data.term_months);
+  const { data, error } = await supabase.from("loans").update({ ...parsed.data, due_date: dueDate })
     .eq("id", existing.id).eq("user_id", user.id).select(loanSelect).maybeSingle();
   if (error || !data) {
     res.status(error ? 400 : 404).json({ error: "Unable to update loan.", details: error?.message });
@@ -262,10 +277,11 @@ router.post("/:id/payments", async (req, res) => {
   }
 
   const months = monthsBetween(previous.lastPaymentDate, parsed.data.payment_date);
-  const accruedInterest = roundMoney(
-    previous.accruedInterest + previous.outstandingPrincipal *
-    (Number(loan.monthly_interest_rate) / 100) * months,
-  );
+  const monthlyRate = Number(loan.monthly_interest_rate) / 100;
+  const isFlat = loan.interest_type === "flat_rate";
+  const totalFlatInterest = roundMoney(Number(loan.principal_amount) * monthlyRate * Number(loan.term_months));
+  const flatInterestAccrued = isFlat ? roundMoney(Math.min(totalFlatInterest, previous.flatInterestAccrued + Number(loan.principal_amount) * monthlyRate * months)) : previous.flatInterestAccrued;
+  const accruedInterest = isFlat ? roundMoney(Math.max(0, flatInterestAccrued - previous.totalInterestPaid)) : roundMoney(previous.accruedInterest + previous.outstandingPrincipal * monthlyRate * months);
   const interestPaid = roundMoney(Math.min(parsed.data.amount, accruedInterest));
   const principalPaid = roundMoney(Math.min(
     Math.max(0, parsed.data.amount - interestPaid), previous.outstandingPrincipal,
@@ -289,6 +305,7 @@ router.post("/:id/payments", async (req, res) => {
   const nextPlan = {
     outstandingPrincipal: roundMoney(previous.outstandingPrincipal - principalPaid),
     accruedInterest: roundMoney(accruedInterest - interestPaid),
+    totalInterestPaid: roundMoney(previous.totalInterestPaid + interestPaid),
   };
   await updateLoanPaymentStatus(supabase, user.id, loan as LoanRecord, nextPlan);
   await logActivity(supabase, user.id, "loan.payment_recorded", loan.id, {
@@ -342,7 +359,7 @@ router.delete("/:id/payments/:paymentId", async (req, res) => {
       return;
     }
   }
-  await updateLoanPaymentStatus(supabase, user.id, loan as LoanRecord, plan);
+  await updateLoanPaymentStatus(supabase, user.id, loan as LoanRecord, { ...plan, totalInterestPaid: plan.totalInterestPaid });
   await logActivity(supabase, user.id, "loan.payment_deleted", loan.id, {
     amount: Number(target.amount), payment_date: target.payment_date,
   });
