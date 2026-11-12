@@ -101,8 +101,12 @@ Current authenticated endpoints:
 | POST | `/api/transactions/transfer` | Create a paired account transfer |
 | PUT | `/api/transactions/:id` | Update an income or expense |
 | DELETE | `/api/transactions/:id` | Delete a transaction or both sides of a transfer |
+| GET | `/api/budgets` | Load the user's accounts, budgets, and expense transactions |
+| POST | `/api/budgets` | Create a budget linked to an active account |
+| PUT | `/api/budgets/:id` | Update an owned budget |
+| DELETE | `/api/budgets/:id` | Delete an owned budget |
 
-The Accounts and Transactions screens now use the Express API. Requests carry the signed-in user's Supabase access token; the API verifies it and performs database operations with that user's publishable-key client, preserving RLS. The API also validates account ownership and active status before creating or changing transactions. No service-role key is used for these operations.
+The Accounts, Transactions, and Budgets screens now use the Express API. Requests carry the signed-in user's Supabase access token; the API verifies it and performs database operations with that user's publishable-key client, preserving RLS. The API also validates account ownership and active status before creating or changing transactions. No service-role key is used for these operations.
 
 ### Deployment
 
@@ -323,7 +327,7 @@ Expected services:
 
 The Express API is deployed as a separate Vercel project using `backend/` as its Root Directory. Vercel detects the Express application through `backend/src/server.ts`, which exports the Express app as its default export. Local development uses `backend/src/dev.ts` to start the same app on port 4000.
 
-The first migrated workflow is **Accounts**. The Accounts screen now calls the Express API rather than querying the Supabase tables directly.
+The migrated workflows are **Accounts**, **Transactions**, and **Budgets**. These screens call the Express API rather than querying their feature tables directly from the browser.
 
 ### API routes
 
@@ -366,7 +370,7 @@ For the deployed backend, set `FRONTEND_URLS` to the exact frontend production o
 
 ### Gradual migration plan
 
-Accounts is the first API-backed module and serves as the implementation pattern. Transactions, budgets, goals, loans, subscriptions, dashboard reads, activity, and settings will be migrated in separate steps. Until each module is migrated and tested, it continues using the existing Supabase browser client and RLS policies. Authentication remains managed by Supabase Auth in the frontend; the API receives the user's access token for each protected request.
+Accounts is the first API-backed module and serves as the implementation pattern. Goals, loans, subscriptions, dashboard reads, activity, and settings will be migrated in separate steps. Until each module is migrated and tested, it continues using the existing Supabase browser client and RLS policies. Authentication remains managed by Supabase Auth in the frontend; the API receives the user's access token for each protected request.
 
 ### Local verification
 
