@@ -378,7 +378,7 @@ The migrated workflows are **Accounts**, **Transactions**, **Budgets**, **Saving
 | POST | `/api/subscriptions/:id/payments` | Record a payment and advance the next billing date |
 | DELETE | `/api/subscriptions/:id/payments/:paymentId` | Delete a payment and restore the billing date when safe |
 
-All account routes require an `Authorization: Bearer <Supabase access token>` header. The API verifies the token with Supabase Auth, then creates a Supabase client using the publishable key and that user's access token. It does **not** use the service-role key. Database operations therefore continue to run under the signed-in user's identity and the existing RLS policies.
+All protected data routes require an `Authorization: Bearer <Supabase access token>` header. The API verifies the token with Supabase Auth, then creates a Supabase client using the publishable key and that user's access token. These database operations run under the signed-in user's identity and existing RLS policies. The service-role key is reserved for the username-to-email lookup in the public login endpoint.
 
 The API also applies Helmet security headers, an explicit frontend-origin allowlist, JSON request-size limits, basic per-instance rate limiting, request validation, and centralized error responses. RLS and database constraints remain the final ownership and relationship enforcement layer.
 
