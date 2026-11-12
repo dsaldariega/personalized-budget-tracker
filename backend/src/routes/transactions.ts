@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import { z } from "zod";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
@@ -145,7 +146,7 @@ router.post("/transfer", async (req, res) => {
     return;
   }
 
-  const transferGroupId = crypto.randomUUID();
+  const transferGroupId = randomUUID();
   const { data, error } = await supabase.from("transactions").insert([
     {
       user_id: user.id, account_id, transaction_type: "transfer", amount,
