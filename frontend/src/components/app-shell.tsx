@@ -80,8 +80,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   async function handleSignOut() {
     const supabase = createSupabaseClient();
     if (!supabase) return;
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Unable to sign out:", error);
+      return;
+    }
     setAccountMenu(null);
+    setWelcomeMode("signed-out");
+    setWelcomeOpen(true);
     router.replace("/");
     router.refresh();
   }
@@ -136,6 +142,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [accountMenu, setAccountMenu] = useState<HTMLElement | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [welcomeMode, setWelcomeMode] = useState<"first-visit" | "signed-out">("first-visit");
   const pageTitle = useMemo(
     () => navGroups.flatMap((group) => group.items).find((item) => item.href === pathname)?.label ?? "BudgetNest",
     [pathname]
@@ -263,13 +270,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Stack spacing={2.2}>
               <Box>
                 <Typography sx={{ color: "primary.main", fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase" }}>
-                  Welcome to BudgetNest
+                  {welcomeMode === "signed-out" ? "You’re signed out" : "Welcome to BudgetNest"}
                 </Typography>
                 <Typography variant="h4" fontWeight={800} letterSpacing={-0.8} sx={{ mt: 0.8, fontSize: { xs: "1.75rem", sm: "2.125rem" } }}>
-                  A calmer place for your money.
+                  {welcomeMode === "signed-out" ? "Thanks for stopping by." : "A calmer place for your money."}
                 </Typography>
                 <Typography color="text.secondary" sx={{ mt: 1, lineHeight: 1.7 }}>
-                  Explore the app, get a feel for the dashboard, and sign in whenever you’re ready to save your own data.
+                  {welcomeMode === "signed-out"
+                    ? "You’ve safely signed out. You can keep exploring BudgetNest as a guest or sign in again whenever you’re ready."
+                    : "Explore the app, get a feel for the dashboard, and sign in whenever you’re ready to save your own data."}
                 </Typography>
               </Box>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2}>
@@ -282,7 +291,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   }}
                   sx={{ borderRadius: 2.5, py: 1.15, textTransform: "none", fontWeight: 750 }}
                 >
-                  Sign in / Create account
+                  {welcomeMode === "signed-out" ? "Sign in again" : "Sign in / Create account"}
                 </Button>
                 <Button
                   variant="outlined"

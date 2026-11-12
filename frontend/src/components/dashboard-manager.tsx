@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AccountBalanceWalletOutlined, ArrowDownwardRounded, ArrowUpwardRounded,
@@ -141,8 +141,10 @@ export function DashboardManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currencyFilter, setCurrencyFilter] = useState("all");
+  const loadRequestId = useRef(0);
 
   const loadData = useCallback(async () => {
+    const requestId = ++loadRequestId.current;
     if (!supabase) { setError("Supabase is not configured. Check your frontend environment variables."); setLoading(false); return; }
     setLoading(true); setError("");
     // Read the local session without requiring a network user verification for guests.
@@ -157,6 +159,7 @@ export function DashboardManager() {
           apiRequest<{ goals: Goal[] }>("/goals"),
           apiRequest<{ subscriptions: Subscription[] }>("/subscriptions"),
         ]);
+        if (requestId !== loadRequestId.current) return;
         setAccounts(accountResult.accounts ?? []);
         setTransactions(transactionResult.transactions ?? []);
         setBudgets(budgetResult.budgets ?? []);
@@ -164,9 +167,11 @@ export function DashboardManager() {
         setSubscriptions(subscriptionResult.subscriptions ?? []);
         setNow(new Date());
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : "Unable to load guest dashboard data.");
+        if (requestId === loadRequestId.current) {
+          setError(loadError instanceof Error ? loadError.message : "Unable to load guest dashboard data.");
+        }
       } finally {
-        setLoading(false);
+        if (requestId === loadRequestId.current) setLoading(false);
       }
       return;
     }
@@ -196,6 +201,7 @@ export function DashboardManager() {
         supabase.from("subscriptions").select("id,account_id,name,amount,billing_frequency,next_billing_date,is_active").eq("user_id", user.id).eq("is_active", true).order("next_billing_date", { ascending: true }),
       ]);
 
+      if (requestId !== loadRequestId.current) return;
       const failed = [transactionResult, budgetResult, goalResult, subscriptionResult].find(result => result.error);
       if (failed?.error) setError(failed.error.message);
 
@@ -206,13 +212,27 @@ export function DashboardManager() {
       setSubscriptions((subscriptionResult.data ?? []) as Subscription[]);
       setNow(new Date());
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Unable to load dashboard data.");
+      if (requestId === loadRequestId.current) {
+        setError(loadError instanceof Error ? loadError.message : "Unable to load dashboard data.");
+      }
     } finally {
-      setLoading(false);
+      if (requestId === loadRequestId.current) setLoading(false);
     }
   }, [supabase]);
 
-  useEffect(() => { void loadData(); }, [loadData]);
+  useEffect(() => {
+    void loadData();
+    if (!supabase) return;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        // Defer Supabase reads until after its auth-state callback has completed.
+        queueMicrotask(() => void loadData());
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [loadData, supabase]);
   const accountMap = useMemo(() => new Map(accounts.map(account => [account.id, account])), [accounts]);
   const currencies = useMemo(() => Array.from(new Set(accounts.filter(a => !a.is_archived).map(a => a.currency))).sort(), [accounts]);
   const selectedCurrency = currencyFilter === "all" || !currencies.includes(currencyFilter)
