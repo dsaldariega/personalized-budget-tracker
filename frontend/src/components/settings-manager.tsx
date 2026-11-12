@@ -10,6 +10,7 @@ import {
   TextField, Typography,
 } from "@mui/material";
 import { createClient } from "@/lib/supabase/client";
+import { apiRequest } from "@/lib/api";
 import { useThemeMode } from "@/components/theme-provider";
 
 type Profile = { full_name: string | null; default_currency: string };
@@ -53,10 +54,6 @@ function localDateStamp() {
   const now = new Date();
   return [now.getFullYear(), String(now.getMonth()+1).padStart(2,"0"), String(now.getDate()).padStart(2,"0")].join("");
 }
-function fingerprint(row: { account_id: string; transaction_type: string; amount: number; category: string | null; description: string | null; transaction_date: string }) {
-  return [row.account_id,row.transaction_type,Number(row.amount).toFixed(2),row.category ?? "",row.description ?? "",row.transaction_date].join("|").toLowerCase();
-}
-
 export function SettingsManager() {
   const supabase = useMemo(() => createClient(), []);
   const { mode, toggleMode } = useThemeMode();
@@ -79,13 +76,13 @@ export function SettingsManager() {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) { setError("Your session could not be verified. Please sign in again."); setLoading(false); return; }
     setUserId(user.id); setEmail(user.email ?? "");
-    const { data, error: profileError } = await supabase.from("profiles").select("full_name,default_currency").eq("id", user.id).single();
-    if (profileError) setError(profileError.message);
-    else {
-      const value = { full_name: data.full_name ?? user.user_metadata?.full_name ?? "", default_currency: data.default_currency ?? "PHP" };
+    try {
+      const result = await apiRequest<{ profile: Profile }>("/settings/profile");
+      const value = { full_name: result.profile.full_name ?? user.user_metadata?.full_name ?? "", default_currency: result.profile.default_currency ?? "PHP" };
       setProfile(value); setInitialProfile(value);
-    }
-    setLoading(false);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to load profile settings.");
+    } finally { setLoading(false); }
   }, [supabase]);
   useEffect(() => { void loadProfile(); }, [loadProfile]);
 
@@ -95,32 +92,29 @@ export function SettingsManager() {
     if (!/^[A-Z]{3}$/.test(profile.default_currency)) { setError("Choose a valid three-letter currency code."); return; }
     setSaving(true); setError(""); setNotice("");
     const name = profile.full_name.trim();
-    const result = await supabase.from("profiles").update({ full_name: name, default_currency: profile.default_currency }).eq("id", userId);
-    if (result.error) { setError(result.error.message); setSaving(false); return; }
-    const authUpdate = await supabase.auth.updateUser({ data: { full_name: name } });
-    if (authUpdate.error) { setError("Profile saved, but the sign-in profile name could not be synchronized: " + authUpdate.error.message); setSaving(false); return; }
-    await supabase.from("activity_logs").insert({ user_id: userId, action: "profile.updated", entity_type: "profile", details: { full_name: name, default_currency: profile.default_currency } });
-    setInitialProfile(profile); setNotice("Profile settings saved."); setSaving(false);
+    try {
+      await apiRequest("/settings/profile", { method: "PUT", body: JSON.stringify({ full_name: name, default_currency: profile.default_currency }) });
+      const authUpdate = await supabase.auth.updateUser({ data: { full_name: name } });
+      if (authUpdate.error) throw new Error("Profile saved, but the sign-in profile name could not be synchronized: " + authUpdate.error.message);
+      setInitialProfile(profile); setNotice("Profile settings saved.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to save profile settings.");
+    } finally { setSaving(false); }
   }
 
   async function exportBackup() {
     if (!supabase || !userId) return;
     setExporting(true); setError(""); setNotice("");
-    const tables = ["profiles","accounts","transactions","budgets","savings_goals","loans","loan_payments","subscriptions","subscription_payments","activity_logs"] as const;
-    const backup: Record<string, unknown> = { format: "BudgetNest backup", version: 1, exported_at: new Date().toISOString(), user_id: userId, data: {} };
-    const data = backup.data as Record<string, unknown>;
-    for (const table of tables) {
-      const column = table === "profiles" ? "id" : "user_id";
-      const allRows: Record<string, unknown>[] = [];
-      let offset = 0;
-      while (true) {
-        const { data: rows, error: queryError } = await supabase.from(table).select("*").eq(column, userId).order("created_at", { ascending: true }).range(offset, offset + 999);
-        if (queryError) { setError("Could not export " + table + ": " + queryError.message); setExporting(false); return; }
-        allRows.push(...(rows ?? []));
-        if (!rows || rows.length < 1000) break;
-        offset += 1000;
-      }
-      data[table] = allRows;
+    let backup: Record<string, unknown>;
+    let data: Record<string, unknown>;
+    try {
+      const response = await apiRequest<{ backup: Record<string, unknown> & { data: Record<string, unknown> } }>("/settings/backup");
+      backup = response.backup;
+      data = response.backup.data;
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to export your data.");
+      setExporting(false);
+      return;
     }
     downloadFile("budgetnest-backup-" + localDateStamp() + ".json", JSON.stringify(backup, null, 2), "application/json;charset=utf-8");
     const tx = (data.transactions ?? []) as Transaction[];
@@ -152,41 +146,19 @@ export function SettingsManager() {
       if (missing.length) throw new Error("Missing required CSV columns: " + missing.join(", "));
       if (parsed.length > 5001) throw new Error("Import is limited to 5,000 rows at a time.");
       const column = (row: string[], name: string) => row[headers.indexOf(name)]?.trim() ?? "";
-      const { data: accountsData, error: accountError } = await supabase.from("accounts").select("id,name,currency,is_archived").eq("user_id", userId);
-      if (accountError) throw new Error(accountError.message);
-      const accounts = (accountsData ?? []) as (Account & { is_archived: boolean })[];
-      const existingResult = await supabase.from("transactions").select("account_id,transaction_type,amount,category,description,transaction_date").eq("user_id", userId);
-      if (existingResult.error) throw new Error(existingResult.error.message);
-      const seen = new Set((existingResult.data ?? []).map(row => fingerprint({ ...row, amount: Number(row.amount) })));
-      const rowsToInsert: Record<string, unknown>[] = [];
-      let skipped = 0;
-      for (let i = 1; i < parsed.length; i++) {
-        const row = parsed[i];
-        const accountName = column(row, "account_name");
-        const currency = column(row, "currency").toUpperCase();
-        const account = accounts.find(a => a.name.toLowerCase() === accountName.toLowerCase() && a.currency === currency && !a.is_archived);
-        const type = column(row, "transaction_type").toLowerCase();
-        const amount = Number(column(row, "amount"));
-        const date = column(row, "transaction_date");
-        const category = column(row, "category");
-        const description = column(row, "description");
-        if (!account) throw new Error("Row " + (i + 1) + ": active account not found for " + accountName + " (" + currency + "). Create or restore the account first.");
-        if (!["income","expense"].includes(type)) throw new Error("Row " + (i + 1) + ": only income and expense rows can be imported. Transfers must be recreated in BudgetNest.");
-        if (!Number.isFinite(amount) || amount <= 0) throw new Error("Row " + (i + 1) + ": amount must be greater than zero.");
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date + "T00:00:00"))) throw new Error("Row " + (i + 1) + ": use YYYY-MM-DD for transaction_date.");
-        if (!category) throw new Error("Row " + (i + 1) + ": category is required.");
-        const value = { account_id: account.id, transaction_type: type, amount, category, description: description || null, transaction_date: date };
-        const key = fingerprint({ ...value, category, description: description || null });
-        if (seen.has(key)) { skipped++; continue; }
-        seen.add(key);
-        rowsToInsert.push({ ...value, user_id: userId, transfer_group_id: null, transfer_direction: null });
-      }
-      for (let i = 0; i < rowsToInsert.length; i += 100) {
-        const result = await supabase.from("transactions").insert(rowsToInsert.slice(i, i + 100));
-        if (result.error) throw new Error("Import stopped after " + i + " rows: " + result.error.message);
-      }
-      await supabase.from("activity_logs").insert({ user_id: userId, action: "data.transactions_imported", entity_type: "transaction", details: { imported: rowsToInsert.length, skipped_duplicates: skipped, source_file: file.name } });
-      setImportSummary("Imported " + rowsToInsert.length + " transaction(s); skipped " + skipped + " duplicate(s).");
+      const rows = parsed.slice(1).map(row => ({
+        account_name: column(row, "account_name"),
+        currency: column(row, "currency").toUpperCase(),
+        transaction_type: column(row, "transaction_type").toLowerCase(),
+        amount: Number(column(row, "amount")),
+        category: column(row, "category"),
+        description: column(row, "description"),
+        transaction_date: column(row, "transaction_date"),
+      }));
+      const result = await apiRequest<{ imported: number; skipped_duplicates: number }>("/settings/transactions/import", {
+        method: "POST", body: JSON.stringify({ rows, source_file: file.name }),
+      });
+      setImportSummary("Imported " + result.imported + " transaction(s); skipped " + result.skipped_duplicates + " duplicate(s).");
       setNotice("Transaction import completed."); 
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "The file could not be imported.");
