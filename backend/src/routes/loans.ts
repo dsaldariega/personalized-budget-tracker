@@ -54,9 +54,23 @@ function roundMoney(value: number) {
 function monthsBetween(from: string, to: string) {
   const start = Date.parse(`${from}T00:00:00.000Z`);
   const end = Date.parse(`${to}T00:00:00.000Z`);
-  return Number.isFinite(start) && Number.isFinite(end)
-    ? Math.max(0, (end - start) / 86400000 / 30.4375)
-    : 0;
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 0;
+  const [startYear, startMonth, startDay] = from.split("-").map(Number);
+  const monthOffset = (offset: number) => {
+    const targetMonth = startMonth - 1 + offset;
+    const year = startYear + Math.floor(targetMonth / 12);
+    const month = targetMonth % 12;
+    const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    return Date.UTC(year, month, Math.min(startDay, lastDay));
+  };
+  const target = new Date(end);
+  let wholeMonths = (target.getUTCFullYear() - startYear) * 12
+    + (target.getUTCMonth() + 1 - startMonth);
+  let anchor = monthOffset(wholeMonths);
+  if (anchor > end) wholeMonths -= 1;
+  anchor = monthOffset(wholeMonths);
+  const nextAnchor = monthOffset(wholeMonths + 1);
+  return Math.max(0, wholeMonths + (end - anchor) / (nextAnchor - anchor));
 }
 function orderedPayments(payments: PaymentRecord[]) {
   return [...payments].sort((a, b) =>

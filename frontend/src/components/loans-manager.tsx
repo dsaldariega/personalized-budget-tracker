@@ -60,7 +60,23 @@ function roundMoney(value: number) { return Math.round((value + Number.EPSILON) 
 function monthsBetween(from: string, to: string) {
   const start = Date.parse(`${from}T00:00:00.000Z`);
   const end = Date.parse(`${to}T00:00:00.000Z`);
-  return Number.isFinite(start) && Number.isFinite(end) ? Math.max(0, (end - start) / 86400000 / 30.4375) : 0;
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 0;
+  const [startYear, startMonth, startDay] = from.split("-").map(Number);
+  const monthOffset = (offset: number) => {
+    const targetMonth = startMonth - 1 + offset;
+    const year = startYear + Math.floor(targetMonth / 12);
+    const month = targetMonth % 12;
+    const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    return Date.UTC(year, month, Math.min(startDay, lastDay));
+  };
+  const target = new Date(end);
+  let wholeMonths = (target.getUTCFullYear() - startYear) * 12
+    + (target.getUTCMonth() + 1 - startMonth);
+  let anchor = monthOffset(wholeMonths);
+  if (anchor > end) wholeMonths -= 1;
+  anchor = monthOffset(wholeMonths);
+  const nextAnchor = monthOffset(wholeMonths + 1);
+  return Math.max(0, wholeMonths + (end - anchor) / (nextAnchor - anchor));
 }
 function monthlyEstimate(principal: number, monthlyRatePercent: number, months: number, interestType: InterestType) {
   if (!months) return 0;
@@ -145,14 +161,23 @@ function LoanDialog({ open, accounts, initial, saving, onClose, onSave }: {
   </Dialog>;
 }
 
-function PaymentDialog({ open, loan, currency, remainingPrincipal, accruedInterest, flatInterestAccrued, totalInterestPaid, lastPaymentDate, saving, onClose, onSave }: {
+function PaymentDialog({ open, loan, currency, remainingPrincipal, accruedInterest, flatInterestAccrued, totalInterestPaid, lastPaymentDate, hasPayments, saving, onClose, onSave }:  {
   open: boolean; loan: Loan | null; currency: string; remainingPrincipal: number;
   accruedInterest: number; flatInterestAccrued: number; totalInterestPaid: number; lastPaymentDate: string;
-  saving: boolean; onClose: () => void; onSave: (value: PaymentForm) => void;
+  hasPayments: boolean; saving: boolean; onClose: () => void; onSave: (value: PaymentForm) => void;
 }) {
   const [form, setForm] = useState<PaymentForm>(emptyPayment());
   const [formError, setFormError] = useState("");
-  useEffect(() => { if (open) { setForm({ ...emptyPayment(), payment_date: lastPaymentDate > today() ? lastPaymentDate : today() }); setFormError(""); } }, [open, loan?.id, lastPaymentDate]);
+  useEffect(() => {
+    if (open) {
+      const firstDueDate = loan ? calculateDueDate(loan.start_date, 1) : today();
+      const defaultDate = !hasPayments
+        ? (firstDueDate > today() ? firstDueDate : today())
+        : (lastPaymentDate > today() ? lastPaymentDate : today());
+      setForm({ ...emptyPayment(), payment_date: defaultDate });
+      setFormError("");
+    }
+  }, [open, loan?.id, lastPaymentDate, hasPayments]);
   const amount = Number(form.amount) || 0;
   const elapsedMonths = monthsBetween(lastPaymentDate, form.payment_date);
   const monthlyRate = (Number(loan?.monthly_interest_rate) || 0) / 100;
@@ -387,7 +412,7 @@ export function LoansManager() {
       <Divider /><MenuItem sx={{ color: "error.main" }} onClick={() => { setDeleteTarget(menu?.loan ?? null); setMenu(null); }}><DeleteOutlineRounded fontSize="small" sx={{ mr: 1 }} /> Delete loan</MenuItem>
     </Menu>
     <LoanDialog open={loanDialog} accounts={accounts.filter(a => !a.is_archived || a.id === editing?.account_id)} initial={loanForm} saving={saving} onClose={() => setLoanDialog(false)} onSave={saveLoan} />
-    <PaymentDialog open={paymentDialog} loan={paymentLoan} currency={accountById.get(paymentLoan?.account_id ?? "")?.currency ?? "PHP"} remainingPrincipal={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).remainingPrincipal : 0} accruedInterest={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).accruedInterest : 0} flatInterestAccrued={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).flatInterestAccrued : 0} totalInterestPaid={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).totalInterestPaid : 0} lastPaymentDate={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).lastPaymentDate : today()} saving={saving} onClose={() => { setPaymentDialog(false); setPaymentLoan(null); }} onSave={recordPayment} />
+    <PaymentDialog open={paymentDialog} loan={paymentLoan} currency={accountById.get(paymentLoan?.account_id ?? "")?.currency ?? "PHP"} remainingPrincipal={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).remainingPrincipal : 0} accruedInterest={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).accruedInterest : 0} flatInterestAccrued={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).flatInterestAccrued : 0} totalInterestPaid={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).totalInterestPaid : 0} lastPaymentDate={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).lastPaymentDate : today()} hasPayments={paymentLoan ? payments.some(p => p.loan_id === paymentLoan.id) : false} saving={saving} onClose={() => { setPaymentDialog(false); setPaymentLoan(null); }} onSave={recordPayment} />
     <Dialog open={Boolean(deleteTarget)} onClose={() => !saving && setDeleteTarget(null)} maxWidth="xs" fullWidth><DialogTitle sx={{ fontWeight: 800 }}>Delete this loan?</DialogTitle><DialogContent><Typography variant="body2" color="text.secondary">This also deletes its repayment history. Your account transactions and balance will not be changed.</Typography></DialogContent><DialogActions sx={{ px: 3, pb: 2.5 }}><Button color="inherit" onClick={() => setDeleteTarget(null)} disabled={saving}>Cancel</Button><Button color="error" variant="contained" onClick={() => void deleteLoan()} disabled={saving}>{saving ? <CircularProgress size={18} color="inherit" /> : "Delete"}</Button></DialogActions></Dialog>
     <Dialog open={Boolean(paymentDeleteTarget)} onClose={() => !saving && setPaymentDeleteTarget(null)} maxWidth="xs" fullWidth><DialogTitle sx={{ fontWeight: 800 }}>Delete this payment?</DialogTitle><DialogContent><Typography variant="body2" color="text.secondary">The outstanding principal and loan status will be recalculated from the remaining payment records.</Typography></DialogContent><DialogActions sx={{ px: 3, pb: 2.5 }}><Button color="inherit" onClick={() => setPaymentDeleteTarget(null)} disabled={saving}>Cancel</Button><Button color="error" variant="contained" onClick={() => void deletePayment()} disabled={saving}>{saving ? <CircularProgress size={18} color="inherit" /> : "Delete payment"}</Button></DialogActions></Dialog>
   </Stack>;
