@@ -399,6 +399,7 @@ Backend (`backend/.env`, and the Vercel backend project):
 ```dotenv
 SUPABASE_URL=https://your-project-ref.supabase.co
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 FRONTEND_URL=http://localhost:3000
 PORT=4000
 ```
