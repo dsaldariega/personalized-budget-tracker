@@ -11,7 +11,7 @@ import { apiRequest } from "@/lib/api";
 import { buildNotifications } from "@/lib/notifications";
 import type { AppNotification } from "@/lib/notifications";
 import {
-  AccountBalanceWalletOutlined, AssessmentOutlined, AutorenewOutlined,
+  AccountBalanceWalletOutlined, AccountBalanceWalletRounded, AssessmentOutlined, AutorenewOutlined,
   DashboardOutlined, DarkModeOutlined, HistoryRounded, InfoOutlined, KeyboardArrowDown, LightModeOutlined, ComputerOutlined,
   MenuRounded, NotificationsNoneOutlined, SavingsOutlined, SettingsOutlined,
   SwapHorizOutlined, TrendingUpOutlined, AccountCircleOutlined, CloseRounded, PolicyOutlined
@@ -161,7 +161,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const sidebar = (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "background.paper" }}>
       <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 1.5 }} sx={{ px: { xs: 1.5, sm: 2.5 }, height: 76, minWidth: 0 }}>
-        <Box sx={{ width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 }, flexShrink: 0, borderRadius: 2.7, display: "grid", placeItems: "center", background: "linear-gradient(145deg, #EF5350 0%, #D32F2F 58%, #B71C1C 100%)", color: "primary.contrastText", fontWeight: 800, fontSize: { xs: 18, sm: 20 }, boxShadow: "0 3px 10px rgba(211,47,47,0.16)" }}>B</Box>
+        <Box sx={{ width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 }, flexShrink: 0, borderRadius: 2.7, display: "grid", placeItems: "center", background: "linear-gradient(145deg, #EF5350 0%, #D32F2F 58%, #B71C1C 100%)", color: "primary.contrastText", fontWeight: 800, fontSize: { xs: 18, sm: 20 }, boxShadow: "0 3px 10px rgba(211,47,47,0.16)" }}><AccountBalanceWalletRounded sx={{ fontSize: { xs: 21, sm: 23 } }} /></Box>
         <Box sx={{ minWidth: 0, flexShrink: 0 }}>
           <Typography sx={{ fontSize: { xs: 16.5, sm: 18 }, fontWeight: 700, letterSpacing: "-0.035em", lineHeight: 1.15, whiteSpace: "nowrap" }}>BudgetNest</Typography>
           <Typography sx={{ display: "block", mt: 0.2, fontSize: { xs: 9, sm: 9.5 }, fontWeight: 550, letterSpacing: "0.105em", lineHeight: 1.3, color: "text.secondary", whiteSpace: "nowrap" }}>PERSONAL FINANCE</Typography>
@@ -420,7 +420,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           key={`${pathname}:${user?.id ?? "guest"}`}
           component="main"
           className="page-transition"
-          sx={{ width: "100%", maxWidth: 1600, mx: "auto", px: { xs: 1.5, sm: 2.5, lg: 3, xl: 4 }, py: { xs: 2.25, sm: 3, md: 4 }, flexGrow: 1, minWidth: 0 }}
+          sx={{ width: "100%", maxWidth: 1840, mx: "auto", px: { xs: 2, sm: 3, md: 3.5, lg: 4, xl: 5 }, py: { xs: 2.5, sm: 3.5, md: 4.5 }, flexGrow: 1, minWidth: 0 }}
         >
           {children}
         </Box>
