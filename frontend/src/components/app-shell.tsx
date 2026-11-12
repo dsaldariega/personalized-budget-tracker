@@ -69,7 +69,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (!supabase) return;
     await supabase.auth.signOut();
     setAccountMenu(null);
-    router.replace("/login");
+    router.replace("/");
     router.refresh();
   }
 
