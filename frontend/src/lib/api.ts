@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { guestApiRequest } from "@/lib/guest-store";
 
 const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL;
 const API_URL = (configuredApiUrl ?? (process.env.NODE_ENV === "development" ? "http://localhost:4000/api" : "")).replace(/\/$/, "");
@@ -9,12 +10,11 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   if (!API_URL) throw new Error("The API URL is not configured. Set NEXT_PUBLIC_API_URL for this environment.");
 
   const supabase = createClient();
-  if (!supabase) throw new Error("Supabase is not configured. Check your frontend environment variables.");
+  if (!supabase) return guestApiRequest<T>(path, init);
 
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError || !session?.access_token) {
-    throw new Error("Your session has expired. Please sign in again.");
-  }
+  if (sessionError) throw new Error("Unable to verify your sign-in session.");
+  if (!session?.access_token) return guestApiRequest<T>(path, init);
 
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");

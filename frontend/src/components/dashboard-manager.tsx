@@ -146,7 +146,29 @@ export function DashboardManager() {
     if (!supabase) { setError("Supabase is not configured. Check your frontend environment variables."); setLoading(false); return; }
     setLoading(true); setError("");
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) { setError("Your session could not be verified. Please sign in again."); setLoading(false); return; }
+    if (authError) { setError("Unable to verify your sign-in session."); setLoading(false); return; }
+    if (!user) {
+      try {
+        const [accountResult, transactionResult, budgetResult, goalResult, subscriptionResult] = await Promise.all([
+          apiRequest<{ accounts: Account[] }>("/accounts"),
+          apiRequest<{ transactions: Transaction[] }>("/transactions"),
+          apiRequest<{ budgets: Budget[] }>("/budgets"),
+          apiRequest<{ goals: Goal[] }>("/goals"),
+          apiRequest<{ subscriptions: Subscription[] }>("/subscriptions"),
+        ]);
+        setAccounts(accountResult.accounts ?? []);
+        setTransactions(transactionResult.transactions ?? []);
+        setBudgets(budgetResult.budgets ?? []);
+        setGoals(goalResult.goals ?? []);
+        setSubscriptions(subscriptionResult.subscriptions ?? []);
+        setNow(new Date());
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : "Unable to load guest dashboard data.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
     const fetchAllTransactions = async () => {
       const rows: Transaction[] = [];
       const pageSize = 1000;
