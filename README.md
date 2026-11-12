@@ -96,6 +96,13 @@ Current authenticated endpoints:
 | PUT | `/api/accounts/:id` | Update an account |
 | PATCH | `/api/accounts/:id/archive` | Archive or restore an account |
 | DELETE | `/api/accounts/:id` | Delete an unlinked account |
+| GET | `/api/loans` | Load accounts, loans, and repayment history |
+| POST | `/api/loans` | Create a loan using a monthly interest rate |
+| PUT | `/api/loans/:id` | Update an owned loan |
+| PATCH | `/api/loans/:id/status` | Update an owned loan status |
+| POST | `/api/loans/:id/payments` | Record a total payment with automatic interest/principal allocation |
+| DELETE | `/api/loans/:id/payments/:paymentId` | Delete a payment and recalculate later automatic allocations |
+| DELETE | `/api/loans/:id` | Delete a loan and its repayment history |
 | GET | `/api/transactions` | Load accounts and transaction history |
 | POST | `/api/transactions` | Create an income or expense |
 | POST | `/api/transactions/transfer` | Create a paired account transfer |
@@ -110,8 +117,15 @@ Current authenticated endpoints:
 | PUT | `/api/goals/:id` | Update an owned savings goal |
 | PATCH | `/api/goals/:id/status` | Pause, resume, or complete a savings goal |
 | DELETE | `/api/goals/:id` | Delete an owned savings goal |
+| GET | `/api/loans` | Load accounts, loans, and repayment history |
+| POST | `/api/loans` | Create a loan using a monthly interest rate |
+| PUT | `/api/loans/:id` | Update an owned loan |
+| PATCH | `/api/loans/:id/status` | Pause, resume, mark paid, or reopen a loan |
+| POST | `/api/loans/:id/payments` | Record a total payment with automatic interest/principal allocation |
+| DELETE | `/api/loans/:id/payments/:paymentId` | Delete a payment and recalculate later automatic allocations |
+| DELETE | `/api/loans/:id` | Delete a loan and its repayment history |
 
-The Accounts, Transactions, Budgets, and Savings Goals screens now use the Express API. Requests carry the signed-in user's Supabase access token; the API verifies it and performs database operations with that user's publishable-key client, preserving RLS. The API also validates account ownership and active status before creating or changing transactions. No service-role key is used for these operations.
+The Accounts, Transactions, Budgets, Savings Goals, and Loans screens now use the Express API. Requests carry the signed-in user's Supabase access token; the API verifies it and performs database operations with that user's publishable-key client, preserving RLS. The API also validates account ownership and active status before creating or changing transactions. No service-role key is used for these operations.
 
 ### Deployment
 
@@ -201,9 +215,10 @@ The dashboard implementation is committed to `dev`; manual acceptance testing is
 
 ### Phase 7 — Loans
 - [x] Create, edit, and delete loans linked to one account
-- [x] Record principal, annual interest rate, term, start date, and due date
+- [x] Record principal, monthly interest rate, term, start date, and due date
 - [x] Estimate equal monthly installments
-- [x] Record repayments with principal and interest breakdown
+- [x] Record only the total repayment amount and automatically allocate interest/principal
+- [x] Preserve historical manual repayment allocations
 - [x] Calculate outstanding principal and repayment progress
 - [x] View and delete payment history; update loan status
 
@@ -296,7 +311,7 @@ The transaction workflow records income and expenses against one account. Transf
 
 Budgets are linked to one account and an expense category. Spending is calculated from expense transactions that match both the selected account and category within the current budget period. Weekly, monthly, and yearly budgets repeat from their configured start date; custom budgets use an explicit start and end date. Editing or deleting a transaction automatically changes the calculated budget progress the next time the page data is refreshed. The existing `budgets` table and its owner-scoped RLS policy are used; no additional database migration is required for the budget manager.
 
-Loans are linked to one account and store the original principal, annual interest rate, term, start date, optional due date, notes, and status. Repayments are stored separately in the owner-scoped `loan_payments` table with an explicit principal/interest breakdown; outstanding principal is calculated from recorded principal repayments. The monthly installment is an estimate using a fixed-rate amortization formula and is not a lender-generated payment schedule. Loan repayments do not automatically create account transactions or change account balances.
+Loans are linked to one account and store the original principal, monthly interest rate, term, start date, optional due date, notes, and status. When a user records a payment, they enter only the total amount paid; BudgetNest estimates accrued interest from the monthly rate and elapsed time since the previous payment, applies the interest portion first, and applies the remainder to principal. Unpaid interest carries forward. Existing manually allocated payment history is preserved. The monthly installment is an estimate using a fixed-rate amortization formula and is not a lender-generated payment schedule. Loan repayments do not automatically create account transactions or change account balances. Because `dev` and `main` temporarily share one database, the legacy `annual_interest_rate` column is retained and synchronized with `monthly_interest_rate` by a database trigger until the old production frontend is migrated.
 
 Subscriptions are linked to one account and store the service name, recurring amount, billing frequency (weekly, monthly, quarterly, or yearly), next billing date, category, notes, and active/inactive status. The page estimates monthly recurring costs, highlights due-soon and overdue services, and lets users record payments with a billing date, paid date, amount, and optional notes. Recording a payment advances the next billing date by one frequency interval. Payment history is stored separately in the owner-scoped `subscription_payments` table; it does not create a transaction or change the linked account balance. Deleting a subscription also deletes its payment history.
 
@@ -332,7 +347,7 @@ Expected services:
 
 The Express API is deployed as a separate Vercel project using `backend/` as its Root Directory. Vercel detects the Express application through `backend/src/server.ts`, which exports the Express app as its default export. Local development uses `backend/src/dev.ts` to start the same app on port 4000.
 
-The migrated workflows are **Accounts**, **Transactions**, **Budgets**, and **Savings Goals**. These screens call the Express API rather than querying their feature tables directly from the browser.
+The migrated workflows are **Accounts**, **Transactions**, **Budgets**, **Savings Goals**, and **Loans**. These screens call the Express API rather than querying their feature tables directly from the browser.
 
 ### API routes
 
@@ -375,7 +390,7 @@ For the deployed backend, set `FRONTEND_URLS` to the exact frontend production o
 
 ### Gradual migration plan
 
-Accounts was the first API-backed module. Transactions, Budgets, and Savings Goals are now migrated. Loans, subscriptions, dashboard reads, activity, and settings will be migrated in separate steps. Until each module is migrated and tested, it continues using the existing Supabase browser client and RLS policies. Authentication remains managed by Supabase Auth in the frontend; the API receives the user's access token for each protected request.
+Accounts was the first API-backed module. Transactions, Budgets, Savings Goals, and Loans are now migrated. Subscriptions, dashboard reads, activity, and settings will be migrated in separate steps. Until each module is migrated and tested, it continues using the existing Supabase browser client and RLS policies. Authentication remains managed by Supabase Auth in the frontend; the API receives the user's access token for each protected request.
 
 ### Local verification
 
