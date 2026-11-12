@@ -821,13 +821,20 @@ export function DashboardManager() {
               component={Link}
               href="/transactions"
               sx={{
-                bgcolor: "primary.main",
-                color: "primary.contrastText",
-                fontWeight: 750,
+                bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(255,130,146,0.16)" : "rgba(217,54,80,0.09)",
+                color: (theme) => theme.palette.mode === "dark" ? "primary.light" : "primary.dark",
+                border: "1px solid",
+                borderColor: (theme) => theme.palette.mode === "dark" ? "rgba(255,130,146,0.24)" : "rgba(217,54,80,0.16)",
+                fontWeight: 550,
                 textTransform: "none",
-                "&:hover": { bgcolor: "primary.dark" },
+                boxShadow: "none",
+                "&:hover": {
+                  bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(255,130,146,0.23)" : "rgba(217,54,80,0.14)",
+                  borderColor: "primary.main",
+                  boxShadow: "none",
+                },
                 "&:focus-visible": {
-                  outline: "3px solid",
+                  outline: "2px solid",
                   outlineColor: "primary.light",
                   outlineOffset: 2,
                 },
