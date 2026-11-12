@@ -178,7 +178,7 @@ export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: bo
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   autoComplete="email"
-                  helperText="Add one if you want email-based recovery later."
+                  helperText="Optional. You can sign in with your username without an email address."
                   fullWidth
                 />
               </>
