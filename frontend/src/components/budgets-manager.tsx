@@ -10,7 +10,7 @@ import {
   DialogContent, DialogTitle, Divider, IconButton, LinearProgress, Menu,
   MenuItem, Paper, Stack, TextField, Tooltip, Typography,
 } from "@mui/material";
-import { createClient } from "@/lib/supabase/client";
+import { apiRequest } from "@/lib/api";
 
 type Period = "weekly" | "monthly" | "yearly" | "custom";
 type Account = { id: string; name: string; currency: string; is_archived: boolean };
@@ -143,7 +143,6 @@ function BudgetDialog({
 }
 
 export function BudgetsManager() {
-  const supabase = useMemo(() => createClient(), []);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -161,20 +160,19 @@ export function BudgetsManager() {
   const [notice, setNotice] = useState("");
 
   const loadData = useCallback(async () => {
-    if (!supabase) { setError("Supabase is not configured. Check your frontend environment variables."); setLoading(false); return; }
-    setLoading(true); setError("");
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) { setError("Your session could not be verified. Please sign in again."); setLoading(false); return; }
-    const [accountResult, budgetResult, expenseResult] = await Promise.all([
-      supabase.from("accounts").select("id,name,currency,is_archived").eq("user_id", user.id).order("name"),
-      supabase.from("budgets").select("id,user_id,account_id,name,category,amount,period,start_date,end_date,created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("transactions").select("account_id,category,amount,transaction_date,transaction_type").eq("user_id", user.id).eq("transaction_type", "expense"),
-    ]);
-    if (accountResult.error) setError(accountResult.error.message); else setAccounts((accountResult.data ?? []) as Account[]);
-    if (budgetResult.error) setError(budgetResult.error.message); else setBudgets((budgetResult.data ?? []) as Budget[]);
-    if (expenseResult.error) setError(expenseResult.error.message); else setExpenses((expenseResult.data ?? []) as Expense[]);
-    setLoading(false);
-  }, [supabase]);
+    setLoading(true);
+    setError("");
+    try {
+      const data = await apiRequest<{ accounts: Account[]; budgets: Budget[]; expenses: Expense[] }>("/budgets");
+      setAccounts(data.accounts);
+      setBudgets(data.budgets);
+      setExpenses(data.expenses);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to load budgets.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
   useEffect(() => { void loadData(); }, [loadData]);
 
   function openCreate() {
@@ -188,35 +186,51 @@ export function BudgetsManager() {
     setMenu(null); setDialogOpen(true);
   }
   async function saveBudget(value: BudgetForm) {
-    if (!supabase) return;
-    setSaving(true); setError(""); setNotice("");
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) { setError("Your session has expired. Please sign in again."); setSaving(false); return; }
-    const account = accounts.find(a => a.id === value.account_id);
-    if (!account || (account.is_archived && (!editing || editing.account_id !== account.id))) { setError("Choose an active account."); setSaving(false); return; }
+    setSaving(true);
+    setError("");
+    setNotice("");
     const payload = {
-      user_id: user.id, account_id: value.account_id, name: value.name,
-      category: value.category, amount: Number(value.amount), period: value.period,
-      start_date: value.start_date, end_date: value.end_date || null,
+      account_id: value.account_id,
+      name: value.name,
+      category: value.category,
+      amount: Number(value.amount),
+      period: value.period,
+      start_date: value.start_date,
+      end_date: value.end_date || null,
     };
-    const result = editing
-      ? await supabase.from("budgets").update(payload).eq("id", editing.id).eq("user_id", user.id)
-      : await supabase.from("budgets").insert(payload);
-    if (result.error) { setError(result.error.message); setSaving(false); return; }
-    await supabase.from("activity_logs").insert({
-      user_id: user.id, action: editing ? "budget.updated" : "budget.created",
-      entity_type: "budget", entity_id: editing?.id ?? null,
-      details: { name: value.name, category: value.category, amount: Number(value.amount), period: value.period },
-    });
-    setDialogOpen(false); setNotice(editing ? "Budget updated." : "Budget created."); setSaving(false); await loadData();
+    try {
+      await apiRequest<{ budget: Budget }>(
+        editing ? `/budgets/${editing.id}` : "/budgets",
+        {
+          method: editing ? "PUT" : "POST",
+          body: JSON.stringify(payload),
+        },
+      );
+      setDialogOpen(false);
+      setNotice(editing ? "Budget updated." : "Budget created.");
+      await loadData();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to save budget.");
+    } finally {
+      setSaving(false);
+    }
   }
+
   async function deleteBudget() {
-    if (!supabase || !deleteTarget) return;
-    setSaving(true); setError("");
-    const result = await supabase.from("budgets").delete().eq("id", deleteTarget.id);
-    if (result.error) { setError(result.error.message); setSaving(false); setDeleteTarget(null); return; }
-    await supabase.from("activity_logs").insert({ user_id: deleteTarget.user_id, action: "budget.deleted", entity_type: "budget", entity_id: deleteTarget.id, details: { name: deleteTarget.name } });
-    setDeleteTarget(null); setNotice("Budget deleted."); setSaving(false); await loadData();
+    if (!deleteTarget) return;
+    setSaving(true);
+    setError("");
+    try {
+      await apiRequest<void>(`/budgets/${deleteTarget.id}`, { method: "DELETE" });
+      setDeleteTarget(null);
+      setNotice("Budget deleted.");
+      await loadData();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to delete budget.");
+      setDeleteTarget(null);
+    } finally {
+      setSaving(false);
+    }
   }
 
   const accountById = useMemo(() => new Map(accounts.map(a => [a.id, a])), [accounts]);
