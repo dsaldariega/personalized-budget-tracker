@@ -160,14 +160,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const sidebar = (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "background.paper" }}>
-      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ px: 2.5, height: 76 }}>
-        <Box sx={{ width: 40, height: 40, borderRadius: 2.7, display: "grid", placeItems: "center", background: "linear-gradient(145deg, #F16B7D 0%, #D93650 58%, #B9233D 100%)", color: "#FFFFFF", fontWeight: 900, fontSize: 20, boxShadow: "0 6px 15px rgba(217,54,80,0.24)" }}>B</Box>
-        <Box>
-          <Typography fontWeight={850} letterSpacing={-0.5} lineHeight={1.1}>BudgetNest</Typography>
-          <Typography variant="caption" color="text.secondary">PERSONAL FINANCE</Typography>
+      <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 1.5 }} sx={{ px: { xs: 1.5, sm: 2.5 }, height: 76, minWidth: 0 }}>
+        <Box sx={{ width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 }, flexShrink: 0, borderRadius: 2.7, display: "grid", placeItems: "center", background: "linear-gradient(145deg, #F16B7D 0%, #D93650 58%, #B9233D 100%)", color: "#FFFFFF", fontWeight: 800, fontSize: { xs: 18, sm: 20 }, boxShadow: "0 5px 12px rgba(217,54,80,0.18)" }}>B</Box>
+        <Box sx={{ minWidth: 0, flexShrink: 0 }}>
+          <Typography sx={{ fontSize: { xs: 16.5, sm: 18 }, fontWeight: 700, letterSpacing: "-0.035em", lineHeight: 1.15, whiteSpace: "nowrap" }}>BudgetNest</Typography>
+          <Typography sx={{ display: "block", mt: 0.2, fontSize: { xs: 9, sm: 9.5 }, fontWeight: 550, letterSpacing: "0.105em", lineHeight: 1.3, color: "text.secondary", whiteSpace: "nowrap" }}>PERSONAL FINANCE</Typography>
         </Box>
-        {!isDesktop && <Box sx={{ flexGrow: 1 }} />}
-        {!isDesktop && <IconButton onClick={() => setMobileOpen(false)} aria-label="Close navigation"><CloseRounded /></IconButton>}
+        {!isDesktop && <Box sx={{ flexGrow: 1, minWidth: 0 }} />}
+        {!isDesktop && <IconButton size="small" onClick={() => setMobileOpen(false)} aria-label="Close navigation" sx={{ flexShrink: 0 }}><CloseRounded /></IconButton>}
       </Stack>
       <Divider />
       <Box sx={{ px: 1.5, py: 2, flexGrow: 1, overflowY: "auto" }}>
