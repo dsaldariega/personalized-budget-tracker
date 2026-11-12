@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import FeedbackForm from "@/components/feedback-form";
 import {
   AccountBalanceWalletOutlined, AutoAwesomeOutlined, BackupOutlined, CalendarMonthOutlined,
   CategoryOutlined, CompareArrowsRounded, HelpOutlineRounded, LockOutlined, SavingsOutlined,
   ShowChartRounded, SubscriptionsOutlined, TrendingUpRounded, WalletOutlined,
 } from "@mui/icons-material";
 import {
-  Accordion, AccordionDetails, AccordionSummary, Box, Grid, Paper, Stack, Typography,
+  Accordion, AccordionDetails, AccordionSummary, Box, Button, Grid, Paper, Stack, Typography,
 } from "@mui/material";
 import ExpandMoreRounded from "@mui/icons-material/ExpandMoreRounded";
 
@@ -154,6 +156,18 @@ export default function AboutPage() {
           ))}
         </Stack>
       </Box>
+
+      <FeedbackForm />
+
+      <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>
+        <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "flex-start", sm: "center" }} justifyContent="space-between" spacing={2}>
+          <Box>
+            <Typography fontWeight={800}>Want to know how your information is handled?</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Read the full BudgetNest privacy policy, including the data we store and the controls available to you.</Typography>
+          </Box>
+          <Button component={Link} href="/privacy" variant="outlined" sx={{ flexShrink: 0 }}>Read privacy policy</Button>
+        </Stack>
+      </Paper>
 
       <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3, bgcolor: "action.hover" }}>
         <Stack direction="row" spacing={1.5} alignItems="flex-start">
