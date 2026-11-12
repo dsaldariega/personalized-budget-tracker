@@ -17,14 +17,27 @@ const require = createRequire(import.meta.url);
 const helmet = require("helmet") as () => express.RequestHandler;
 
 const app = express();
-const allowedOrigin = process.env.FRONTEND_URL?.trim() || "http://localhost:3000";
+const configuredOrigins = [
+  process.env.FRONTEND_URL,
+  ...(process.env.FRONTEND_URLS ?? "").split(","),
+]
+  .map((origin) => origin?.trim())
+  .filter((origin): origin is string => Boolean(origin));
+const localDevelopmentOrigin = /^https?:\\/\\/(?:localhost|127\\.0\\.0\\.1)(?::\\d+)?$/;
+const budgetNestPreviewOrigin =
+  /^https:\\/\\/budgetnest-(?:[a-z0-9]+|web-git-[a-z0-9-]+)-dsaldariegas-projects\\.vercel\\.app$/;
 
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
 app.use(helmet());
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || origin === allowedOrigin) return callback(null, true);
+    const isAllowed =
+      !origin ||
+      configuredOrigins.includes(origin) ||
+      localDevelopmentOrigin.test(origin) ||
+      budgetNestPreviewOrigin.test(origin);
+    if (isAllowed) return callback(null, true);
     return callback(null, false);
   },
   credentials: false,
