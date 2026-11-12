@@ -126,9 +126,31 @@ export function AuthPage({
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          px: { xs: 2.5, sm: 5, md: 5, lg: 8 },
-          py: { xs: 5, md: 7 },
+          px: { xs: 2, sm: 4, md: 5, lg: 7 },
+          py: { xs: 4, md: 5 },
           position: "relative",
+          overflow: "hidden",
+          background: "linear-gradient(145deg, #fffafb 0%, #f8f6fb 100%)",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            width: 360,
+            height: 360,
+            borderRadius: "50%",
+            right: -190,
+            top: -180,
+            bgcolor: "rgba(241,107,125,0.07)",
+          },
+          "&::after": {
+            content: '""',
+            position: "absolute",
+            width: 280,
+            height: 280,
+            borderRadius: "50%",
+            left: -170,
+            bottom: -170,
+            bgcolor: "rgba(106,48,72,0.055)",
+          },
         }}
       >
         <Stack direction="row" alignItems="center" spacing={1.2} sx={{ display: { xs: "flex", md: "none" }, mb: 4 }}>
@@ -137,16 +159,16 @@ export function AuthPage({
           </Box>
           <Typography fontWeight={850} fontSize={18} letterSpacing={-0.5}>BudgetNest</Typography>
         </Stack>
-        <Box sx={{ width: "100%", maxWidth: 460 }}>
+        <Box sx={{ width: "100%", maxWidth: 430, position: "relative", zIndex: 1 }}>
           <Typography sx={{ mb: 1, color: "primary.main", fontSize: 11, fontWeight: 800, letterSpacing: 1.6, textTransform: "uppercase" }}>
             {isLogin ? "Your finances, in focus" : "A better money routine starts here"}
           </Typography>
           {children}
-          <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.7} sx={{ mt: 3, color: "text.disabled" }}>
+          <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.7} sx={{ mt: 2, color: "text.disabled" }}>
             <ShieldRounded sx={{ fontSize: 15 }} />
             <Typography variant="caption">Your account is protected with secure authentication</Typography>
           </Stack>
-          <Typography variant="caption" color="text.disabled" textAlign="center" display="block" sx={{ mt: 3 }}>
+          <Typography variant="caption" color="text.disabled" textAlign="center" display="block" sx={{ mt: 2 }}>
             © {new Date().getFullYear()} BudgetNest
           </Typography>
         </Box>
