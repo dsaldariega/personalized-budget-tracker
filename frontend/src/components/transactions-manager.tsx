@@ -12,7 +12,7 @@ import {
   InputLabel, Menu, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, TextField, Tooltip, Typography,
 } from "@mui/material";
-import { createClient } from "@/lib/supabase/client";
+import { apiRequest } from "@/lib/api";
 
 type TransactionType = "income" | "expense" | "transfer";
 type TransferDirection = "in" | "out";
@@ -109,7 +109,6 @@ function TransactionDialog({
 }
 
 export function TransactionsManager() {
-  const supabase = useMemo(() => createClient(), []);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,20 +126,18 @@ export function TransactionsManager() {
   const [monthFilter, setMonthFilter] = useState("all");
 
   const loadData = useCallback(async () => {
-    if (!supabase) { setError("Supabase is not configured. Check your frontend environment variables."); setLoading(false); return; }
-    setLoading(true); setError("");
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) { setError("Your session could not be verified. Please sign in again."); setLoading(false); return; }
-    const [accountResult, transactionResult] = await Promise.all([
-      supabase.from("accounts").select("id,name,currency,opening_balance,is_archived").eq("user_id", user.id).order("name"),
-      supabase.from("transactions").select("id,user_id,account_id,transaction_type,amount,category,description,transaction_date,transfer_group_id,transfer_direction,created_at").eq("user_id", user.id).order("transaction_date", { ascending: false }).order("created_at", { ascending: false }),
-    ]);
-    if (accountResult.error) setError(accountResult.error.message);
-    else setAccounts((accountResult.data ?? []) as Account[]);
-    if (transactionResult.error) setError(transactionResult.error.message);
-    else setTransactions((transactionResult.data ?? []) as Transaction[]);
-    setLoading(false);
-  }, [supabase]);
+    setLoading(true);
+    setError("");
+    try {
+      const result = await apiRequest<{ accounts: Account[]; transactions: Transaction[] }>("/transactions");
+      setAccounts(result.accounts ?? []);
+      setTransactions(result.transactions ?? []);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load transactions.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
   useEffect(() => { void loadData(); }, [loadData]);
 
   function openCreate() {
@@ -156,47 +153,61 @@ export function TransactionsManager() {
     setMenu(null); setDialogOpen(true);
   }
   async function saveTransaction(value: FormValue) {
-    if (!supabase) return;
     setSaving(true); setError(""); setNotice("");
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) { setError("Your session has expired. Please sign in again."); setSaving(false); return; }
     const source = accounts.find((a) => a.id === value.account_id);
     const destination = accounts.find((a) => a.id === value.destination_account_id);
     if (!source || source.is_archived) { setError("Choose an active account."); setSaving(false); return; }
     if (value.transaction_type === "transfer" && (!destination || destination.is_archived)) { setError("Choose an active destination account."); setSaving(false); return; }
     if (value.transaction_type === "transfer" && source.currency !== destination?.currency) { setError("Transfers between different currencies are not supported yet. Use accounts with the same currency."); setSaving(false); return; }
-    const common = { user_id: user.id, amount: Number(value.amount), description: value.description || null, transaction_date: value.transaction_date };
-    let saveError: { message: string } | null = null;
-    if (editing) {
-      const result = await supabase.from("transactions").update({ ...common, account_id: source.id, transaction_type: value.transaction_type, category: value.category }).eq("id", editing.id).eq("user_id", user.id);
-      saveError = result.error;
-    } else if (value.transaction_type === "transfer") {
-      const groupId = crypto.randomUUID();
-      const result = await supabase.from("transactions").insert([
-        { ...common, account_id: source.id, transaction_type: "transfer", transfer_group_id: groupId, transfer_direction: "out", category: null },
-        { ...common, account_id: destination!.id, transaction_type: "transfer", transfer_group_id: groupId, transfer_direction: "in", category: null },
-      ]);
-      saveError = result.error;
-    } else {
-      const result = await supabase.from("transactions").insert({ ...common, account_id: source.id, transaction_type: value.transaction_type, category: value.category, transfer_group_id: null, transfer_direction: null });
-      saveError = result.error;
+
+    const common = {
+      account_id: source.id,
+      amount: Number(value.amount),
+      description: value.description || null,
+      transaction_date: value.transaction_date,
+    };
+
+    try {
+      if (editing) {
+        await apiRequest(`/transactions/${encodeURIComponent(editing.id)}`, {
+          method: "PUT",
+          body: JSON.stringify({ ...common, transaction_type: value.transaction_type, category: value.category }),
+        });
+      } else if (value.transaction_type === "transfer") {
+        await apiRequest("/transactions/transfer", {
+          method: "POST",
+          body: JSON.stringify({ ...common, destination_account_id: destination!.id }),
+        });
+      } else {
+        await apiRequest("/transactions", {
+          method: "POST",
+          body: JSON.stringify({ ...common, transaction_type: value.transaction_type, category: value.category }),
+        });
+      }
+
+      setDialogOpen(false);
+      setNotice(editing ? "Transaction updated." : "Transaction added.");
+      await loadData();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Unable to save transaction.");
+    } finally {
+      setSaving(false);
     }
-    if (saveError) { setError(saveError.message); setSaving(false); return; }
-    await supabase.from("activity_logs").insert({ user_id: user.id, action: editing ? "transaction.updated" : "transaction.created", entity_type: "transaction", entity_id: editing?.id ?? null, details: { transaction_type: value.transaction_type, amount: Number(value.amount), category: value.category || null } });
-    setDialogOpen(false); setNotice(editing ? "Transaction updated." : "Transaction added."); setSaving(false); await loadData();
   }
   async function deleteTransaction() {
-    if (!supabase || !deleteTarget) return;
+    if (!deleteTarget) return;
     setSaving(true); setError("");
-    const deleteResult = deleteTarget.transfer_group_id
-      ? await supabase.from("transactions").delete().eq("transfer_group_id", deleteTarget.transfer_group_id)
-      : await supabase.from("transactions").delete().eq("id", deleteTarget.id);
-    if (deleteResult.error) { setError(deleteResult.error.message); setSaving(false); setDeleteTarget(null); return; }
-    await supabase.from("activity_logs").insert({
-      user_id: deleteTarget.user_id, action: "transaction.deleted", entity_type: "transaction",
-      entity_id: deleteTarget.id, details: { transaction_type: deleteTarget.transaction_type, amount: Number(deleteTarget.amount), category: deleteTarget.category, transfer: Boolean(deleteTarget.transfer_group_id) },
-    });
-    setDeleteTarget(null); setNotice(deleteTarget.transfer_group_id ? "Transfer deleted from both accounts." : "Transaction deleted."); setSaving(false); await loadData();
+    try {
+      await apiRequest<void>(`/transactions/${encodeURIComponent(deleteTarget.id)}`, { method: "DELETE" });
+      setDeleteTarget(null);
+      setNotice(deleteTarget.transfer_group_id ? "Transfer deleted from both accounts." : "Transaction deleted.");
+      await loadData();
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Unable to delete transaction.");
+      setDeleteTarget(null);
+    } finally {
+      setSaving(false);
+    }
   }
 
   const accountById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
