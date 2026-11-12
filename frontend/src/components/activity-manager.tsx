@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   AccountBalanceWalletOutlined, AddCardOutlined, AutorenewRounded, HistoryRounded,
   RefreshRounded, SearchRounded, SwapHorizRounded, TrendingUpRounded,
@@ -9,7 +9,7 @@ import {
   Alert, Avatar, Box, Button, CircularProgress, MenuItem, Paper, Stack, Table,
   TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography,
 } from "@mui/material";
-import { createClient } from "@/lib/supabase/client";
+import { apiRequest } from "@/lib/api";
 
 type Activity = {
   id: string; action: string; entity_type: string | null; entity_id: string | null;
@@ -61,7 +61,6 @@ function iconFor(item: Activity) {
 }
 
 export function ActivityManager() {
-  const supabase = useMemo(() => createClient(), []);
   const [items, setItems] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -70,21 +69,18 @@ export function ActivityManager() {
   const [periodFilter, setPeriodFilter] = useState("30");
 
   const load = useCallback(async () => {
-    if (!supabase) { setError("Supabase is not configured. Check your environment variables."); setLoading(false); return; }
     setLoading(true); setError("");
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) { setError("Your session could not be verified. Please sign in again."); setLoading(false); return; }
-    let query = supabase.from("activity_logs").select("id,action,entity_type,entity_id,details,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(500);
-    if (periodFilter !== "all") {
-      const since = new Date();
-      since.setDate(since.getDate() - Number(periodFilter));
-      query = query.gte("created_at", since.toISOString());
-    }
-    if (entityFilter !== "all") query = query.eq("entity_type", entityFilter);
-    const { data, error: queryError } = await query;
-    if (queryError) setError(queryError.message); else setItems((data ?? []) as Activity[]);
-    setLoading(false); 
-  }, [supabase, entityFilter, periodFilter]);
+    try {
+      const params = new URLSearchParams();
+      if (periodFilter !== "all") params.set("days", periodFilter);
+      if (entityFilter !== "all") params.set("entity_type", entityFilter);
+      const suffix = params.toString() ? `?${params.toString()}` : "";
+      const result = await apiRequest<{ activities: Activity[] }>(`/activity${suffix}`);
+      setItems(result.activities ?? []);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to load activity.");
+    } finally { setLoading(false); }
+  }, [entityFilter, periodFilter]);
   useEffect(() => { void load(); }, [load]);
 
   const filtered = items.filter(item => {

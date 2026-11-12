@@ -7,9 +7,11 @@ import {
 } from "@mui/icons-material";
 import {
   Alert, Avatar, Box, Button, CircularProgress, Divider, MenuItem, Paper, Stack,
-  TextField, Typography,
+  TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText,
 } from "@mui/material";
 import { createClient } from "@/lib/supabase/client";
+import { apiRequest } from "@/lib/api";
+import { SuccessToast } from "@/components/success-toast";
 import { useThemeMode } from "@/components/theme-provider";
 
 type Profile = { full_name: string | null; default_currency: string };
@@ -20,9 +22,11 @@ function csvEscape(value: unknown) {
   const text = value === null || value === undefined ? "" : typeof value === "object" ? JSON.stringify(value) : String(value);
   return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
 }
-function makeCsv(rows: Record<string, unknown>[]) {
-  if (!rows.length) return "";
-  const headers = Object.keys(rows[0]);
+const transactionCsvHeaders = [
+  "account_name", "currency", "transaction_type", "amount",
+  "category", "description", "transaction_date",
+];
+function makeCsv(rows: Record<string, unknown>[], headers: string[] = transactionCsvHeaders) {
   return "\uFEFF" + [headers.map(csvEscape).join(","), ...rows.map(row => headers.map(header => csvEscape(row[header])).join(","))].join("\r\n");
 }
 function downloadFile(filename: string, content: string, type: string) {
@@ -49,14 +53,42 @@ function parseCsv(text: string) {
   if (field.length || row.length) { row.push(field.replace(/\r$/, "")); rows.push(row); }
   return rows.filter(values => values.some(value => value.trim() !== ""));
 }
+type ImportIssue = { row?: number; field?: string; message: string };
+function normalizeImportDate(value: string): { value?: string; error?: string } {
+  const input = value.trim();
+  const valid = (year: number, month: number, day: number) => {
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+      ? date.toISOString().slice(0, 10) : undefined;
+  };
+  let match = input.match(/^([0-9]{4})[-/]([0-9]{1,2})[-/]([0-9]{1,2})$/);
+  if (match) {
+    const result = valid(Number(match[1]), Number(match[2]), Number(match[3]));
+    return result ? { value: result } : { error: "Enter a real calendar date." };
+  }
+  match = input.match(/^([0-9]{1,2})[/-]([0-9]{1,2})[/-]([0-9]{4})$/);
+  if (match) {
+    const first = Number(match[1]), second = Number(match[2]), year = Number(match[3]);
+    // For ambiguous slash/dash dates, use MM/DD/YYYY. If the first value
+    // cannot be a month, treat the input as DD/MM/YYYY instead.
+    const month = first > 12 ? second : first;
+    const day = first > 12 ? first : second;
+    const result = valid(year, month, day);
+    return result ? { value: result } : { error: "Enter a real date (MM/DD/YYYY or YYYY-MM-DD)." };
+  }
+  if (/^[0-9]+(?:\.[0-9]+)?$/.test(input)) {
+    const serial = Number(input);
+    if (serial >= 20000 && serial <= 80000) {
+      const date = new Date(Date.UTC(1899, 11, 30) + Math.round(serial) * 86400000);
+      return { value: date.toISOString().slice(0, 10) };
+    }
+  }
+  return { error: "Use YYYY-MM-DD or MM/DD/YYYY for the transaction date." };
+}
 function localDateStamp() {
   const now = new Date();
   return [now.getFullYear(), String(now.getMonth()+1).padStart(2,"0"), String(now.getDate()).padStart(2,"0")].join("");
 }
-function fingerprint(row: { account_id: string; transaction_type: string; amount: number; category: string | null; description: string | null; transaction_date: string }) {
-  return [row.account_id,row.transaction_type,Number(row.amount).toFixed(2),row.category ?? "",row.description ?? "",row.transaction_date].join("|").toLowerCase();
-}
-
 export function SettingsManager() {
   const supabase = useMemo(() => createClient(), []);
   const { mode, toggleMode } = useThemeMode();
@@ -71,6 +103,8 @@ export function SettingsManager() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [importSummary, setImportSummary] = useState("");
+  const [importIssues, setImportIssues] = useState<ImportIssue[]>([]);
+  const [importErrorOpen, setImportErrorOpen] = useState(false);
   const [userId, setUserId] = useState("");
 
   const loadProfile = useCallback(async () => {
@@ -79,13 +113,13 @@ export function SettingsManager() {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) { setError("Your session could not be verified. Please sign in again."); setLoading(false); return; }
     setUserId(user.id); setEmail(user.email ?? "");
-    const { data, error: profileError } = await supabase.from("profiles").select("full_name,default_currency").eq("id", user.id).single();
-    if (profileError) setError(profileError.message);
-    else {
-      const value = { full_name: data.full_name ?? user.user_metadata?.full_name ?? "", default_currency: data.default_currency ?? "PHP" };
+    try {
+      const result = await apiRequest<{ profile: Profile }>("/settings/profile");
+      const value = { full_name: result.profile.full_name ?? user.user_metadata?.full_name ?? "", default_currency: result.profile.default_currency ?? "PHP" };
       setProfile(value); setInitialProfile(value);
-    }
-    setLoading(false);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to load profile settings.");
+    } finally { setLoading(false); }
   }, [supabase]);
   useEffect(() => { void loadProfile(); }, [loadProfile]);
 
@@ -95,52 +129,53 @@ export function SettingsManager() {
     if (!/^[A-Z]{3}$/.test(profile.default_currency)) { setError("Choose a valid three-letter currency code."); return; }
     setSaving(true); setError(""); setNotice("");
     const name = profile.full_name.trim();
-    const result = await supabase.from("profiles").update({ full_name: name, default_currency: profile.default_currency }).eq("id", userId);
-    if (result.error) { setError(result.error.message); setSaving(false); return; }
-    const authUpdate = await supabase.auth.updateUser({ data: { full_name: name } });
-    if (authUpdate.error) { setError("Profile saved, but the sign-in profile name could not be synchronized: " + authUpdate.error.message); setSaving(false); return; }
-    await supabase.from("activity_logs").insert({ user_id: userId, action: "profile.updated", entity_type: "profile", details: { full_name: name, default_currency: profile.default_currency } });
-    setInitialProfile(profile); setNotice("Profile settings saved."); setSaving(false);
+    try {
+      await apiRequest("/settings/profile", { method: "PUT", body: JSON.stringify({ full_name: name, default_currency: profile.default_currency }) });
+      const authUpdate = await supabase.auth.updateUser({ data: { full_name: name } });
+      if (authUpdate.error) throw new Error("Profile saved, but the sign-in profile name could not be synchronized: " + authUpdate.error.message);
+      setInitialProfile(profile); setNotice("Profile settings saved.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to save profile settings.");
+    } finally { setSaving(false); }
   }
 
   async function exportBackup() {
     if (!supabase || !userId) return;
     setExporting(true); setError(""); setNotice("");
-    const tables = ["profiles","accounts","transactions","budgets","savings_goals","loans","loan_payments","subscriptions","subscription_payments","activity_logs"] as const;
-    const backup: Record<string, unknown> = { format: "BudgetNest backup", version: 1, exported_at: new Date().toISOString(), user_id: userId, data: {} };
-    const data = backup.data as Record<string, unknown>;
-    for (const table of tables) {
-      const column = table === "profiles" ? "id" : "user_id";
-      const allRows: Record<string, unknown>[] = [];
-      let offset = 0;
-      while (true) {
-        const { data: rows, error: queryError } = await supabase.from(table).select("*").eq(column, userId).order("created_at", { ascending: true }).range(offset, offset + 999);
-        if (queryError) { setError("Could not export " + table + ": " + queryError.message); setExporting(false); return; }
-        allRows.push(...(rows ?? []));
-        if (!rows || rows.length < 1000) break;
-        offset += 1000;
-      }
-      data[table] = allRows;
+    let backup: Record<string, unknown>;
+    let data: Record<string, unknown>;
+    try {
+      const response = await apiRequest<{ backup: Record<string, unknown> & { data: Record<string, unknown> } }>("/settings/backup");
+      backup = response.backup;
+      data = response.backup.data;
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to export your data.");
+      setExporting(false);
+      return;
     }
     downloadFile("budgetnest-backup-" + localDateStamp() + ".json", JSON.stringify(backup, null, 2), "application/json;charset=utf-8");
     const tx = (data.transactions ?? []) as Transaction[];
     const accountRows = (data.accounts ?? []) as Account[];
     const names = new Map(accountRows.map(a => [a.id, a.name]));
-    const csvRows = tx.filter(item => item.transaction_type !== "transfer").map(item => ({
-      account_name: names.get(item.account_id) ?? "", currency: accountRows.find(a => a.id === item.account_id)?.currency ?? "",
-      transaction_type: item.transaction_type, amount: item.amount, category: item.category ?? "",
-      description: item.description ?? "", transaction_date: item.transaction_date,
-      transfer_group_id: item.transfer_group_id ?? "", transfer_direction: item.transfer_direction ?? "",
+    const csvRows = tx.filter(item => item.transaction_type === "income" || item.transaction_type === "expense").map(item => ({
+      account_name: names.get(item.account_id) ?? "",
+      currency: accountRows.find(a => a.id === item.account_id)?.currency ?? "",
+      transaction_type: item.transaction_type,
+      amount: Number(item.amount).toFixed(2),
+      category: item.category ?? "",
+      description: item.description ?? "",
+      transaction_date: item.transaction_date.slice(0, 10),
     }));
-    if (csvRows.length) downloadFile("budgetnest-transactions-" + localDateStamp() + ".csv", makeCsv(csvRows), "text/csv;charset=utf-8");
-    setNotice("Your full JSON backup and Excel-compatible transaction CSV have been downloaded."); setExporting(false);
+    // Always include the import-compatible header, even when there are no income/expense rows.
+    downloadFile("budgetnest-transactions-" + localDateStamp() + ".csv", makeCsv(csvRows), "text/csv;charset=utf-8");
+    setNotice("Your full JSON backup and import-ready transaction CSV have been downloaded. Transfers are preserved in the JSON backup."); setExporting(false);
   }
 
   async function importTransactions(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file || !supabase || !userId) return;
-    setImporting(true); setError(""); setNotice(""); setImportSummary("");
+    setImporting(true); setError(""); setNotice(""); setImportSummary(""); setImportIssues([]); setImportErrorOpen(false);
     try {
       if (file.size > 5 * 1024 * 1024) throw new Error("Please choose a CSV file smaller than 5 MB.");
       const raw = (await file.text()).replace(/^\uFEFF/, "");
@@ -152,44 +187,37 @@ export function SettingsManager() {
       if (missing.length) throw new Error("Missing required CSV columns: " + missing.join(", "));
       if (parsed.length > 5001) throw new Error("Import is limited to 5,000 rows at a time.");
       const column = (row: string[], name: string) => row[headers.indexOf(name)]?.trim() ?? "";
-      const { data: accountsData, error: accountError } = await supabase.from("accounts").select("id,name,currency,is_archived").eq("user_id", userId);
-      if (accountError) throw new Error(accountError.message);
-      const accounts = (accountsData ?? []) as (Account & { is_archived: boolean })[];
-      const existingResult = await supabase.from("transactions").select("account_id,transaction_type,amount,category,description,transaction_date").eq("user_id", userId);
-      if (existingResult.error) throw new Error(existingResult.error.message);
-      const seen = new Set((existingResult.data ?? []).map(row => fingerprint({ ...row, amount: Number(row.amount) })));
-      const rowsToInsert: Record<string, unknown>[] = [];
-      let skipped = 0;
-      for (let i = 1; i < parsed.length; i++) {
-        const row = parsed[i];
-        const accountName = column(row, "account_name");
-        const currency = column(row, "currency").toUpperCase();
-        const account = accounts.find(a => a.name.toLowerCase() === accountName.toLowerCase() && a.currency === currency && !a.is_archived);
-        const type = column(row, "transaction_type").toLowerCase();
-        const amount = Number(column(row, "amount"));
-        const date = column(row, "transaction_date");
-        const category = column(row, "category");
-        const description = column(row, "description");
-        if (!account) throw new Error("Row " + (i + 1) + ": active account not found for " + accountName + " (" + currency + "). Create or restore the account first.");
-        if (!["income","expense"].includes(type)) throw new Error("Row " + (i + 1) + ": only income and expense rows can be imported. Transfers must be recreated in BudgetNest.");
-        if (!Number.isFinite(amount) || amount <= 0) throw new Error("Row " + (i + 1) + ": amount must be greater than zero.");
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date + "T00:00:00"))) throw new Error("Row " + (i + 1) + ": use YYYY-MM-DD for transaction_date.");
-        if (!category) throw new Error("Row " + (i + 1) + ": category is required.");
-        const value = { account_id: account.id, transaction_type: type, amount, category, description: description || null, transaction_date: date };
-        const key = fingerprint({ ...value, category, description: description || null });
-        if (seen.has(key)) { skipped++; continue; }
-        seen.add(key);
-        rowsToInsert.push({ ...value, user_id: userId, transfer_group_id: null, transfer_direction: null });
+      const localIssues: ImportIssue[] = [];
+      const rows = parsed.slice(1).map((row, index) => {
+        const sourceDate = column(row, "transaction_date");
+        const normalizedDate = normalizeImportDate(sourceDate);
+        if (!normalizedDate.value) localIssues.push({ row: index + 2, field: "transaction_date", message: normalizedDate.error ?? "Invalid date." });
+        return {
+          account_name: column(row, "account_name"),
+          currency: column(row, "currency").toUpperCase(),
+          transaction_type: column(row, "transaction_type").toLowerCase(),
+          amount: Number(column(row, "amount")),
+          category: column(row, "category"),
+          description: column(row, "description"),
+          transaction_date: normalizedDate.value ?? sourceDate,
+        };
+      });
+      if (localIssues.length) {
+        setError("Please correct the transaction dates listed below and try again.");
+        setImportIssues(localIssues);
+        setImportErrorOpen(true);
+        return;
       }
-      for (let i = 0; i < rowsToInsert.length; i += 100) {
-        const result = await supabase.from("transactions").insert(rowsToInsert.slice(i, i + 100));
-        if (result.error) throw new Error("Import stopped after " + i + " rows: " + result.error.message);
-      }
-      await supabase.from("activity_logs").insert({ user_id: userId, action: "data.transactions_imported", entity_type: "transaction", details: { imported: rowsToInsert.length, skipped_duplicates: skipped, source_file: file.name } });
-      setImportSummary("Imported " + rowsToInsert.length + " transaction(s); skipped " + skipped + " duplicate(s).");
+      const result = await apiRequest<{ imported: number; skipped_duplicates: number }>("/settings/transactions/import", {
+        method: "POST", body: JSON.stringify({ rows, source_file: file.name }),
+      });
+      setImportSummary("Imported " + result.imported + " transaction(s); skipped " + result.skipped_duplicates + " duplicate(s).");
       setNotice("Transaction import completed."); 
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "The file could not be imported.");
+      const failure = cause as Error & { issues?: ImportIssue[] };
+      setImportIssues(Array.isArray(failure.issues) ? failure.issues : []);
+      setError(failure.message || "The file could not be imported.");
+      setImportErrorOpen(true);
     } finally { setImporting(false); }
   }
 
@@ -198,7 +226,7 @@ export function SettingsManager() {
     <Stack spacing={3}>
       <Box><Typography variant="h4" fontWeight={800} letterSpacing={-0.8}>Settings</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>Manage your profile, preferences, and personal data.</Typography></Box>
       {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
-      {notice && <Alert severity="success" onClose={() => setNotice("")}>{notice}</Alert>}
+      <SuccessToast message={notice} onClose={() => setNotice("")} />
       {loading ? <Paper variant="outlined" sx={{ minHeight: 180, display: "grid", placeItems: "center", borderRadius: 3 }}><CircularProgress /></Paper> : (
         <>
           <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>
@@ -245,6 +273,31 @@ export function SettingsManager() {
           </Paper>
         </>
       )}
+      <Dialog open={importErrorOpen} onClose={() => setImportErrorOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 800 }}>Import couldn&apos;t be completed</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+            {error || "Please correct the following CSV entries and try again."}
+          </Typography>
+          {importIssues.length > 0 ? (
+            <List dense disablePadding>
+              {importIssues.map((issue, index) => (
+                <ListItem key={index} alignItems="flex-start" divider={index < importIssues.length - 1} sx={{ px: 0 }}>
+                  <ListItemText
+                    primary={issue.row ? `CSV row ${issue.row}${issue.field ? " · " + issue.field.replaceAll("_", " ") : ""}` : issue.field ?? "Import"}
+                    secondary={issue.message}
+                    primaryTypographyProps={{ fontWeight: 700, variant: "body2" }}
+                    secondaryTypographyProps={{ color: "error.main", variant: "body2" }}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          ) : <Typography variant="body2" color="error.main">{error}</Typography>}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button variant="contained" onClick={() => setImportErrorOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }

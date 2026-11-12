@@ -42,6 +42,7 @@ import {
   Typography,
 } from "@mui/material";
 import { apiRequest } from "@/lib/api";
+import { SuccessToast } from "@/components/success-toast";
 
 type AccountType = "cash" | "bank" | "e_wallet" | "credit" | "investment" | "other";
 
@@ -358,7 +359,7 @@ export function AccountsManager() {
       </Stack>
 
       {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
-      {notice && <Alert severity="success" onClose={() => setNotice("")}>{notice}</Alert>}
+      <SuccessToast message={notice} onClose={() => setNotice("")} />
 
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" }, gap: 2 }}>
         <Paper sx={{ p: 2.5, borderRadius: 3 }}>

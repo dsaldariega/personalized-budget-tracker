@@ -1,22 +1,27 @@
 import cors from "cors";
 import express from "express";
-import helmet from "helmet";
+import * as helmetModule from "helmet";
 import { rateLimit } from "express-rate-limit";
 import accountsRouter from "./routes/accounts.js";
+import transactionsRouter from "./routes/transactions.js";
+import budgetsRouter from "./routes/budgets.js";
+import goalsRouter from "./routes/goals.js";
+import loansRouter from "./routes/loans.js";
+import subscriptionsRouter from "./routes/subscriptions.js";
+import activityRouter from "./routes/activity.js";
+import settingsRouter from "./routes/settings.js";
+import feedbackRouter from "./routes/feedback.js";
 import { authenticate } from "./middleware/authenticate.js";
 
 const app = express();
-const allowedOrigins = (process.env.FRONTEND_URLS ?? process.env.FRONTEND_URL ?? "http://localhost:3000")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+const allowedOrigin = process.env.FRONTEND_URL?.trim() || "http://localhost:3000";
 
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
-app.use(helmet());
+app.use(helmetModule.default());
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    if (!origin || origin === allowedOrigin) return callback(null, true);
     return callback(null, false);
   },
   credentials: false,
@@ -42,6 +47,14 @@ app.get("/api/me", authenticate, (_req, res) => {
 });
 
 app.use("/api/accounts", authenticate, accountsRouter);
+app.use("/api/transactions", authenticate, transactionsRouter);
+app.use("/api/budgets", authenticate, budgetsRouter);
+app.use("/api/goals", authenticate, goalsRouter);
+app.use("/api/loans", authenticate, loansRouter);
+app.use("/api/subscriptions", authenticate, subscriptionsRouter);
+app.use("/api/activity", authenticate, activityRouter);
+app.use("/api/settings", authenticate, settingsRouter);
+app.use("/api/feedback", authenticate, feedbackRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Route not found." });

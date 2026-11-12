@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import FeedbackForm from "@/components/feedback-form";
 import {
   AccountBalanceWalletOutlined, AutoAwesomeOutlined, BackupOutlined, CalendarMonthOutlined,
   CategoryOutlined, CompareArrowsRounded, HelpOutlineRounded, LockOutlined, SavingsOutlined,
   ShowChartRounded, SubscriptionsOutlined, TrendingUpRounded, WalletOutlined,
 } from "@mui/icons-material";
 import {
-  Accordion, AccordionDetails, AccordionSummary, Box, Grid, Paper, Stack, Typography,
+  Accordion, AccordionDetails, AccordionSummary, Box, Button, Grid, Paper, Stack, Typography,
 } from "@mui/material";
 import ExpandMoreRounded from "@mui/icons-material/ExpandMoreRounded";
 
@@ -57,7 +58,7 @@ const faqs = [
   },
   {
     question: "Can I permanently delete my account from the app?",
-    answer: "Permanent account deletion is not currently available as a self-service action. It requires a trusted server-side process to remove the authentication account and its related records together. Export a backup before requesting account deletion through the app's support channel, when available.",
+    answer: "Permanent account deletion is not currently available as a self-service action. It requires a trusted server-side process to remove the authentication account and its related records together. Export a backup first. You can use the feedback form below to record a deletion request, but submitting feedback does not delete your account automatically.",
   },
 ];
 
@@ -154,6 +155,18 @@ export default function AboutPage() {
           ))}
         </Stack>
       </Box>
+
+      <FeedbackForm />
+
+      <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>
+        <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "flex-start", sm: "center" }} justifyContent="space-between" spacing={2}>
+          <Box>
+            <Typography fontWeight={800}>Want to know how your information is handled?</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Read the full BudgetNest privacy policy, including the data we store and the controls available to you.</Typography>
+          </Box>
+          <Button href="/privacy" variant="outlined" sx={{ flexShrink: 0 }}>Read privacy policy</Button>
+        </Stack>
+      </Paper>
 
       <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3, bgcolor: "action.hover" }}>
         <Stack direction="row" spacing={1.5} alignItems="flex-start">

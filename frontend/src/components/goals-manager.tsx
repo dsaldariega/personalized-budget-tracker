@@ -10,7 +10,8 @@ import {
   DialogContent, DialogTitle, Divider, IconButton, LinearProgress, Menu,
   MenuItem, Paper, Stack, TextField, Tooltip, Typography,
 } from "@mui/material";
-import { createClient } from "@/lib/supabase/client";
+import { apiRequest } from "@/lib/api";
+import { SuccessToast } from "@/components/success-toast";
 
 type GoalStatus = "active" | "completed" | "paused";
 type Account = { id: string; name: string; currency: string; is_archived: boolean };
@@ -91,7 +92,6 @@ function GoalDialog({
 }
 
 export function GoalsManager() {
-  const supabase = useMemo(() => createClient(), []);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,18 +108,14 @@ export function GoalsManager() {
   const [notice, setNotice] = useState("");
 
   const loadData = useCallback(async () => {
-    if (!supabase) { setError("Supabase is not configured. Check your frontend environment variables."); setLoading(false); return; }
     setLoading(true); setError("");
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) { setError("Your session could not be verified. Please sign in again."); setLoading(false); return; }
-    const [accountResult, goalResult] = await Promise.all([
-      supabase.from("accounts").select("id,name,currency,is_archived").eq("user_id", user.id).order("name"),
-      supabase.from("savings_goals").select("id,user_id,account_id,name,target_amount,current_amount,target_date,status,created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
-    ]);
-    if (accountResult.error) setError(accountResult.error.message); else setAccounts((accountResult.data ?? []) as Account[]);
-    if (goalResult.error) setError(goalResult.error.message); else setGoals((goalResult.data ?? []) as Goal[]);
-    setLoading(false);
-  }, [supabase]);
+    try {
+      const data = await apiRequest<{ accounts: Account[]; goals: Goal[] }>("/goals");
+      setAccounts(data.accounts); setGoals(data.goals);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to load savings goals.");
+    } finally { setLoading(false); }
+  }, []);
   useEffect(() => { void loadData(); }, [loadData]);
 
   function openCreate() {
@@ -133,46 +129,31 @@ export function GoalsManager() {
     setMenu(null); setDialogOpen(true);
   }
   async function saveGoal(value: GoalForm) {
-    if (!supabase) return;
     setSaving(true); setError(""); setNotice("");
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) { setError("Your session has expired. Please sign in again."); setSaving(false); return; }
-    const account = accounts.find(a => a.id === value.account_id);
-    if (!account || (account.is_archived && (!editing || editing.account_id !== account.id))) { setError("Choose an active account."); setSaving(false); return; }
-    const current = Number(value.current_amount);
-    const target = Number(value.target_amount);
-    const payload = {
-      user_id: user.id, account_id: value.account_id, name: value.name,
-      target_amount: target, current_amount: current, target_date: value.target_date || null,
-      status: current >= target ? "completed" : value.status,
-    };
-    const result = editing
-      ? await supabase.from("savings_goals").update(payload).eq("id", editing.id).eq("user_id", user.id)
-      : await supabase.from("savings_goals").insert(payload);
-    if (result.error) { setError(result.error.message); setSaving(false); return; }
-    await supabase.from("activity_logs").insert({
-      user_id: user.id, action: editing ? "goal.updated" : "goal.created",
-      entity_type: "savings_goal", entity_id: editing?.id ?? null,
-      details: { name: value.name, target_amount: target, current_amount: current, status: payload.status },
-    });
-    setDialogOpen(false); setNotice(editing ? "Savings goal updated." : "Savings goal created."); setSaving(false); await loadData();
+    const current = Number(value.current_amount), target = Number(value.target_amount);
+    const payload = { account_id: value.account_id, name: value.name, target_amount: target, current_amount: current, target_date: value.target_date || null, status: current >= target ? "completed" : value.status };
+    try {
+      await apiRequest<{ goal: Goal }>(editing ? `/goals/${editing.id}` : "/goals", { method: editing ? "PUT" : "POST", body: JSON.stringify(payload) });
+      setDialogOpen(false); setNotice(editing ? "Savings goal updated." : "Savings goal created."); await loadData();
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Unable to save savings goal."); }
+    finally { setSaving(false); }
   }
   async function deleteGoal() {
-    if (!supabase || !deleteTarget) return;
+    if (!deleteTarget) return;
     setSaving(true); setError("");
-    const result = await supabase.from("savings_goals").delete().eq("id", deleteTarget.id).eq("user_id", deleteTarget.user_id);
-    if (result.error) { setError(result.error.message); setSaving(false); setDeleteTarget(null); return; }
-    await supabase.from("activity_logs").insert({ user_id: deleteTarget.user_id, action: "goal.deleted", entity_type: "savings_goal", entity_id: deleteTarget.id, details: { name: deleteTarget.name } });
-    setDeleteTarget(null); setNotice("Savings goal deleted."); setSaving(false); await loadData();
+    try {
+      await apiRequest<void>(`/goals/${deleteTarget.id}`, { method: "DELETE" });
+      setDeleteTarget(null); setNotice("Savings goal deleted."); await loadData();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to delete savings goal."); setDeleteTarget(null);
+    } finally { setSaving(false); }
   }
   async function setStatus(goal: Goal, status: GoalStatus) {
-    if (!supabase) return;
     setMenu(null); setError("");
-    const result = await supabase.from("savings_goals").update({ status }).eq("id", goal.id).eq("user_id", goal.user_id);
-    if (result.error) { setError(result.error.message); return; }
-    await supabase.from("activity_logs").insert({ user_id: goal.user_id, action: "goal.status_updated", entity_type: "savings_goal", entity_id: goal.id, details: { name: goal.name, status } });
-    setNotice(status === "completed" ? "Goal marked as completed." : status === "paused" ? "Goal paused." : "Goal resumed.");
-    await loadData();
+    try {
+      await apiRequest<{ goal: Goal }>(`/goals/${goal.id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
+      setNotice(status === "completed" ? "Goal marked as completed." : status === "paused" ? "Goal paused." : "Goal resumed."); await loadData();
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Unable to update goal status."); }
   }
 
   const accountById = useMemo(() => new Map(accounts.map(a => [a.id, a])), [accounts]);
@@ -199,7 +180,7 @@ export function GoalsManager() {
         <Button variant="contained" startIcon={<AddRounded />} onClick={openCreate} disabled={!accounts.some(a => !a.is_archived)}>Create goal</Button>
       </Stack>
       {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
-      {notice && <Alert severity="success" onClose={() => setNotice("")}>{notice}</Alert>}
+      <SuccessToast message={notice} onClose={() => setNotice("")} />
       {!accounts.some(a => !a.is_archived) && !loading && <Alert severity="info" action={<Button color="inherit" size="small" onClick={() => window.location.assign("/accounts")}>Go to accounts</Button>}>Add an active account before creating a savings goal.</Alert>}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3,minmax(0,1fr))" }, gap: 2 }}>
         <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><SavingsRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Active goals</Typography><Typography variant="h6" fontWeight={800}>{activeGoals.length}</Typography></Box></Stack></Paper>

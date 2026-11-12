@@ -10,7 +10,7 @@ import {
   AccountBalanceWalletOutlined, AssessmentOutlined, AutorenewOutlined,
   DashboardOutlined, DarkModeOutlined, HistoryRounded, InfoOutlined, KeyboardArrowDown, LightModeOutlined,
   MenuRounded, NotificationsNoneOutlined, SavingsOutlined, SettingsOutlined,
-  SwapHorizOutlined, TrendingUpOutlined, AccountCircleOutlined, CloseRounded
+  SwapHorizOutlined, TrendingUpOutlined, AccountCircleOutlined, CloseRounded, PolicyOutlined
 } from "@mui/icons-material";
 import {
   Alert, AppBar, Avatar, Badge, Box, Button, Divider, Drawer, IconButton, List,
@@ -35,7 +35,8 @@ const navGroups = [
   { label: "PREFERENCES", items: [
     { label: "Activity Log", href: "/activity", icon: <HistoryRounded /> },
     { label: "Settings", href: "/settings", icon: <SettingsOutlined /> },
-    { label: "About", href: "/about", icon: <InfoOutlined /> }
+    { label: "About", href: "/about", icon: <InfoOutlined /> },
+    { label: "Privacy", href: "/privacy", icon: <PolicyOutlined /> }
   ] }
 ];
 

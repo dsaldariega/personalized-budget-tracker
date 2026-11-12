@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/client";
 const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL;
 const API_URL = (configuredApiUrl ?? (process.env.NODE_ENV === "development" ? "http://localhost:4000/api" : "")).replace(/\/$/, "");
 
-type ApiError = Error & { status?: number };
+type ApiError = Error & { status?: number; details?: unknown; issues?: unknown };
 
 export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!API_URL) throw new Error("The API URL is not configured. Set NEXT_PUBLIC_API_URL for this environment.");
@@ -28,9 +28,11 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   });
 
   if (!response.ok) {
-    const payload = await response.json().catch(() => null) as { error?: string } | null;
+    const payload = await response.json().catch(() => null) as { error?: string; details?: unknown; issues?: unknown } | null;
     const error = new Error(payload?.error ?? `API request failed (${response.status}).`) as ApiError;
     error.status = response.status;
+    error.details = payload?.details;
+    error.issues = payload?.issues;
     throw error;
   }
 

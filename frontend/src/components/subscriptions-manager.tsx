@@ -12,7 +12,8 @@ import {
   Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   TextField, Tooltip, Typography,
 } from "@mui/material";
-import { createClient } from "@/lib/supabase/client";
+import { apiRequest } from "@/lib/api";
+import { SuccessToast } from "@/components/success-toast";
 
 type Frequency = "weekly" | "monthly" | "quarterly" | "yearly";
 type Account = { id: string; name: string; currency: string; is_archived: boolean };
@@ -129,7 +130,6 @@ function SubscriptionDialog({
 }
 
 export function SubscriptionsManager() {
-  const supabase = useMemo(() => createClient(), []);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -152,20 +152,18 @@ export function SubscriptionsManager() {
   const [notice, setNotice] = useState("");
 
   const loadData = useCallback(async () => {
-    if (!supabase) { setError("Supabase is not configured. Check your frontend environment variables."); setLoading(false); return; }
     setLoading(true); setError("");
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) { setError("Your session could not be verified. Please sign in again."); setLoading(false); return; }
-    const [accountResult, subscriptionResult, paymentResult] = await Promise.all([
-      supabase.from("accounts").select("id,name,currency,is_archived").eq("user_id", user.id).order("name"),
-      supabase.from("subscriptions").select("id,user_id,account_id,name,amount,billing_frequency,next_billing_date,category,notes,is_active,created_at").eq("user_id", user.id).order("next_billing_date"),
-      supabase.from("subscription_payments").select("id,subscription_id,amount,billing_date,paid_date,notes").eq("user_id", user.id).order("paid_date", { ascending: false }),
-    ]);
-    if (accountResult.error) setError(accountResult.error.message); else setAccounts((accountResult.data ?? []) as Account[]);
-    if (subscriptionResult.error) setError(subscriptionResult.error.message); else setSubscriptions((subscriptionResult.data ?? []) as Subscription[]);
-    if (paymentResult.error) setError(paymentResult.error.message); else setPayments((paymentResult.data ?? []) as Payment[]);
-    setLoading(false);
-  }, [supabase]);
+    try {
+      const data = await apiRequest<{ accounts: Account[]; subscriptions: Subscription[]; payments: Payment[] }>("/subscriptions");
+      setAccounts(data.accounts ?? []);
+      setSubscriptions(data.subscriptions ?? []);
+      setPayments(data.payments ?? []);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to load subscriptions.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
   useEffect(() => { void loadData(); }, [loadData]);
 
   const accountById = useMemo(() => new Map(accounts.map(a => [a.id, a])), [accounts]);
@@ -185,44 +183,57 @@ export function SubscriptionsManager() {
     setMenu(null); setDialogOpen(true);
   }
   async function saveSubscription(value: SubscriptionForm) {
-    if (!supabase) return;
-    setSaving(true); setError(""); setNotice("");
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) { setError("Your session has expired. Please sign in again."); setSaving(false); return; }
     const account = accounts.find(a => a.id === value.account_id);
-    if (!account || (account.is_archived && (!editing || editing.account_id !== account.id))) { setError("Choose an active account."); setSaving(false); return; }
+    if (!account || (account.is_archived && (!editing || editing.account_id !== account.id))) {
+      setError("Choose an active account."); return;
+    }
+    setSaving(true); setError(""); setNotice("");
     const payload = {
-      user_id: user.id, account_id: value.account_id, name: value.name,
+      account_id: value.account_id, name: value.name,
       amount: Number(value.amount), billing_frequency: value.billing_frequency,
       next_billing_date: value.next_billing_date, category: value.category || null,
       notes: value.notes.trim() || null, is_active: value.is_active,
     };
-    const result = editing
-      ? await supabase.from("subscriptions").update(payload).eq("id", editing.id).eq("user_id", user.id)
-      : await supabase.from("subscriptions").insert(payload);
-    if (result.error) { setError(result.error.message); setSaving(false); return; }
-    await supabase.from("activity_logs").insert({
-      user_id: user.id, action: editing ? "subscription.updated" : "subscription.created",
-      entity_type: "subscription", entity_id: editing?.id ?? null,
-      details: { name: value.name, amount: Number(value.amount), billing_frequency: value.billing_frequency, account_id: value.account_id },
-    });
-    setDialogOpen(false); setNotice(editing ? "Subscription updated." : "Subscription added."); setSaving(false); await loadData();
+    try {
+      if (editing) {
+        await apiRequest(`/subscriptions/${editing.id}`, { method: "PUT", body: JSON.stringify(payload) });
+      } else {
+        await apiRequest("/subscriptions", { method: "POST", body: JSON.stringify(payload) });
+      }
+      setDialogOpen(false);
+      setNotice(editing ? "Subscription updated." : "Subscription added.");
+      await loadData();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to save subscription.");
+    } finally {
+      setSaving(false);
+    }
   }
   async function deleteSubscription() {
-    if (!supabase || !deleteTarget) return;
+    if (!deleteTarget) return;
     setSaving(true); setError("");
-    const result = await supabase.from("subscriptions").delete().eq("id", deleteTarget.id).eq("user_id", deleteTarget.user_id);
-    if (result.error) { setError(result.error.message); setSaving(false); setDeleteTarget(null); return; }
-    await supabase.from("activity_logs").insert({ user_id: deleteTarget.user_id, action: "subscription.deleted", entity_type: "subscription", entity_id: deleteTarget.id, details: { name: deleteTarget.name } });
-    setDeleteTarget(null); setNotice("Subscription and its payment history deleted."); setSaving(false); await loadData();
+    try {
+      await apiRequest(`/subscriptions/${deleteTarget.id}`, { method: "DELETE" });
+      setDeleteTarget(null);
+      setNotice("Subscription and its payment history deleted.");
+      await loadData();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to delete subscription.");
+    } finally {
+      setSaving(false);
+    }
   }
   async function setActive(subscription: Subscription, is_active: boolean) {
-    if (!supabase) return;
     setMenu(null); setError("");
-    const result = await supabase.from("subscriptions").update({ is_active }).eq("id", subscription.id).eq("user_id", subscription.user_id);
-    if (result.error) { setError(result.error.message); return; }
-    await supabase.from("activity_logs").insert({ user_id: subscription.user_id, action: "subscription.status_updated", entity_type: "subscription", entity_id: subscription.id, details: { name: subscription.name, is_active } });
-    setNotice(is_active ? "Subscription resumed." : "Subscription paused."); await loadData();
+    try {
+      await apiRequest(`/subscriptions/${subscription.id}/status`, {
+        method: "PATCH", body: JSON.stringify({ is_active }),
+      });
+      setNotice(is_active ? "Subscription resumed." : "Subscription paused.");
+      await loadData();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to update subscription status.");
+    }
   }
   function openPayment(subscription: Subscription) {
     setPaymentTarget(subscription); setPaymentDate(todayLocal());
@@ -230,44 +241,42 @@ export function SubscriptionsManager() {
     setMenu(null);
   }
   async function recordPayment() {
-    if (!supabase || !paymentTarget) return;
+    if (!paymentTarget) return;
     const amount = Number(paymentAmount);
-    if (!Number.isFinite(amount) || amount <= 0 || !paymentDate) { setError("Enter a valid payment amount and date."); return; }
-    setSaving(true); setError("");
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) { setError("Your session has expired. Please sign in again."); setSaving(false); return; }
-    const result = await supabase.from("subscription_payments").insert({
-      user_id: user.id, subscription_id: paymentTarget.id, amount,
-      billing_date: paymentTarget.next_billing_date, paid_date: paymentDate,
-      notes: paymentNotes.trim() || null,
-    });
-    if (result.error) { setError(result.error.message); setSaving(false); return; }
-    const nextDate = addBillingPeriod(paymentTarget.next_billing_date, paymentTarget.billing_frequency);
-    const update = await supabase.from("subscriptions").update({ next_billing_date: nextDate }).eq("id", paymentTarget.id).eq("user_id", user.id);
-    if (update.error) {
-      setError("Payment was recorded, but the next billing date could not be updated. Refresh and edit the date manually. " + update.error.message);
-      setSaving(false); await loadData(); return;
+    if (!Number.isFinite(amount) || amount <= 0 || !paymentDate) {
+      setError("Enter a valid payment amount and date."); return;
     }
-    await supabase.from("activity_logs").insert({ user_id: user.id, action: "subscription.payment_recorded", entity_type: "subscription", entity_id: paymentTarget.id, details: { name: paymentTarget.name, amount, billing_date: paymentTarget.next_billing_date, next_billing_date: nextDate } });
-    setPaymentTarget(null); setNotice("Payment recorded. Next billing date updated."); setSaving(false); await loadData();
+    setSaving(true); setError("");
+    try {
+      await apiRequest(`/subscriptions/${paymentTarget.id}/payments`, {
+        method: "POST",
+        body: JSON.stringify({ amount, paid_date: paymentDate, notes: paymentNotes.trim() || null }),
+      });
+      setPaymentTarget(null);
+      setNotice("Payment recorded. Next billing date updated.");
+      await loadData();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to record subscription payment.");
+      await loadData();
+    } finally {
+      setSaving(false);
+    }
   }
   async function deletePayment(payment: Payment) {
-    if (!supabase) return;
+    if (!historyTarget) return;
     setSaving(true); setError("");
-    const result = await supabase.from("subscription_payments").delete().eq("id", payment.id).eq("user_id", historyTarget ? subscriptions.find(s => s.id === historyTarget.id)?.user_id ?? "" : "");
-    if (result.error) setError(result.error.message);
-    else {
-      const subscription = subscriptions.find(s => s.id === payment.subscription_id);
-      if (subscription && subscription.next_billing_date === addBillingPeriod(payment.billing_date, subscription.billing_frequency)) {
-        const rollback = await supabase.from("subscriptions").update({ next_billing_date: payment.billing_date }).eq("id", subscription.id).eq("user_id", subscription.user_id);
-        if (rollback.error) setError("Payment history deleted, but the next billing date could not be rolled back: " + rollback.error.message);
-        else setNotice("Payment history deleted and the next billing date was restored.");
-      } else {
-        setNotice("Payment history entry deleted. The next billing date was left unchanged because a later cycle may already have been processed.");
-      }
+    try {
+      const result = await apiRequest<{ message: string }>(
+        `/subscriptions/${historyTarget.id}/payments/${payment.id}`,
+        { method: "DELETE" },
+      );
+      setNotice(result.message);
       await loadData();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to delete payment history.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   const filtered = subscriptions.filter(subscription =>
@@ -294,7 +303,7 @@ export function SubscriptionsManager() {
         <Button variant="contained" startIcon={<AddRounded />} onClick={openCreate} disabled={!accounts.some(a => !a.is_archived)}>Add subscription</Button>
       </Stack>
       {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
-      {notice && <Alert severity="success" onClose={() => setNotice("")}>{notice}</Alert>}
+      <SuccessToast message={notice} onClose={() => setNotice("")} />
       {!accounts.some(a => !a.is_archived) && !loading && <Alert severity="info" action={<Button color="inherit" size="small" onClick={() => window.location.assign("/accounts")}>Go to accounts</Button>}>Add an active account before creating a subscription.</Alert>}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3,minmax(0,1fr))" }, gap: 2 }}>
         <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><SubscriptionsRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Active subscriptions</Typography><Typography variant="h6" fontWeight={800}>{active.length}</Typography></Box></Stack></Paper>

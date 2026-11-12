@@ -11,6 +11,7 @@ import {
   FormControl, Grid, LinearProgress, MenuItem, Paper, Select, Stack,
   Typography,
 } from "@mui/material";
+import { apiRequest } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
 type Account = { id: string; name: string; currency: string; opening_balance: number; is_archived: boolean; account_type: string };
@@ -163,22 +164,29 @@ export function DashboardManager() {
       }
       return { data: rows, error: null };
     };
-    const [accountResult, transactionResult, budgetResult, goalResult, subscriptionResult] = await Promise.all([
-      supabase.from("accounts").select("id,name,currency,opening_balance,is_archived,account_type").eq("user_id", user.id).order("created_at", { ascending: false }),
-      fetchAllTransactions(),
-      supabase.from("budgets").select("id,account_id,name,category,amount,period,start_date,end_date").eq("user_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("savings_goals").select("id,account_id,name,target_amount,current_amount,target_date,status").eq("user_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("subscriptions").select("id,account_id,name,amount,billing_frequency,next_billing_date,is_active").eq("user_id", user.id).eq("is_active", true).order("next_billing_date", { ascending: true }),
-    ]);
-    const failed = [accountResult, transactionResult, budgetResult, goalResult, subscriptionResult].find(result => result.error);
-    if (failed?.error) setError(failed.error.message);
-    setAccounts((accountResult.data ?? []) as Account[]);
-    setTransactions((transactionResult.data ?? []) as Transaction[]);
-    setBudgets((budgetResult.data ?? []) as Budget[]);
-    setGoals((goalResult.data ?? []) as Goal[]);
-    setSubscriptions((subscriptionResult.data ?? []) as Subscription[]);
-    setNow(new Date());
-    setLoading(false);
+    try {
+      const [accountApiResult, transactionResult, budgetResult, goalResult, subscriptionResult] = await Promise.all([
+        apiRequest<{ accounts: Account[] }>("/accounts"),
+        fetchAllTransactions(),
+        supabase.from("budgets").select("id,account_id,name,category,amount,period,start_date,end_date").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("savings_goals").select("id,account_id,name,target_amount,current_amount,target_date,status").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("subscriptions").select("id,account_id,name,amount,billing_frequency,next_billing_date,is_active").eq("user_id", user.id).eq("is_active", true).order("next_billing_date", { ascending: true }),
+      ]);
+
+      const failed = [transactionResult, budgetResult, goalResult, subscriptionResult].find(result => result.error);
+      if (failed?.error) setError(failed.error.message);
+
+      setAccounts(accountApiResult.accounts ?? []);
+      setTransactions((transactionResult.data ?? []) as Transaction[]);
+      setBudgets((budgetResult.data ?? []) as Budget[]);
+      setGoals((goalResult.data ?? []) as Goal[]);
+      setSubscriptions((subscriptionResult.data ?? []) as Subscription[]);
+      setNow(new Date());
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load dashboard data.");
+    } finally {
+      setLoading(false);
+    }
   }, [supabase]);
 
   useEffect(() => { void loadData(); }, [loadData]);
