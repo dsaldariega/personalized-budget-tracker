@@ -171,9 +171,8 @@ function PaymentDialog({ open, loan, currency, remainingPrincipal, accruedIntere
   useEffect(() => {
     if (open) {
       const firstDueDate = loan ? calculateDueDate(loan.start_date, 1) : today();
-      const defaultDate = !hasPayments
-        ? (firstDueDate > today() ? firstDueDate : today())
-        : (lastPaymentDate > today() ? lastPaymentDate : today());
+      const nextDueDate = hasPayments ? calculateDueDate(lastPaymentDate, 1) : firstDueDate;
+      const defaultDate = nextDueDate > today() ? nextDueDate : today();
       setForm({ ...emptyPayment(), payment_date: defaultDate });
       setFormError("");
     }
