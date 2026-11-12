@@ -399,7 +399,7 @@ For the deployed backend, set `FRONTEND_URLS` to the exact frontend production o
 
 ### Gradual migration plan
 
-Accounts was the first API-backed module. Transactions, Budgets, Savings Goals, and Loans are now migrated. Dashboard reads, activity, and settings will be migrated in separate steps. Until each module is migrated and tested, it continues using the existing Supabase browser client and RLS policies. Authentication remains managed by Supabase Auth in the frontend; the API receives the user's access token for each protected request.
+Accounts was the first API-backed module. Transactions, Budgets, Savings Goals, Loans, and Subscriptions are now migrated. Dashboard reads, activity, and settings will be migrated in separate steps. Until each module is migrated and tested, it continues using the existing Supabase browser client and RLS policies. Authentication remains managed by Supabase Auth in the frontend; the API receives the user's access token for each protected request.
 
 ### Local verification
 
