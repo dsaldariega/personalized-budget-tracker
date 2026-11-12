@@ -1,5 +1,6 @@
 "use client";
 
+import { AuthModal } from "@/components/auth-modal";
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BackupOutlined, CheckCircleOutlineRounded, CloudDownloadOutlined, CloudUploadOutlined,
@@ -232,7 +233,7 @@ export function SettingsManager() {
           <Avatar sx={{ width: 56, height: 56, bgcolor: "action.hover", color: "primary.main" }}><LockOutlined /></Avatar>
           <Typography variant="h6" fontWeight={800}>Login required</Typography>
           <Typography color="text.secondary">Please log in to use Profile, Data backup & transfer, and account management features. Your guest financial data can still be used while you try BudgetNest, but account settings belong to your signed-in account.</Typography>
-          <Button variant="contained" href="/login">Log in</Button>
+          <Button variant="contained" onClick={() => setRequiresLogin(false)}>Log in</Button>
         </Stack>
       </Paper>
     </Stack>
