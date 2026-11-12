@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import "./globals.css";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 import { AppShell } from "@/components/app-shell";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider, type ThemePreference } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
   title: {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const cookieStore = await cookies();
   const savedTheme = cookieStore.get("budgetnest-theme")?.value;
-  const initialPreference = savedTheme === "system" || savedTheme === "dark" ? savedTheme : "light";
+  const initialPreference: ThemePreference = savedTheme === "system" || savedTheme === "dark" ? savedTheme : "light";
 
   return (
     <html lang="en">
