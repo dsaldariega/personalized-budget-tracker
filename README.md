@@ -83,6 +83,14 @@ personalized-budget-tracker/
 
 The frontend will never contain a Supabase service-role key. The Express API verifies the user's Supabase access token and uses a user-scoped Supabase client with the publishable key, so existing RLS policies remain active.
 
+### Authentication setup
+
+- New registrations require a unique username (3–24 lowercase letters, numbers, or underscores).
+- Users can sign in with either their username or email address.
+- Usernames are stored in `public.profiles`; the auth trigger creates the profile when a Supabase Auth user is registered.
+- Apply all SQL files in `supabase/migrations/` to the BudgetNest Supabase project before testing username sign-in. In particular, apply `20261112000000_add_profile_usernames.sql`.
+- For immediate sign-in after registration, disable **Confirm email** in Supabase Dashboard → Authentication → Providers → Email. Supabase otherwise creates the account but withholds the session until the email address is confirmed. This setting is required for instant registration-to-app navigation.
+
 ### Backend API migration
 
 The backend is being adopted gradually while the frontend continues to use Supabase directly for modules that have not yet migrated.
