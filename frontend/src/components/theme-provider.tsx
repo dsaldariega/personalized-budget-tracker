@@ -90,28 +90,44 @@ export function ThemeProvider({
       error: { main: mode === "dark" ? "#FF8292" : "#D93650" },
       info: { main: mode === "dark" ? "#70BFFF" : "#328DD8" },
       background: mode === "dark"
-        ? { default: "#111426", paper: "#1A1F35" }
+        ? { default: "#121212", paper: "#121212" }
         : { default: "#F8F7FA", paper: "#FFFFFF" },
-      divider: mode === "dark" ? "rgba(230,235,255,0.10)" : "rgba(34,42,74,0.09)",
+      text: mode === "dark"
+        ? {
+            primary: "#FFFFFF",
+            secondary: "rgba(255,255,255,0.70)",
+            disabled: "rgba(255,255,255,0.50)",
+          }
+        : undefined,
+      action: mode === "dark"
+        ? {
+            active: "#FFFFFF",
+            hover: "rgba(255,255,255,0.08)",
+            selected: "rgba(255,255,255,0.16)",
+            disabled: "rgba(255,255,255,0.30)",
+            disabledBackground: "rgba(255,255,255,0.12)",
+          }
+        : undefined,
+      divider: mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(34,42,74,0.09)",
     },
     shape: { borderRadius: 12 },
     typography: {
-      htmlFontSize: 14,
-      fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      htmlFontSize: 16,
+      fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
       fontSize: 14,
-      h1: { fontSize: "1.9rem", lineHeight: 1.2, fontWeight: 750, letterSpacing: "-0.035em" },
-      h2: { fontSize: "1.65rem", lineHeight: 1.25, fontWeight: 750, letterSpacing: "-0.03em" },
-      h3: { fontSize: "1.4rem", lineHeight: 1.3, fontWeight: 750, letterSpacing: "-0.025em" },
-      h4: { fontSize: "1.25rem", lineHeight: 1.35, fontWeight: 750, letterSpacing: "-0.02em" },
-      h5: { fontSize: "1.1rem", lineHeight: 1.4, fontWeight: 700 },
-      h6: { fontSize: "1rem", lineHeight: 1.45, fontWeight: 700 },
-      subtitle1: { fontSize: "0.95rem", lineHeight: 1.5, fontWeight: 600 },
-      subtitle2: { fontSize: "0.85rem", lineHeight: 1.45, fontWeight: 650 },
-      body1: { fontSize: "0.9rem", lineHeight: 1.6 },
-      body2: { fontSize: "0.82rem", lineHeight: 1.55 },
-      button: { fontSize: "0.84rem", fontWeight: 650, textTransform: "none" },
-      caption: { fontSize: "0.72rem", lineHeight: 1.45 },
-      overline: { fontSize: "0.68rem", lineHeight: 1.5, fontWeight: 750, letterSpacing: "0.09em" },
+      h1: { fontSize: "2rem", lineHeight: 1.2, fontWeight: 700, letterSpacing: "-0.03em" },
+      h2: { fontSize: "1.75rem", lineHeight: 1.25, fontWeight: 700, letterSpacing: "-0.025em" },
+      h3: { fontSize: "1.5rem", lineHeight: 1.3, fontWeight: 700, letterSpacing: "-0.02em" },
+      h4: { fontSize: "1.3rem", lineHeight: 1.35, fontWeight: 700, letterSpacing: "-0.015em" },
+      h5: { fontSize: "1.15rem", lineHeight: 1.4, fontWeight: 700 },
+      h6: { fontSize: "1.05rem", lineHeight: 1.45, fontWeight: 700 },
+      subtitle1: { fontSize: "1rem", lineHeight: 1.5, fontWeight: 600 },
+      subtitle2: { fontSize: "0.9rem", lineHeight: 1.45, fontWeight: 600 },
+      body1: { fontSize: "0.95rem", lineHeight: 1.6 },
+      body2: { fontSize: "0.875rem", lineHeight: 1.55 },
+      button: { fontSize: "0.875rem", fontWeight: 600, textTransform: "none" },
+      caption: { fontSize: "0.75rem", lineHeight: 1.45 },
+      overline: { fontSize: "0.7rem", lineHeight: 1.5, fontWeight: 700, letterSpacing: "0.08em" },
     },
     components: {
       MuiCard: {
@@ -120,7 +136,7 @@ export function ThemeProvider({
             position: "relative",
             overflow: "hidden",
             border: "1px solid",
-            borderColor: mode === "dark" ? "rgba(230,235,255,0.09)" : "rgba(34,42,74,0.075)",
+            borderColor: mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(34,42,74,0.075)",
             borderRadius: 16,
             boxShadow: mode === "dark" ? "0 8px 28px rgba(0,0,0,0.16)" : "0 6px 24px rgba(38, 45, 85, 0.045)",
             transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
@@ -136,7 +152,10 @@ export function ThemeProvider({
       },
       MuiPaper: {
         styleOverrides: {
-          root: { backgroundImage: "none" },
+          root: {
+            backgroundImage: "none",
+            backgroundColor: mode === "dark" ? "#1E1E1E" : undefined,
+          },
           rounded: { borderRadius: 16 },
         },
       },
@@ -144,7 +163,7 @@ export function ThemeProvider({
         styleOverrides: {
           root: {
             backdropFilter: "blur(16px)",
-            backgroundColor: mode === "dark" ? "rgba(17,20,38,0.88)" : "rgba(250,249,252,0.88)",
+            backgroundColor: mode === "dark" ? "rgba(18,18,18,0.92)" : "rgba(250,249,252,0.88)",
           },
         },
       },
@@ -165,8 +184,8 @@ export function ThemeProvider({
       },
       MuiChip: {
         styleOverrides: {
-          root: { borderRadius: 8, fontWeight: 650 },
-          label: { fontSize: "0.76rem" },
+          root: { borderRadius: 8, fontWeight: 600 },
+          label: { fontSize: "0.8rem" },
         },
       },
       MuiInputLabel: {
@@ -194,13 +213,13 @@ export function ThemeProvider({
             lineHeight: 1.5,
           },
           notchedOutline: {
-            borderColor: mode === "dark" ? "rgba(230,235,255,0.20)" : "rgba(34,42,74,0.20)",
+            borderColor: mode === "dark" ? "rgba(255,255,255,0.23)" : "rgba(34,42,74,0.20)",
           },
         },
       },
       MuiTableCell: {
         styleOverrides: {
-          root: { padding: "11px 14px", fontSize: "0.82rem" },
+          root: { padding: "12px 14px", fontSize: "0.875rem" },
           head: { fontWeight: 700, color: mode === "dark" ? "#C8CDE0" : "#555B70" },
         },
       },
