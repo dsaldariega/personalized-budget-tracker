@@ -12,8 +12,8 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   const supabase = createClient();
   if (!supabase) return guestApiRequest<T>(path, init);
 
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw new Error("Unable to verify your sign-in session.");
+  // A missing, expired, or unreadable local session should not block guest mode.
+  const { data: { session } } = await supabase.auth.getSession();
   if (!session?.access_token) return guestApiRequest<T>(path, init);
 
   const headers = new Headers(init.headers);
