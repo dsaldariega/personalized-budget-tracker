@@ -11,7 +11,7 @@ import { publicApiRequest } from "@/lib/api";
 
 type AuthMode = "login" | "register";
 
-export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: boolean; onAuthenticated?: () => void }) {
+export function AuthForm({ mode, modal = false, onAuthenticated }: { mode: AuthMode; modal?: boolean; onAuthenticated?: () => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -122,13 +122,13 @@ export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: bo
       elevation={0}
       sx={{
         width: "100%",
-        maxWidth: 430,
-        p: { xs: 2.5, sm: 3.25 },
-        borderRadius: 4,
-        border: 1,
+        maxWidth: modal ? "none" : 430,
+        p: modal ? 0 : { xs: 2.5, sm: 3.25 },
+        borderRadius: modal ? 0 : 4,
+        border: modal ? 0 : 1,
         borderColor: "divider",
         bgcolor: "background.paper",
-        boxShadow: 3,
+        boxShadow: modal ? "none" : 3,
       }}
     >
       <Stack spacing={2.1}>
