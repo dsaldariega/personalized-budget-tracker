@@ -11,6 +11,7 @@ import subscriptionsRouter from "./routes/subscriptions.js";
 import activityRouter from "./routes/activity.js";
 import settingsRouter from "./routes/settings.js";
 import feedbackRouter from "./routes/feedback.js";
+import authRouter from "./routes/auth.js";
 import { authenticate } from "./middleware/authenticate.js";
 
 const require = createRequire(import.meta.url);
@@ -52,6 +53,8 @@ app.use("/api", rateLimit({
   standardHeaders: "draft-8",
   legacyHeaders: false,
 }));
+
+app.use("/api/auth", authRouter);
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", service: "budgetnest-api" });
