@@ -173,7 +173,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Box sx={{ px: 1.5, py: 2, flexGrow: 1, overflowY: "auto" }}>
         {navGroups.map((group) => (
           <Box key={group.label} sx={{ mb: 2.2 }}>
-            <Typography sx={{ px: 1.5, mb: 0.8, fontSize: 10, fontWeight: 800, letterSpacing: 1.2, color: "text.disabled" }}>{group.label}</Typography>
+            <Typography sx={{ px: 1.5, mb: 0.8, fontSize: 11, fontWeight: 650, letterSpacing: 1.1, color: "text.secondary" }}>{group.label}</Typography>
             <List disablePadding>
               {group.items.map((item) => {
                 const selected = pathname === item.href;
@@ -193,7 +193,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     }}
                   >
                     <ListItemIcon sx={{ minWidth: 36, color: "inherit" }}>{item.icon}</ListItemIcon>
-                    <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: 13.5, fontWeight: selected ? 750 : 550 }} />
+                    <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: 14.5, fontWeight: selected ? 650 : 450, lineHeight: 1.4 }} />
                     {selected && <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: "primary.main" }} />}
                   </ListItemButton>
                 );
