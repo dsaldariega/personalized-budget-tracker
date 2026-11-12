@@ -1,6 +1,6 @@
 import cors from "cors";
 import express from "express";
-import helmet from "helmet";
+import { createRequire } from "node:module";
 import { rateLimit } from "express-rate-limit";
 import accountsRouter from "./routes/accounts.js";
 import transactionsRouter from "./routes/transactions.js";
@@ -12,6 +12,9 @@ import activityRouter from "./routes/activity.js";
 import settingsRouter from "./routes/settings.js";
 import feedbackRouter from "./routes/feedback.js";
 import { authenticate } from "./middleware/authenticate.js";
+
+const require = createRequire(import.meta.url);
+const helmet = require("helmet") as () => express.RequestHandler;
 
 const app = express();
 const allowedOrigin = process.env.FRONTEND_URL?.trim() || "http://localhost:3000";
