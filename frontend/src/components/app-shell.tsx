@@ -19,7 +19,7 @@ import {
 import {
   AppBar, Avatar, Badge, Box, Button, Divider, Drawer, IconButton, List,
   ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, Toolbar,
-  Popover, Tooltip, Typography, useMediaQuery, useTheme
+  Popover, Tooltip, Typography, Dialog, DialogContent, useMediaQuery, useTheme
 } from "@mui/material";
 import { useThemeMode } from "@/components/theme-provider";
 
@@ -53,6 +53,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!authReady || user) return;
+    const dismissed = window.sessionStorage.getItem("budgetnest-welcome-dismissed");
+    if (!dismissed) setWelcomeOpen(true);
+  }, [authReady, user]);
 
   useEffect(() => {
     const supabase = createSupabaseClient();
@@ -129,6 +135,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountMenu, setAccountMenu] = useState<HTMLElement | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
   const pageTitle = useMemo(
     () => navGroups.flatMap((group) => group.items).find((item) => item.href === pathname)?.label ?? "BudgetNest",
     [pathname]
@@ -210,8 +217,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Toolbar sx={{ minHeight: "72px !important", px: { xs: 2, md: 3 } }}>
             <IconButton onClick={() => setMobileOpen(true)} sx={{ display: { lg: "none" }, mr: 1 }} aria-label="Open navigation"><MenuRounded /></IconButton>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="caption" color="text.secondary">WORKSPACE / {pageTitle.toUpperCase()}</Typography>
-              <Typography fontWeight={750} sx={{ lineHeight: 1.25 }}>{pageTitle}</Typography>
+              <Typography fontWeight={800} sx={{ fontSize: { xs: 16, sm: 17 }, lineHeight: 1.25 }}>{pageTitle}</Typography>
             </Box>
             <Tooltip title={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
               <IconButton onClick={toggleMode} aria-label="Toggle color theme" sx={{ mr: 0.5 }}>
@@ -243,6 +249,59 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           </Toolbar>
         </AppBar>
+        <Dialog
+          open={welcomeOpen}
+          onClose={() => {
+            window.sessionStorage.setItem("budgetnest-welcome-dismissed", "1");
+            setWelcomeOpen(false);
+          }}
+          fullWidth
+          maxWidth="xs"
+          PaperProps={{ sx: { borderRadius: 4, overflow: "hidden" } }}
+        >
+          <DialogContent sx={{ p: { xs: 3, sm: 4 } }}>
+            <Stack spacing={2.2}>
+              <Box>
+                <Typography sx={{ color: "primary.main", fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase" }}>
+                  Welcome to BudgetNest
+                </Typography>
+                <Typography variant="h5" fontWeight={800} letterSpacing={-0.7} sx={{ mt: 0.7 }}>
+                  A calmer place for your money.
+                </Typography>
+                <Typography color="text.secondary" sx={{ mt: 1, lineHeight: 1.7 }}>
+                  Explore the app, get a feel for the dashboard, and sign in whenever you’re ready to save your own data.
+                </Typography>
+              </Box>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2}>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={() => {
+                    setWelcomeOpen(false);
+                    setLoginOpen(true);
+                  }}
+                  sx={{ borderRadius: 2.5, py: 1.15, textTransform: "none", fontWeight: 750 }}
+                >
+                  Sign in / Create account
+                </Button>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  onClick={() => {
+                    window.sessionStorage.setItem("budgetnest-welcome-dismissed", "1");
+                    setWelcomeOpen(false);
+                  }}
+                  sx={{ borderRadius: 2.5, py: 1.15, textTransform: "none", fontWeight: 700 }}
+                >
+                  Continue as guest
+                </Button>
+              </Stack>
+              <Typography variant="caption" color="text.disabled" textAlign="center">
+                You can close this welcome anytime and continue exploring.
+              </Typography>
+            </Stack>
+          </DialogContent>
+        </Dialog>
         <AuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />
         <Popover
           open={Boolean(notificationAnchor)}
