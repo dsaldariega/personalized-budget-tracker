@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { usePathname } from "next/navigation";
+import { AuthModal } from "@/components/auth-modal";
 import {
   AccountBalanceWalletOutlined, AssessmentOutlined, AutorenewOutlined,
   DashboardOutlined, DarkModeOutlined, HistoryRounded, InfoOutlined, KeyboardArrowDown, LightModeOutlined,
@@ -78,6 +79,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountMenu, setAccountMenu] = useState<HTMLElement | null>(null);
   const [noticeOpen, setNoticeOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
   const pageTitle = useMemo(
     () => navGroups.flatMap((group) => group.items).find((item) => item.href === pathname)?.label ?? "BudgetNest",
     [pathname]
@@ -184,13 +186,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {user ? (
                 <MenuItem onClick={handleSignOut}>Sign out</MenuItem>
               ) : (
-                <MenuItem component="a" href="/login" onClick={() => setAccountMenu(null)}><AccountCircleOutlined fontSize="small" sx={{ mr: 1 }} /> Sign in / Create account</MenuItem>
+                <MenuItem onClick={() => { setAccountMenu(null); setLoginOpen(true); }}><AccountCircleOutlined fontSize="small" sx={{ mr: 1 }} /> Sign in / Create account</MenuItem>
               )}
             </Menu>
 
           </Toolbar>
         </AppBar>
-        <Snackbar open={noticeOpen} autoHideDuration={3000} onClose={() => setNoticeOpen(false)} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
+        <AuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />\n        <Snackbar open={noticeOpen} autoHideDuration={3000} onClose={() => setNoticeOpen(false)} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
           <Alert severity="info" variant="filled" onClose={() => setNoticeOpen(false)}>You’re all caught up.</Alert>
         </Snackbar>
         <Box component="main" sx={{ width: "100%", maxWidth: 1600, mx: "auto", px: { xs: 2, sm: 3, xl: 4 }, py: { xs: 3, md: 4 }, flexGrow: 1 }}>
