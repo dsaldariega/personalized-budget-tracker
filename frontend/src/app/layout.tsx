@@ -16,13 +16,13 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const cookieStore = await cookies();
   const savedTheme = cookieStore.get("budgetnest-theme")?.value;
-  const initialMode = savedTheme === "dark" ? "dark" : "light";
+  const initialPreference = savedTheme === "system" || savedTheme === "dark" ? savedTheme : "light";
 
   return (
     <html lang="en">
       <body>
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-          <ThemeProvider initialMode={initialMode}>
+          <ThemeProvider initialPreference={initialPreference}>
             <AppShell>{children}</AppShell>
           </ThemeProvider>
         </AppRouterCacheProvider>
