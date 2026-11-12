@@ -1,6 +1,6 @@
 import cors from "cors";
 import express from "express";
-import * as helmetModule from "helmet";
+import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import accountsRouter from "./routes/accounts.js";
 import transactionsRouter from "./routes/transactions.js";
@@ -18,7 +18,7 @@ const allowedOrigin = process.env.FRONTEND_URL?.trim() || "http://localhost:3000
 
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
-app.use(helmetModule.default());
+app.use(helmet());
 app.use(cors({
   origin(origin, callback) {
     if (!origin || origin === allowedOrigin) return callback(null, true);
