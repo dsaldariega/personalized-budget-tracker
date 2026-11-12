@@ -12,14 +12,14 @@ import { buildNotifications } from "@/lib/notifications";
 import type { AppNotification } from "@/lib/notifications";
 import {
   AccountBalanceWalletOutlined, AssessmentOutlined, AutorenewOutlined,
-  DashboardOutlined, DarkModeOutlined, HistoryRounded, InfoOutlined, KeyboardArrowDown, LightModeOutlined,
+  DashboardOutlined, DarkModeOutlined, HistoryRounded, InfoOutlined, KeyboardArrowDown, LightModeOutlined, ComputerOutlined,
   MenuRounded, NotificationsNoneOutlined, SavingsOutlined, SettingsOutlined,
   SwapHorizOutlined, TrendingUpOutlined, AccountCircleOutlined, CloseRounded, PolicyOutlined
 } from "@mui/icons-material";
 import {
   AppBar, Avatar, Badge, Box, Button, CircularProgress, Divider, Drawer, IconButton, List,
   ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, Toolbar,
-  Popover, Tooltip, Typography, Dialog, DialogContent, useMediaQuery, useTheme
+  Popover, Tooltip, Typography, Dialog, DialogContent, useMediaQuery, useTheme, ToggleButton, ToggleButtonGroup
 } from "@mui/material";
 import { useThemeMode } from "@/components/theme-provider";
 
@@ -143,7 +143,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
-  const { mode, toggleMode } = useThemeMode();
+  const { mode, preference, setPreference } = useThemeMode();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountMenu, setAccountMenu] = useState<HTMLElement | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -217,7 +217,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Box component="nav" sx={{ width: { lg: drawerWidth }, flexShrink: { lg: 0 } }}>
         <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)}
           ModalProps={{ keepMounted: true }}
-          sx={{ display: { xs: "block", lg: "none" }, "& .MuiDrawer-paper": { width: drawerWidth, border: 0 } }}>
+          sx={{ display: { xs: "block", lg: "none" }, "& .MuiDrawer-paper": { width: `min(${drawerWidth}px, calc(100vw - 40px))`, border: 0 } }}>
           {sidebar}
         </Drawer>
         <Drawer variant="permanent" open
@@ -228,18 +228,37 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <Box sx={{ ml: { lg: `${drawerWidth}px` }, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "background.default", backdropFilter: "blur(16px)" }}>
-          <Toolbar sx={{ minHeight: "72px !important", px: { xs: 2, md: 3 } }}>
+          <Toolbar sx={{ minHeight: { xs: "60px !important", sm: "68px !important" }, px: { xs: 1.25, sm: 2, md: 3 }, gap: { xs: 0.25, sm: 0.75 } }}>
             <IconButton onClick={() => setMobileOpen(true)} sx={{ display: { lg: "none" }, mr: 1 }} aria-label="Open navigation"><MenuRounded /></IconButton>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography fontWeight={800} sx={{ fontSize: { xs: 16, sm: 17 }, lineHeight: 1.25 }}>{pageTitle}</Typography>
+              <Typography fontWeight={750} sx={{ fontSize: { xs: 14, sm: 16 }, lineHeight: 1.25 }}>{pageTitle}</Typography>
             </Box>
-            <Tooltip title={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
-              <IconButton onClick={toggleMode} aria-label="Toggle color theme" sx={{ mr: 0.5 }}>
-                {mode === "dark" ? <LightModeOutlined /> : <DarkModeOutlined />}
-              </IconButton>
-            </Tooltip>
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={preference}
+              onChange={(_, value: "system" | "light" | "dark" | null) => {
+                if (value) setPreference(value);
+              }}
+              aria-label="Appearance preference"
+              sx={{
+                mr: { xs: 0.25, sm: 0.75 },
+                p: 0.35,
+                gap: 0.25,
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 2.5,
+                bgcolor: "action.hover",
+                "& .MuiToggleButtonGroup-grouped": { border: 0, borderRadius: "8px !important", mx: 0, px: { xs: 0.65, sm: 0.9 }, py: 0.55, color: "text.secondary" },
+                "& .Mui-selected": { bgcolor: "background.paper !important", color: "primary.main", boxShadow: "0 1px 4px rgba(20,24,40,0.12)" },
+              }}
+            >
+              <ToggleButton value="system" aria-label="Use system appearance" title="System"><ComputerOutlined sx={{ fontSize: 18 }} /></ToggleButton>
+              <ToggleButton value="light" aria-label="Use light appearance" title="Light"><LightModeOutlined sx={{ fontSize: 18 }} /></ToggleButton>
+              <ToggleButton value="dark" aria-label="Use dark appearance" title="Dark"><DarkModeOutlined sx={{ fontSize: 18 }} /></ToggleButton>
+            </ToggleButtonGroup>
             <Tooltip title="Notifications">
-              <IconButton onClick={(event) => setNotificationAnchor(event.currentTarget)} aria-label="Notifications" sx={{ mr: 1 }}>
+              <IconButton onClick={(event) => setNotificationAnchor(event.currentTarget)} aria-label="Notifications" sx={{ mr: { xs: 0.25, sm: 0.75 } }}>
                 <Badge badgeContent={visibleNotifications.length} color="error" max={9}>
                   <NotificationsNoneOutlined />
                 </Badge>
@@ -400,11 +419,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           key={`${pathname}:${user?.id ?? "guest"}`}
           component="main"
           className="page-transition"
-          sx={{ width: "100%", maxWidth: 1600, mx: "auto", px: { xs: 2, sm: 3, xl: 4 }, py: { xs: 3, md: 4 }, flexGrow: 1 }}
+          sx={{ width: "100%", maxWidth: 1600, mx: "auto", px: { xs: 1.5, sm: 2.5, lg: 3, xl: 4 }, py: { xs: 2.25, sm: 3, md: 4 }, flexGrow: 1, minWidth: 0 }}
         >
           {children}
         </Box>
-        <Box component="footer" sx={{ px: 3, py: 2, borderTop: 1, borderColor: "divider" }}>
+        <Box component="footer" sx={{ px: { xs: 2, sm: 3 }, py: 1.5, borderTop: 1, borderColor: "divider" }}>
           <Typography variant="caption" color="text.disabled">BudgetNest · Your money, with a little more clarity.</Typography>
         </Box>
       </Box>
