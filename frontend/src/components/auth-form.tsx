@@ -126,9 +126,9 @@ export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: bo
         p: { xs: 2.5, sm: 3.25 },
         borderRadius: 4,
         border: 1,
-        borderColor: "rgba(34, 28, 53, 0.08)",
-        bgcolor: "rgba(255,255,255,0.96)",
-        boxShadow: "0 24px 70px rgba(34, 28, 53, 0.10)",
+        borderColor: "divider",
+        bgcolor: "background.paper",
+        boxShadow: 3,
       }}
     >
       <Stack spacing={2.1}>
@@ -215,8 +215,8 @@ export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: bo
                 py: 1.3,
                 borderRadius: 2.5,
                 textTransform: "none",
-                fontWeight: 750,
-                boxShadow: "0 8px 18px rgba(217, 54, 80, 0.18)",
+                fontWeight: 600,
+                boxShadow: "none",
               }}
             >
               {loading ? "Please wait…" : isRegister ? "Create account" : "Sign in"}

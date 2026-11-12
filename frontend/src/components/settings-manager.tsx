@@ -5,10 +5,12 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "
 import {
   BackupOutlined, CheckCircleOutlineRounded, CloudDownloadOutlined, CloudUploadOutlined,
   DeleteOutlineRounded, LockOutlined, PaletteOutlined, PersonOutlineRounded, SecurityOutlined,
+  ComputerOutlined, DarkModeOutlined, LightModeOutlined,
 } from "@mui/icons-material";
 import {
   Alert, Avatar, Box, Button, CircularProgress, Divider, MenuItem, Paper, Stack,
   TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText,
+  ToggleButtonGroup, ToggleButton,
 } from "@mui/material";
 import { createClient } from "@/lib/supabase/client";
 import { apiRequest } from "@/lib/api";
@@ -93,7 +95,7 @@ function localDateStamp() {
 }
 export function SettingsManager() {
   const supabase = useMemo(() => createClient(), []);
-  const { mode, toggleMode } = useThemeMode();
+  const { mode, preference, setPreference } = useThemeMode();
   const fileRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState("");
   const [profile, setProfile] = useState<Profile>({ full_name: "", default_currency: "PHP" });
@@ -261,9 +263,68 @@ export function SettingsManager() {
           </Paper>
           <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>
             <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 2 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><PaletteOutlined /></Avatar><Box><Typography variant="h6" fontWeight={800}>Appearance</Typography><Typography variant="body2" color="text.secondary">Choose how BudgetNest looks on this device.</Typography></Box></Stack>
-            <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between" spacing={2}>
-              <Box><Typography fontWeight={700}>{mode === "dark" ? "Dark mode" : "Light mode"} is enabled</Typography><Typography variant="body2" color="text.secondary">Your preference is saved in this browser.</Typography></Box>
-              <Button variant="outlined" onClick={toggleMode}>Switch to {mode === "dark" ? "light" : "dark"} mode</Button>
+            <Stack spacing={1.5}>
+              <Box>
+                <Typography fontWeight={700}>
+                  {preference === "system" ? `System appearance · currently ${mode}` : `${mode === "dark" ? "Dark" : "Light"} appearance enabled`}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {preference === "system"
+                    ? "BudgetNest follows your device's appearance setting."
+                    : "Your preference is saved in this browser and stays the same across visits."}
+                </Typography>
+              </Box>
+              <ToggleButtonGroup
+                exclusive
+                fullWidth
+                value={preference}
+                onChange={(_, value: "system" | "light" | "dark" | null) => {
+                  if (value) setPreference(value);
+                }}
+                aria-label="Choose appearance"
+                sx={{
+                  p: 0.5,
+                  gap: 0.5,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 2.5,
+                  bgcolor: "action.hover",
+                  "& .MuiToggleButtonGroup-grouped": {
+                    flex: 1,
+                    minWidth: 0,
+                    border: 0,
+                    borderRadius: "9px !important",
+                    px: 1,
+                    py: 1.1,
+                    color: "text.secondary",
+                    textTransform: "none",
+                  },
+                  "& .Mui-selected": {
+                    bgcolor: "background.paper !important",
+                    color: "primary.main",
+                    boxShadow: 1,
+                  },
+                }}
+              >
+                <ToggleButton value="system" aria-label="System appearance">
+                  <Stack alignItems="center" spacing={0.45}>
+                    <ComputerOutlined fontSize="small" />
+                    <Typography variant="caption" fontWeight={700}>System</Typography>
+                  </Stack>
+                </ToggleButton>
+                <ToggleButton value="light" aria-label="Light appearance">
+                  <Stack alignItems="center" spacing={0.45}>
+                    <LightModeOutlined fontSize="small" />
+                    <Typography variant="caption" fontWeight={700}>Light</Typography>
+                  </Stack>
+                </ToggleButton>
+                <ToggleButton value="dark" aria-label="Dark appearance">
+                  <Stack alignItems="center" spacing={0.45}>
+                    <DarkModeOutlined fontSize="small" />
+                    <Typography variant="caption" fontWeight={700}>Dark</Typography>
+                  </Stack>
+                </ToggleButton>
+              </ToggleButtonGroup>
             </Stack>
           </Paper>
           <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>

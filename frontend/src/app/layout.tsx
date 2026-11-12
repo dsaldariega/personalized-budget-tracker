@@ -2,8 +2,16 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
+import { Roboto } from "next/font/google";
 import { AppShell } from "@/components/app-shell";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider, type ThemePreference } from "@/components/theme-provider";
+
+const roboto = Roboto({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-roboto",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -16,13 +24,13 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const cookieStore = await cookies();
   const savedTheme = cookieStore.get("budgetnest-theme")?.value;
-  const initialMode = savedTheme === "dark" ? "dark" : "light";
+  const initialPreference: ThemePreference = savedTheme === "system" || savedTheme === "dark" ? savedTheme : "light";
 
   return (
     <html lang="en">
-      <body>
+      <body className={roboto.variable}>
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-          <ThemeProvider initialMode={initialMode}>
+          <ThemeProvider initialPreference={initialPreference}>
             <AppShell>{children}</AppShell>
           </ThemeProvider>
         </AppRouterCacheProvider>
