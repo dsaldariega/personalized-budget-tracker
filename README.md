@@ -403,7 +403,7 @@ FRONTEND_URL=http://localhost:3000
 PORT=4000
 ```
 
-For the deployed backend, set `FRONTEND_URL` to the exact frontend origin allowed to call the API. This setting accepts one origin; use `http://localhost:3000` for local development and your deployed frontend origin for the Vercel environment. Do not add a service-role key for this user-scoped API foundation.
+For the deployed backend, set `FRONTEND_URL` to the exact frontend origin allowed to call the API. This setting accepts one origin; use `http://localhost:3000` for local development and your deployed frontend origin for the Vercel environment. The service-role key is used only for the narrowly scoped username lookup described above; do not use it for ordinary user-scoped data operations.
 
 ### Gradual migration plan
 
