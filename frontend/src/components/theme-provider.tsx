@@ -34,10 +34,6 @@ function persistTheme(preference: ThemePreference) {
   }
 }
 
-function getSystemMode(): ResolvedThemeMode {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
 export function ThemeProvider({
   children,
   initialPreference = "light",
