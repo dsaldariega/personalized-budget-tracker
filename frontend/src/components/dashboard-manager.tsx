@@ -145,8 +145,9 @@ export function DashboardManager() {
   const loadData = useCallback(async () => {
     if (!supabase) { setError("Supabase is not configured. Check your frontend environment variables."); setLoading(false); return; }
     setLoading(true); setError("");
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError) { setError("Unable to verify your sign-in session."); setLoading(false); return; }
+    // Read the local session without requiring a network user verification for guests.
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user ?? null;
     if (!user) {
       try {
         const [accountResult, transactionResult, budgetResult, goalResult, subscriptionResult] = await Promise.all([
