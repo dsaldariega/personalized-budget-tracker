@@ -87,7 +87,12 @@ function paymentPlan(loan: LoanRecord, payments: PaymentRecord[], recalculateAut
       const amount = roundMoney(Number(payment.amount));
       interestPaid = roundMoney(Math.min(amount, accruedInterest));
       principalPaid = roundMoney(Math.min(Math.max(0, amount - interestPaid), outstandingPrincipal));
-      if (amount > interestPaid + principalPaid + 0.009) return { error: `Payment on ${payment.payment_date} exceeds the remaining principal and accrued interest. Delete later payments first or review this payment.` } as const;
+      if (isFlat) {
+        const futureInterest = Math.max(0, totalFlatInterest - totalInterestPaid - accruedInterest);
+        const futureInterestPaid = roundMoney(Math.min(Math.max(0, amount - interestPaid - principalPaid), futureInterest));
+        interestPaid = roundMoney(interestPaid + futureInterestPaid);
+      }
+      if (amount > interestPaid + principalPaid + 0.009) return { error: `Payment on ${payment.payment_date} exceeds the remaining loan obligation. Delete later payments first or review this payment.` } as const;
       allocations.push({ id: payment.id, principal_paid: principalPaid, interest_paid: interestPaid });
     }
     totalInterestPaid = roundMoney(totalInterestPaid + interestPaid);
@@ -282,12 +287,18 @@ router.post("/:id/payments", async (req, res) => {
   const totalFlatInterest = roundMoney(Number(loan.principal_amount) * monthlyRate * Number(loan.term_months));
   const flatInterestAccrued = isFlat ? roundMoney(Math.min(totalFlatInterest, previous.flatInterestAccrued + Number(loan.principal_amount) * monthlyRate * months)) : previous.flatInterestAccrued;
   const accruedInterest = isFlat ? roundMoney(Math.max(0, flatInterestAccrued - previous.totalInterestPaid)) : roundMoney(previous.accruedInterest + previous.outstandingPrincipal * monthlyRate * months);
-  const interestPaid = roundMoney(Math.min(parsed.data.amount, accruedInterest));
+  let interestPaid = roundMoney(Math.min(parsed.data.amount, accruedInterest));
   const principalPaid = roundMoney(Math.min(
     Math.max(0, parsed.data.amount - interestPaid), previous.outstandingPrincipal,
   ));
+  if (isFlat) {
+    const futureInterest = Math.max(0, totalFlatInterest - previous.totalInterestPaid - accruedInterest);
+    interestPaid = roundMoney(interestPaid + Math.min(
+      Math.max(0, parsed.data.amount - interestPaid - principalPaid), futureInterest,
+    ));
+  }
   if (parsed.data.amount > interestPaid + principalPaid + 0.009) {
-    res.status(400).json({ error: "Payment cannot exceed the remaining principal and accrued interest." });
+    res.status(400).json({ error: "Payment cannot exceed the remaining loan obligation." });
     return;
   }
 
