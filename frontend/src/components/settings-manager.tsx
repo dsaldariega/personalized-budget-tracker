@@ -7,7 +7,7 @@ import {
 } from "@mui/icons-material";
 import {
   Alert, Avatar, Box, Button, CircularProgress, Divider, MenuItem, Paper, Stack,
-  TextField, Typography,
+  TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText,
 } from "@mui/material";
 import { createClient } from "@/lib/supabase/client";
 import { apiRequest } from "@/lib/api";
@@ -50,6 +50,37 @@ function parseCsv(text: string) {
   if (field.length || row.length) { row.push(field.replace(/\r$/, "")); rows.push(row); }
   return rows.filter(values => values.some(value => value.trim() !== ""));
 }
+type ImportIssue = { row?: number; field?: string; message: string };
+function normalizeImportDate(value: string): { value?: string; error?: string } {
+  const input = value.trim();
+  const valid = (year: number, month: number, day: number) => {
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+      ? date.toISOString().slice(0, 10) : undefined;
+  };
+  let match = input.match(/^([0-9]{4})[-/]([0-9]{1,2})[-/]([0-9]{1,2})$/);
+  if (match) {
+    const result = valid(Number(match[1]), Number(match[2]), Number(match[3]));
+    return result ? { value: result } : { error: "Enter a real calendar date." };
+  }
+  match = input.match(/^([0-9]{1,2})[/-]([0-9]{1,2})[/-]([0-9]{4})$/);
+  if (match) {
+    const first = Number(match[1]), second = Number(match[2]), year = Number(match[3]);
+    // Philippine date convention is DD/MM/YYYY; infer MM/DD/YYYY when only that order is valid.
+    const day = first > 12 ? first : second > 12 ? second : first;
+    const month = first > 12 ? second : second > 12 ? first : second;
+    const result = valid(year, month, day);
+    return result ? { value: result } : { error: "Enter a real date (DD/MM/YYYY or YYYY-MM-DD)." };
+  }
+  if (/^[0-9]+(?:\.[0-9]+)?$/.test(input)) {
+    const serial = Number(input);
+    if (serial >= 20000 && serial <= 80000) {
+      const date = new Date(Date.UTC(1899, 11, 30) + Math.round(serial) * 86400000);
+      return { value: date.toISOString().slice(0, 10) };
+    }
+  }
+  return { error: "Use YYYY-MM-DD or DD/MM/YYYY for the transaction date." };
+}
 function localDateStamp() {
   const now = new Date();
   return [now.getFullYear(), String(now.getMonth()+1).padStart(2,"0"), String(now.getDate()).padStart(2,"0")].join("");
@@ -68,6 +99,8 @@ export function SettingsManager() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [importSummary, setImportSummary] = useState("");
+  const [importIssues, setImportIssues] = useState<ImportIssue[]>([]);
+  const [importErrorOpen, setImportErrorOpen] = useState(false);
   const [userId, setUserId] = useState("");
 
   const loadProfile = useCallback(async () => {
@@ -134,7 +167,7 @@ export function SettingsManager() {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file || !supabase || !userId) return;
-    setImporting(true); setError(""); setNotice(""); setImportSummary("");
+    setImporting(true); setError(""); setNotice(""); setImportSummary(""); setImportIssues([]); setImportErrorOpen(false);
     try {
       if (file.size > 5 * 1024 * 1024) throw new Error("Please choose a CSV file smaller than 5 MB.");
       const raw = (await file.text()).replace(/^\uFEFF/, "");
@@ -146,22 +179,37 @@ export function SettingsManager() {
       if (missing.length) throw new Error("Missing required CSV columns: " + missing.join(", "));
       if (parsed.length > 5001) throw new Error("Import is limited to 5,000 rows at a time.");
       const column = (row: string[], name: string) => row[headers.indexOf(name)]?.trim() ?? "";
-      const rows = parsed.slice(1).map(row => ({
-        account_name: column(row, "account_name"),
-        currency: column(row, "currency").toUpperCase(),
-        transaction_type: column(row, "transaction_type").toLowerCase(),
-        amount: Number(column(row, "amount")),
-        category: column(row, "category"),
-        description: column(row, "description"),
-        transaction_date: column(row, "transaction_date"),
-      }));
+      const localIssues: ImportIssue[] = [];
+      const rows = parsed.slice(1).map((row, index) => {
+        const sourceDate = column(row, "transaction_date");
+        const normalizedDate = normalizeImportDate(sourceDate);
+        if (!normalizedDate.value) localIssues.push({ row: index + 2, field: "transaction_date", message: normalizedDate.error ?? "Invalid date." });
+        return {
+          account_name: column(row, "account_name"),
+          currency: column(row, "currency").toUpperCase(),
+          transaction_type: column(row, "transaction_type").toLowerCase(),
+          amount: Number(column(row, "amount")),
+          category: column(row, "category"),
+          description: column(row, "description"),
+          transaction_date: normalizedDate.value ?? sourceDate,
+        };
+      });
+      if (localIssues.length) {
+        setError("Please correct the transaction dates listed below and try again.");
+        setImportIssues(localIssues);
+        setImportErrorOpen(true);
+        return;
+      }
       const result = await apiRequest<{ imported: number; skipped_duplicates: number }>("/settings/transactions/import", {
         method: "POST", body: JSON.stringify({ rows, source_file: file.name }),
       });
       setImportSummary("Imported " + result.imported + " transaction(s); skipped " + result.skipped_duplicates + " duplicate(s).");
       setNotice("Transaction import completed."); 
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "The file could not be imported.");
+      const failure = cause as Error & { issues?: ImportIssue[] };
+      setImportIssues(Array.isArray(failure.issues) ? failure.issues : []);
+      setError(failure.message || "The file could not be imported.");
+      setImportErrorOpen(true);
     } finally { setImporting(false); }
   }
 
@@ -217,6 +265,31 @@ export function SettingsManager() {
           </Paper>
         </>
       )}
+      <Dialog open={importErrorOpen} onClose={() => setImportErrorOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 800 }}>Import couldn&apos;t be completed</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+            {error || "Please correct the following CSV entries and try again."}
+          </Typography>
+          {importIssues.length > 0 ? (
+            <List dense disablePadding>
+              {importIssues.map((issue, index) => (
+                <ListItem key={index} alignItems="flex-start" divider={index < importIssues.length - 1} sx={{ px: 0 }}>
+                  <ListItemText
+                    primary={issue.row ? `CSV row ${issue.row}${issue.field ? " · " + issue.field.replaceAll("_", " ") : ""}` : issue.field ?? "Import"}
+                    secondary={issue.message}
+                    primaryTypographyProps={{ fontWeight: 700, variant: "body2" }}
+                    secondaryTypographyProps={{ color: "error.main", variant: "body2" }}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          ) : <Typography variant="body2" color="error.main">{error}</Typography>}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button variant="contained" onClick={() => setImportErrorOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }

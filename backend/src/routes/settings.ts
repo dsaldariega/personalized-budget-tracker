@@ -89,7 +89,12 @@ router.get("/backup", async (_req, res) => {
 router.post("/transactions/import", async (req, res) => {
   const parsed = importSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: "Invalid transaction import.", details: parsed.error.flatten() });
+    const issues = parsed.error.issues.map(issue => {
+      const rowIndex = typeof issue.path[1] === "number" ? issue.path[1] : undefined;
+      const field = typeof issue.path[2] === "string" ? issue.path[2] : undefined;
+      return { row: rowIndex === undefined ? undefined : rowIndex + 2, field, message: issue.message };
+    });
+    res.status(400).json({ error: "Some CSV rows contain invalid values.", details: parsed.error.flatten(), issues });
     return;
   }
   const { supabase, user } = context(res);
@@ -116,12 +121,18 @@ router.post("/transactions/import", async (req, res) => {
       item.currency === row.currency && !item.is_archived
     );
     if (!account) {
-      res.status(400).json({ error: "Row " + (index + 2) + ": active account not found for " + row.account_name + " (" + row.currency + "). Create or restore the account first." });
+      res.status(400).json({
+        error: "Some CSV rows could not be matched to an active account.",
+        issues: [{ row: index + 2, field: "account_name", message: "Active account not found for " + row.account_name + " (" + row.currency + "). Create or restore the account first." }],
+      });
       return;
     }
     const date = new Date(row.transaction_date + "T00:00:00.000Z");
     if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== row.transaction_date) {
-      res.status(400).json({ error: "Row " + (index + 2) + ": invalid transaction date." });
+      res.status(400).json({
+        error: "Some CSV rows contain invalid dates.",
+        issues: [{ row: index + 2, field: "transaction_date", message: "Enter a real calendar date in YYYY-MM-DD format." }],
+      });
       return;
     }
     const value = {
