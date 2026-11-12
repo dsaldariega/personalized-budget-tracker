@@ -2,8 +2,16 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
+import { Roboto } from "next/font/google";
 import { AppShell } from "@/components/app-shell";
 import { ThemeProvider, type ThemePreference } from "@/components/theme-provider";
+
+const roboto = Roboto({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-roboto",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -20,7 +28,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
   return (
     <html lang="en">
-      <body>
+      <body className={roboto.variable}>
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
           <ThemeProvider initialPreference={initialPreference}>
             <AppShell>{children}</AppShell>
