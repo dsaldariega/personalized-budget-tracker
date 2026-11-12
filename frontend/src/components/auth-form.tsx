@@ -75,7 +75,7 @@ export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: bo
 
         setMessage({
           type: "success",
-          text: "Account created. If email confirmation is enabled in Supabase, confirm the account before signing in.",
+          text: "Account created, but Supabase did not return a sign-in session. To enable instant sign-in after registration, turn off Confirm email in Supabase Authentication settings, then try again.",
         });
       } else if (identifier.includes("@")) {
         const { error } = await supabase.auth.signInWithPassword({
@@ -158,7 +158,7 @@ export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: bo
                   value={username}
                   onChange={(event) => setUsername(event.target.value.replace(/\s/g, "").toLowerCase())}
                   autoComplete="username"
-                  placeholder="e.g. dan_saldariega"
+                  placeholder="e.g. budget_user"
                   helperText="3–24 characters: letters, numbers, and underscores."
                   inputProps={{ minLength: 3, maxLength: 24, pattern: "[a-z0-9_]+" }}
                   required
@@ -169,7 +169,7 @@ export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: bo
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
                   autoComplete="name"
-                  required
+                  helperText="Optional. You can use your username to sign in."
                   fullWidth
                 />
                 <TextField
