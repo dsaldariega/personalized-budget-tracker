@@ -83,6 +83,27 @@ personalized-budget-tracker/
 
 The frontend will never contain a Supabase service-role key. The Express API verifies the user's Supabase access token and uses a user-scoped Supabase client with the publishable key, so existing RLS policies remain active.
 
+### Backend API migration
+
+The backend is being adopted gradually while the frontend continues to use Supabase directly for modules that have not yet migrated.
+
+Current authenticated endpoints:
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | `/api/accounts` | Load accounts and balance transaction data |
+| POST | `/api/accounts` | Create an account |
+| PUT | `/api/accounts/:id` | Update an account |
+| PATCH | `/api/accounts/:id/archive` | Archive or restore an account |
+| DELETE | `/api/accounts/:id` | Delete an unlinked account |
+| GET | `/api/transactions` | Load accounts and transaction history |
+| POST | `/api/transactions` | Create an income or expense |
+| POST | `/api/transactions/transfer` | Create a paired account transfer |
+| PUT | `/api/transactions/:id` | Update an income or expense |
+| DELETE | `/api/transactions/:id` | Delete a transaction or both sides of a transfer |
+
+The Accounts and Transactions screens now use the Express API. Requests carry the signed-in user's Supabase access token; the API verifies it and performs database operations with that user's publishable-key client, preserving RLS. The API also validates account ownership and active status before creating or changing transactions. No service-role key is used for these operations.
+
 ### Deployment
 
 The intended deployment model is:
