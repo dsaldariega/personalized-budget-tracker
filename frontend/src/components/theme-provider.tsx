@@ -92,22 +92,22 @@ export function ThemeProvider({
       background: mode === "dark"
         ? { default: "#121212", paper: "#121212" }
         : { default: "#F8F7FA", paper: "#FFFFFF" },
-      text: mode === "dark"
+      ...(mode === "dark"
         ? {
-            primary: "#FFFFFF",
-            secondary: "rgba(255,255,255,0.70)",
-            disabled: "rgba(255,255,255,0.50)",
+            text: {
+              primary: "#FFFFFF",
+              secondary: "rgba(255,255,255,0.70)",
+              disabled: "rgba(255,255,255,0.50)",
+            },
+            action: {
+              active: "#FFFFFF",
+              hover: "rgba(255,255,255,0.08)",
+              selected: "rgba(255,255,255,0.16)",
+              disabled: "rgba(255,255,255,0.30)",
+              disabledBackground: "rgba(255,255,255,0.12)",
+            },
           }
-        : undefined,
-      action: mode === "dark"
-        ? {
-            active: "#FFFFFF",
-            hover: "rgba(255,255,255,0.08)",
-            selected: "rgba(255,255,255,0.16)",
-            disabled: "rgba(255,255,255,0.30)",
-            disabledBackground: "rgba(255,255,255,0.12)",
-          }
-        : undefined,
+        : {}),
       divider: mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(34,42,74,0.09)",
     },
     shape: { borderRadius: 12 },
