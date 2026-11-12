@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogTitle, DialogContent, IconButton } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, IconButton, Typography } from "@mui/material";
 import { CloseRounded } from "@mui/icons-material";
 import { AuthForm } from "@/components/auth-form";
 
@@ -27,12 +27,15 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "flex-end",
+          justifyContent: "space-between",
           minHeight: 56,
           p: { xs: 1, sm: 1.25 },
           pb: 0,
         }}
       >
+        <Typography variant="overline" color="text.secondary" fontWeight={750} letterSpacing={1.1}>
+          SECURE SIGN IN
+        </Typography>
         <IconButton
           onClick={onClose}
           aria-label="Close sign in"
