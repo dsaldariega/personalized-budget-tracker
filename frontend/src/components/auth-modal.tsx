@@ -10,7 +10,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
       open={open}
       onClose={onClose}
       fullWidth
-      maxWidth="sm"
+      maxWidth="xs"
       PaperProps={{ sx: { borderRadius: 4, overflow: "hidden" } }}
     >
       <IconButton
@@ -21,7 +21,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
         <CloseRounded />
       </IconButton>
       <DialogContent sx={{ p: 0 }}>
-        <Box sx={{ p: { xs: 1, sm: 2 } }}>
+        <Box sx={{ p: { xs: 0.5, sm: 1 } }}>
           <AuthForm mode="login" modal />
         </Box>
       </DialogContent>
