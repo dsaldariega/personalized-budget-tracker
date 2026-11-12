@@ -107,7 +107,7 @@ export function SettingsManager() {
   const [importIssues, setImportIssues] = useState<ImportIssue[]>([]);
   const [importErrorOpen, setImportErrorOpen] = useState(false);
   const [userId, setUserId] = useState("");
-  const [requiresLogin, setRequiresLogin] = useState(false);
+  const [requiresLogin, setRequiresLogin] = useState(false);\n  const [loginOpen, setLoginOpen] = useState(false);
 
   const loadProfile = useCallback(async () => {
     if (!supabase) { setRequiresLogin(true); setLoading(false); return; }
@@ -233,7 +233,7 @@ export function SettingsManager() {
           <Avatar sx={{ width: 56, height: 56, bgcolor: "action.hover", color: "primary.main" }}><LockOutlined /></Avatar>
           <Typography variant="h6" fontWeight={800}>Login required</Typography>
           <Typography color="text.secondary">Please log in to use Profile, Data backup & transfer, and account management features. Your guest financial data can still be used while you try BudgetNest, but account settings belong to your signed-in account.</Typography>
-          <Button variant="contained" onClick={() => setRequiresLogin(false)}>Log in</Button>
+          <Button variant="contained" onClick={() => setLoginOpen(true)}>Log in</Button>\n          <AuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />
         </Stack>
       </Paper>
     </Stack>
