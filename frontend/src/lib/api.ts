@@ -68,3 +68,32 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   notifyDataChanged(method);
   return result;
 }
+
+export async function publicApiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  if (!API_URL) throw new Error("The API URL is not configured. Set NEXT_PUBLIC_API_URL for this environment.");
+
+  const headers = new Headers(init.headers);
+  headers.set("Accept", "application/json");
+  if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path.startsWith("/") ? path : `/${path}`}`, {
+      ...init,
+      headers,
+      cache: "no-store",
+    });
+  } catch (cause) {
+    throw new Error(
+      `Unable to reach the BudgetNest API. Configured API URL: ${API_URL}`,
+      { cause },
+    );
+  }
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(payload?.error ?? `API request failed (${response.status}).`);
+  }
+
+  return await response.json() as T;
+}

@@ -17,9 +17,9 @@ import {
   SwapHorizOutlined, TrendingUpOutlined, AccountCircleOutlined, CloseRounded, PolicyOutlined
 } from "@mui/icons-material";
 import {
-  AppBar, Avatar, Badge, Box, Button, Divider, Drawer, IconButton, List,
+  AppBar, Avatar, Badge, Box, Button, CircularProgress, Divider, Drawer, IconButton, List,
   ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, Toolbar,
-  Popover, Tooltip, Typography, useMediaQuery, useTheme
+  Popover, Tooltip, Typography, Dialog, DialogContent, useMediaQuery, useTheme
 } from "@mui/material";
 import { useThemeMode } from "@/components/theme-provider";
 
@@ -55,6 +55,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [notificationsLoading, setNotificationsLoading] = useState(false);
 
   useEffect(() => {
+    if (!authReady || user) return;
+    const dismissed = window.sessionStorage.getItem("budgetnest-welcome-dismissed");
+    if (!dismissed) setWelcomeOpen(true);
+  }, [authReady, user]);
+
+  useEffect(() => {
     const supabase = createSupabaseClient();
     if (!supabase) {
       setAuthReady(true);
@@ -73,9 +79,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   async function handleSignOut() {
     const supabase = createSupabaseClient();
-    if (!supabase) return;
-    await supabase.auth.signOut();
+    if (!supabase || isSigningOut) return;
+
     setAccountMenu(null);
+    setIsSigningOut(true);
+    await new Promise((resolve) => window.setTimeout(resolve, 450));
+
+    const { error } = await supabase.auth.signOut();
+    setIsSigningOut(false);
+    if (error) {
+      console.error("Unable to sign out:", error);
+      return;
+    }
+
+    setWelcomeMode("signed-out");
+    setWelcomeOpen(true);
     router.replace("/");
     router.refresh();
   }
@@ -129,6 +147,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountMenu, setAccountMenu] = useState<HTMLElement | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [welcomeMode, setWelcomeMode] = useState<"first-visit" | "signed-out">("first-visit");
   const pageTitle = useMemo(
     () => navGroups.flatMap((group) => group.items).find((item) => item.href === pathname)?.label ?? "BudgetNest",
     [pathname]
@@ -192,7 +213,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default", scrollbarGutter: "stable" }}>
       <Box component="nav" sx={{ width: { lg: drawerWidth }, flexShrink: { lg: 0 } }}>
         <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)}
           ModalProps={{ keepMounted: true }}
@@ -210,8 +231,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Toolbar sx={{ minHeight: "72px !important", px: { xs: 2, md: 3 } }}>
             <IconButton onClick={() => setMobileOpen(true)} sx={{ display: { lg: "none" }, mr: 1 }} aria-label="Open navigation"><MenuRounded /></IconButton>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="caption" color="text.secondary">WORKSPACE / {pageTitle.toUpperCase()}</Typography>
-              <Typography fontWeight={750} sx={{ lineHeight: 1.25 }}>{pageTitle}</Typography>
+              <Typography fontWeight={800} sx={{ fontSize: { xs: 16, sm: 17 }, lineHeight: 1.25 }}>{pageTitle}</Typography>
             </Box>
             <Tooltip title={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
               <IconButton onClick={toggleMode} aria-label="Toggle color theme" sx={{ mr: 0.5 }}>
@@ -243,6 +263,81 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           </Toolbar>
         </AppBar>
+        <Dialog
+          open={isSigningOut}
+          disableEscapeKeyDown
+          onClose={() => undefined}
+          maxWidth="xs"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 4, mx: 2 } }}
+        >
+          <DialogContent sx={{ py: 4, px: 3 }}>
+            <Stack alignItems="center" spacing={2}>
+              <CircularProgress size={30} />
+              <Box sx={{ textAlign: "center" }}>
+                <Typography fontWeight={800}>Signing you out</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  Just a moment while we safely end your session…
+                </Typography>
+              </Box>
+            </Stack>
+          </DialogContent>
+        </Dialog>
+        <Dialog
+          open={welcomeOpen}
+          onClose={() => {
+            window.sessionStorage.setItem("budgetnest-welcome-dismissed", "1");
+            setWelcomeOpen(false);
+          }}
+          fullWidth
+          maxWidth="sm"
+          PaperProps={{ sx: { borderRadius: 4, overflow: "hidden", mx: { xs: 1.5, sm: 2 } } }}
+        >
+          <DialogContent sx={{ p: { xs: 3.5, sm: 5 } }}>
+            <Stack spacing={2.2}>
+              <Box>
+                <Typography sx={{ color: "primary.main", fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase" }}>
+                  {welcomeMode === "signed-out" ? "You’re signed out" : "Welcome to BudgetNest"}
+                </Typography>
+                <Typography variant="h4" fontWeight={800} letterSpacing={-0.8} sx={{ mt: 0.8, fontSize: { xs: "1.75rem", sm: "2.125rem" } }}>
+                  {welcomeMode === "signed-out" ? "Thanks for stopping by." : "A calmer place for your money."}
+                </Typography>
+                <Typography color="text.secondary" sx={{ mt: 1, lineHeight: 1.7 }}>
+                  {welcomeMode === "signed-out"
+                    ? "You’ve safely signed out. You can keep exploring BudgetNest as a guest or sign in again whenever you’re ready."
+                    : "Explore the app, get a feel for the dashboard, and sign in whenever you’re ready to save your own data."}
+                </Typography>
+              </Box>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2}>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={() => {
+                    setWelcomeOpen(false);
+                    setLoginOpen(true);
+                  }}
+                  sx={{ borderRadius: 2.5, py: 1.15, textTransform: "none", fontWeight: 750 }}
+                >
+                  {welcomeMode === "signed-out" ? "Sign in again" : "Sign in / Create account"}
+                </Button>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  onClick={() => {
+                    window.sessionStorage.setItem("budgetnest-welcome-dismissed", "1");
+                    setWelcomeOpen(false);
+                  }}
+                  sx={{ borderRadius: 2.5, py: 1.15, textTransform: "none", fontWeight: 700 }}
+                >
+                  Continue as guest
+                </Button>
+              </Stack>
+              <Typography variant="caption" color="text.disabled" textAlign="center">
+                You can close this welcome anytime and continue exploring.
+              </Typography>
+            </Stack>
+          </DialogContent>
+        </Dialog>
         <AuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />
         <Popover
           open={Boolean(notificationAnchor)}
@@ -302,7 +397,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Box>
         </Popover>
         <Box
-          key={pathname}
+          key={`${pathname}:${user?.id ?? "guest"}`}
           component="main"
           className="page-transition"
           sx={{ width: "100%", maxWidth: 1600, mx: "auto", px: { xs: 2, sm: 3, xl: 4 }, py: { xs: 3, md: 4 }, flexGrow: 1 }}
