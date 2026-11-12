@@ -361,7 +361,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Box>
         </Popover>
         <Box
-          key={pathname}
+          key={`${pathname}:${user?.id ?? "guest"}`}
           component="main"
           className="page-transition"
           sx={{ width: "100%", maxWidth: 1600, mx: "auto", px: { xs: 2, sm: 3, xl: 4 }, py: { xs: 3, md: 4 }, flexGrow: 1 }}

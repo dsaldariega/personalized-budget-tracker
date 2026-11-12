@@ -11,7 +11,7 @@ import { publicApiRequest } from "@/lib/api";
 
 type AuthMode = "login" | "register";
 
-export function AuthForm({ mode }: { mode: AuthMode; modal?: boolean }) {
+export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: boolean; onAuthenticated?: () => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -67,6 +67,7 @@ export function AuthForm({ mode }: { mode: AuthMode; modal?: boolean }) {
         }
 
         if (data.session) {
+          onAuthenticated?.();
           router.replace(destination);
           router.refresh();
           return;
@@ -87,6 +88,7 @@ export function AuthForm({ mode }: { mode: AuthMode; modal?: boolean }) {
           return;
         }
 
+        onAuthenticated?.();
         router.replace(destination);
         router.refresh();
       } else {
@@ -101,6 +103,7 @@ export function AuthForm({ mode }: { mode: AuthMode; modal?: boolean }) {
           return;
         }
 
+        onAuthenticated?.();
         router.replace(destination);
         router.refresh();
       }
