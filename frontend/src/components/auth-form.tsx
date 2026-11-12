@@ -73,10 +73,10 @@ export function AuthForm({ mode, modal = false }: { mode: AuthMode; modal?: bool
 
 
   return (
-    <Paper sx={{ width: "100%", maxWidth: 440, p: { xs: 3, sm: 4 }, borderRadius: 4 }}>
+    <Paper elevation={0} sx={{ width: "100%", maxWidth: 460, p: { xs: 3, sm: 4.5 }, borderRadius: 4, border: 1, borderColor: "divider", boxShadow: "0 18px 55px rgba(34, 28, 53, 0.07)" }}>
       <Stack spacing={2.5}>
         <Box>
-          <Typography variant="h4" fontWeight={800} letterSpacing={-1}>
+          <Typography variant="h4" fontWeight={800} letterSpacing={-1.2} sx={{ fontSize: { xs: 28, sm: 32 } }}>
             {isRegister ? "Create your account" : "Welcome back"}
           </Typography>
           <Typography color="text.secondary" sx={{ mt: 1 }}>
@@ -95,7 +95,7 @@ export function AuthForm({ mode, modal = false }: { mode: AuthMode; modal?: bool
             )}
             <TextField label="Email address" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required fullWidth />
             <TextField label="Password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={isRegister ? "new-password" : "current-password"} inputProps={{ minLength: 8 }} helperText={isRegister ? "Use at least 8 characters." : undefined} required fullWidth />
-            <Button type="submit" variant="contained" disableElevation disabled={loading || !supabase} sx={{ py: 1.25, textTransform: "none" }}>
+            <Button type="submit" variant="contained" disableElevation disabled={loading || !supabase} sx={{ py: 1.45, borderRadius: 2.5, textTransform: "none", fontWeight: 750, boxShadow: "0 8px 18px rgba(217, 54, 80, 0.18)" }}>
               {loading ? "Please wait…" : isRegister ? "Create account" : "Sign in"}
             </Button>
           </Stack>
