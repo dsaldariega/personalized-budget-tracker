@@ -4,6 +4,7 @@ import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import accountsRouter from "./routes/accounts.js";
 import transactionsRouter from "./routes/transactions.js";
+import budgetsRouter from "./routes/budgets.js";
 import { authenticate } from "./middleware/authenticate.js";
 
 const app = express();
@@ -44,6 +45,7 @@ app.get("/api/me", authenticate, (_req, res) => {
 
 app.use("/api/accounts", authenticate, accountsRouter);
 app.use("/api/transactions", authenticate, transactionsRouter);
+app.use("/api/budgets", authenticate, budgetsRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Route not found." });
