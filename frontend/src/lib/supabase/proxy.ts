@@ -5,7 +5,7 @@ export async function updateSession(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-  // Keep the UI preview usable until the dedicated Supabase project is configured.
+  // Guest mode remains available even before Supabase is configured.
   if (!url || !publishableKey) return NextResponse.next({ request });
 
   let response = NextResponse.next({ request });
@@ -26,34 +26,23 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // Keep this immediately after client creation: it refreshes and validates the cookie session.
-  // A missing/invalid session can return null data, so read claims defensively.
+  // Refresh and validate an existing session, but do not require one to use the app.
   const { data, error } = await supabase.auth.getClaims();
   if (error) {
     console.error("[BudgetNest] Unable to verify the Supabase session:", error.message);
   }
-  const claims = data?.claims ?? null;
 
+  const hasSession = Boolean(data?.claims);
   const pathname = request.nextUrl.pathname;
-  const isLoginRoute = pathname === "/login";
-  const isRegisterRoute = pathname === "/register";
-  const isPublicRoute =
-    isLoginRoute || isRegisterRoute || pathname.startsWith("/auth/");
+  const isAuthRoute = pathname === "/login" || pathname === "/register";
 
-  if (!claims && !isPublicRoute) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/login";
-    redirectUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  if (claims && (isLoginRoute || isRegisterRoute)) {
+  // Keep auth pages available to guests; send signed-in users back to the dashboard.
+  if (hasSession && isAuthRoute) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/";
     redirectUrl.search = "";
 
     const redirectResponse = NextResponse.redirect(redirectUrl);
-    // Preserve any refreshed auth cookies when redirecting away from an auth page.
     response.cookies.getAll().forEach((cookie) => {
       redirectResponse.cookies.set(cookie);
     });

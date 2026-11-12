@@ -1,5 +1,6 @@
 "use client";
 
+import { AuthModal } from "@/components/auth-modal";
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BackupOutlined, CheckCircleOutlineRounded, CloudDownloadOutlined, CloudUploadOutlined,
@@ -106,12 +107,15 @@ export function SettingsManager() {
   const [importIssues, setImportIssues] = useState<ImportIssue[]>([]);
   const [importErrorOpen, setImportErrorOpen] = useState(false);
   const [userId, setUserId] = useState("");
+  const [requiresLogin, setRequiresLogin] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
 
   const loadProfile = useCallback(async () => {
-    if (!supabase) { setError("Supabase is not configured."); setLoading(false); return; }
+    if (!supabase) { setRequiresLogin(true); setLoading(false); return; }
     setLoading(true); setError("");
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) { setError("Your session could not be verified. Please sign in again."); setLoading(false); return; }
+    if (authError || !user) { setRequiresLogin(true); setLoading(false); return; }
+    setRequiresLogin(false);
     setUserId(user.id); setEmail(user.email ?? "");
     try {
       const result = await apiRequest<{ profile: Profile }>("/settings/profile");
@@ -222,6 +226,20 @@ export function SettingsManager() {
   }
 
   const dirty = profile.full_name !== initialProfile.full_name || profile.default_currency !== initialProfile.default_currency;
+  if (requiresLogin) return (
+    <Stack spacing={3}>
+      <Box><Typography variant="h4" fontWeight={800} letterSpacing={-0.8}>Settings</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>Manage your profile, preferences, and personal data.</Typography></Box>
+      <Paper variant="outlined" sx={{ p: { xs: 3, md: 5 }, borderRadius: 3, textAlign: "center" }}>
+        <Stack alignItems="center" spacing={1.5} sx={{ maxWidth: 520, mx: "auto" }}>
+          <Avatar sx={{ width: 56, height: 56, bgcolor: "action.hover", color: "primary.main" }}><LockOutlined /></Avatar>
+          <Typography variant="h6" fontWeight={800}>Login required</Typography>
+          <Typography color="text.secondary">Please log in to use Profile, Data backup & transfer, and account management features. Your guest financial data can still be used while you try BudgetNest, but account settings belong to your signed-in account.</Typography>
+          <Button variant="contained" onClick={() => setLoginOpen(true)}>Log in</Button>
+          <AuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+        </Stack>
+      </Paper>
+    </Stack>
+  );
   return (
     <Stack spacing={3}>
       <Box><Typography variant="h4" fontWeight={800} letterSpacing={-0.8}>Settings</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>Manage your profile, preferences, and personal data.</Typography></Box>

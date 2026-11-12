@@ -6,6 +6,10 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { usePathname } from "next/navigation";
+import { AuthModal } from "@/components/auth-modal";
+import { apiRequest } from "@/lib/api";
+import { buildNotifications } from "@/lib/notifications";
+import type { AppNotification } from "@/lib/notifications";
 import {
   AccountBalanceWalletOutlined, AssessmentOutlined, AutorenewOutlined,
   DashboardOutlined, DarkModeOutlined, HistoryRounded, InfoOutlined, KeyboardArrowDown, LightModeOutlined,
@@ -13,9 +17,9 @@ import {
   SwapHorizOutlined, TrendingUpOutlined, AccountCircleOutlined, CloseRounded, PolicyOutlined
 } from "@mui/icons-material";
 import {
-  Alert, AppBar, Avatar, Badge, Box, Button, Divider, Drawer, IconButton, List,
+  AppBar, Avatar, Badge, Box, Button, Divider, Drawer, IconButton, List,
   ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, Toolbar,
-  Snackbar, Tooltip, Typography, useMediaQuery, useTheme
+  Popover, Tooltip, Typography, useMediaQuery, useTheme
 } from "@mui/material";
 import { useThemeMode } from "@/components/theme-provider";
 
@@ -45,6 +49,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [notificationAnchor, setNotificationAnchor] = useState<HTMLElement | null>(null);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
 
   useEffect(() => {
     const supabase = createSupabaseClient();
@@ -68,16 +76,59 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (!supabase) return;
     await supabase.auth.signOut();
     setAccountMenu(null);
-    router.replace("/login");
+    router.replace("/");
     router.refresh();
   }
+
+  useEffect(() => {
+    if (!authReady) return;
+    let active = true;
+    setDismissedIds([]);
+
+    const loadNotifications = () => {
+      setNotificationsLoading(true);
+      Promise.all([
+        apiRequest<{ accounts: Array<{ id: string; currency?: string }>; budgets: Array<any>; expenses: Array<any> }>("/budgets"),
+        apiRequest<{ accounts: Array<{ id: string; currency?: string }>; goals: Array<any> }>("/goals"),
+        apiRequest<{ subscriptions: Array<any> }>("/subscriptions"),
+      ]).then(([budgetData, goalData, subscriptionData]) => {
+        if (!active) return;
+        setNotifications(buildNotifications({
+          accounts: budgetData.accounts?.length ? budgetData.accounts : goalData.accounts ?? [],
+          budgets: budgetData.budgets ?? [],
+          expenses: budgetData.expenses ?? [],
+          goals: goalData.goals ?? [],
+          subscriptions: subscriptionData.subscriptions ?? [],
+        }));
+      }).catch((error) => {
+        console.error("Unable to load notifications:", error);
+        if (active) setNotifications([]);
+      }).finally(() => {
+        if (active) setNotificationsLoading(false);
+      });
+    };
+
+    loadNotifications();
+    window.addEventListener("budgetnest:data-changed", loadNotifications);
+    return () => {
+      active = false;
+      window.removeEventListener("budgetnest:data-changed", loadNotifications);
+    };
+  }, [authReady, user?.id]);
+
+  const visibleNotifications = notifications.filter(item => !dismissedIds.includes(item.id));
+  const dismissNotification = (id: string) => setDismissedIds(current => [...current, id]);
+  const dismissAllNotifications = () => setDismissedIds(current => [
+    ...current,
+    ...visibleNotifications.map(item => item.id),
+  ]);
 
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const { mode, toggleMode } = useThemeMode();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountMenu, setAccountMenu] = useState<HTMLElement | null>(null);
-  const [noticeOpen, setNoticeOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
   const pageTitle = useMemo(
     () => navGroups.flatMap((group) => group.items).find((item) => item.href === pathname)?.label ?? "BudgetNest",
     [pathname]
@@ -168,8 +219,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </IconButton>
             </Tooltip>
             <Tooltip title="Notifications">
-              <IconButton onClick={() => setNoticeOpen(true)} aria-label="Notifications" sx={{ mr: 1 }}>
-                <Badge variant="dot" color="primary"><NotificationsNoneOutlined /></Badge>
+              <IconButton onClick={(event) => setNotificationAnchor(event.currentTarget)} aria-label="Notifications" sx={{ mr: 1 }}>
+                <Badge badgeContent={visibleNotifications.length} color="error" max={9}>
+                  <NotificationsNoneOutlined />
+                </Badge>
               </IconButton>
             </Tooltip>
             <Button onClick={(event) => setAccountMenu(event.currentTarget)} color="inherit" sx={{ minWidth: 0, px: 1, textTransform: "none", borderRadius: 3 }}>
@@ -184,16 +237,76 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {user ? (
                 <MenuItem onClick={handleSignOut}>Sign out</MenuItem>
               ) : (
-                <MenuItem component="a" href="/login" onClick={() => setAccountMenu(null)}><AccountCircleOutlined fontSize="small" sx={{ mr: 1 }} /> Sign in / Create account</MenuItem>
+                <MenuItem onClick={() => { setAccountMenu(null); setLoginOpen(true); }}><AccountCircleOutlined fontSize="small" sx={{ mr: 1 }} /> Sign in / Create account</MenuItem>
               )}
             </Menu>
 
           </Toolbar>
         </AppBar>
-        <Snackbar open={noticeOpen} autoHideDuration={3000} onClose={() => setNoticeOpen(false)} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
-          <Alert severity="info" variant="filled" onClose={() => setNoticeOpen(false)}>You’re all caught up.</Alert>
-        </Snackbar>
-        <Box component="main" sx={{ width: "100%", maxWidth: 1600, mx: "auto", px: { xs: 2, sm: 3, xl: 4 }, py: { xs: 3, md: 4 }, flexGrow: 1 }}>
+        <AuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+        <Popover
+          open={Boolean(notificationAnchor)}
+          anchorEl={notificationAnchor}
+          onClose={() => setNotificationAnchor(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          transformOrigin={{ vertical: "top", horizontal: "right" }}
+          slotProps={{ paper: { sx: { mt: 1, width: { xs: "calc(100vw - 32px)", sm: 390 }, maxWidth: 390, borderRadius: 3, overflow: "hidden" } } }}
+        >
+          <Box sx={{ px: 2, py: 1.7, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box>
+              <Typography fontWeight={800}>Notifications</Typography>
+              <Typography variant="caption" color="text.secondary">
+                {visibleNotifications.length ? `${visibleNotifications.length} active alert${visibleNotifications.length === 1 ? "" : "s"}` : "You're all caught up"}
+              </Typography>
+            </Box>
+            {visibleNotifications.length > 0 && (
+              <Button size="small" color="inherit" onClick={dismissAllNotifications}>Clear all</Button>
+            )}
+          </Box>
+          <Divider />
+          <Box sx={{ maxHeight: 430, overflowY: "auto" }}>
+            {notificationsLoading ? (
+              <Box sx={{ p: 3, textAlign: "center" }}><Typography variant="body2" color="text.secondary">Checking your budgets and goals…</Typography></Box>
+            ) : visibleNotifications.length === 0 ? (
+              <Box sx={{ px: 3, py: 4, textAlign: "center" }}>
+                <Box sx={{ width: 42, height: 42, borderRadius: "50%", bgcolor: "action.hover", display: "grid", placeItems: "center", mx: "auto", mb: 1.2 }}>
+                  <NotificationsNoneOutlined color="action" />
+                </Box>
+                <Typography fontWeight={700} variant="body2">You're all caught up!</Typography>
+                <Typography variant="caption" color="text.secondary">We'll let you know when something needs your attention.</Typography>
+              </Box>
+            ) : visibleNotifications.map((item) => (
+              <Box key={item.id} sx={{ display: "flex", alignItems: "flex-start", gap: 1, px: 1.5, py: 1.4, borderBottom: 1, borderColor: "divider", "&:hover": { bgcolor: "action.hover" } }}>
+                <Box
+                  component="button"
+                  onClick={() => { dismissNotification(item.id); setNotificationAnchor(null); router.push(item.href); }}
+                  sx={{ flex: 1, minWidth: 0, border: 0, p: 0, bgcolor: "transparent", color: "inherit", textAlign: "left", cursor: "pointer" }}
+                >
+                  <Stack direction="row" alignItems="center" spacing={0.8} sx={{ mb: 0.45 }}>
+                    <Box sx={{ width: 7, height: 7, flexShrink: 0, borderRadius: "50%", bgcolor: item.severity === "error" ? "error.main" : item.severity === "warning" ? "warning.main" : item.severity === "success" ? "success.main" : "info.main" }} />
+                    <Typography variant="body2" fontWeight={750}>{item.title}</Typography>
+                  </Stack>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", lineHeight: 1.5, pl: 1.7 }}>{item.message}</Typography>
+                  <Typography variant="caption" color="primary.main" fontWeight={700} sx={{ display: "block", pl: 1.7, mt: 0.7 }}>View details</Typography>
+                </Box>
+                <Tooltip title="Dismiss for now">
+                  <IconButton size="small" aria-label={`Dismiss ${item.title}`} onClick={() => dismissNotification(item.id)} sx={{ mt: -0.5 }}>
+                    <CloseRounded fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            ))}
+          </Box>
+          <Box sx={{ px: 2, py: 1, bgcolor: "action.hover" }}>
+            <Typography variant="caption" color="text.secondary">Dismissed alerts may appear again when you sign in if they still need attention.</Typography>
+          </Box>
+        </Popover>
+        <Box
+          key={pathname}
+          component="main"
+          className="page-transition"
+          sx={{ width: "100%", maxWidth: 1600, mx: "auto", px: { xs: 2, sm: 3, xl: 4 }, py: { xs: 3, md: 4 }, flexGrow: 1 }}
+        >
           {children}
         </Box>
         <Box component="footer" sx={{ px: 3, py: 2, borderTop: 1, borderColor: "divider" }}>

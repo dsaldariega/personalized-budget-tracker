@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 
 type AuthMode = "login" | "register";
 
-export function AuthForm({ mode }: { mode: AuthMode }) {
+export function AuthForm({ mode, modal = false }: { mode: AuthMode; modal?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
