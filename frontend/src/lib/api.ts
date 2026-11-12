@@ -6,15 +6,30 @@ const API_URL = (configuredApiUrl ?? (process.env.NODE_ENV === "development" ? "
 
 type ApiError = Error & { status?: number; details?: unknown; issues?: unknown };
 
+function notifyDataChanged(method: string) {
+  if (method !== "GET" && typeof window !== "undefined") {
+    window.dispatchEvent(new Event("budgetnest:data-changed"));
+  }
+}
+
 export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!API_URL) throw new Error("The API URL is not configured. Set NEXT_PUBLIC_API_URL for this environment.");
 
+  const method = (init.method ?? "GET").toUpperCase();
   const supabase = createClient();
-  if (!supabase) return guestApiRequest<T>(path, init);
+  if (!supabase) {
+    const result = await guestApiRequest<T>(path, init);
+    notifyDataChanged(method);
+    return result;
+  }
 
   // A missing, expired, or unreadable local session should not block guest mode.
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) return guestApiRequest<T>(path, init);
+  if (!session?.access_token) {
+    const result = await guestApiRequest<T>(path, init);
+    notifyDataChanged(method);
+    return result;
+  }
 
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
@@ -36,6 +51,11 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     throw error;
   }
 
-  if (response.status === 204) return undefined as T;
-  return response.json() as Promise<T>;
+  if (response.status === 204) {
+    notifyDataChanged(method);
+    return undefined as T;
+  }
+  const result = await response.json() as T;
+  notifyDataChanged(method);
+  return result;
 }
