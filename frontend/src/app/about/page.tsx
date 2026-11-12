@@ -59,7 +59,7 @@ const faqs = [
   },
   {
     question: "Can I permanently delete my account from the app?",
-    answer: "Permanent account deletion is not currently available as a self-service action. It requires a trusted server-side process to remove the authentication account and its related records together. Export a backup before requesting account deletion through the app's support channel, when available.",
+    answer: "Permanent account deletion is not currently available as a self-service action. It requires a trusted server-side process to remove the authentication account and its related records together. Export a backup first. You can use the feedback form below to record a deletion request, but submitting feedback does not delete your account automatically.",
   },
 ];
 

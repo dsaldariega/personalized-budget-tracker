@@ -55,7 +55,7 @@ const sections = [
     title: "Retention and account deletion",
     paragraphs: [
       "Your records are retained while your BudgetNest account remains active, subject to the operation of the app and its infrastructure providers. Feedback submissions are retained in the app database for review and product improvement.",
-      "Permanent account deletion is not currently available as a self-service feature. Export your data before making a deletion request. Deleting individual records in the app does not delete your authentication account."
+      "Permanent account deletion is not currently available as a self-service feature. You can use the feedback form to record a deletion request, but submitting feedback does not delete the account automatically. Export your data first. Deleting individual records in the app does not delete your authentication account."
     ],
   },
 ];
