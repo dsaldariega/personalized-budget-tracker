@@ -3,48 +3,76 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { CssBaseline, ThemeProvider as MuiThemeProvider, createTheme } from "@mui/material";
 
-type ThemeMode = "light" | "dark";
+export type ThemePreference = "system" | "light" | "dark";
+export type ResolvedThemeMode = "light" | "dark";
+
 const THEME_STORAGE_KEY = "budgetnest-theme";
 const THEME_COOKIE_KEY = "budgetnest-theme";
-const ThemeContext = createContext<{ mode: ThemeMode; toggleMode: () => void }>({
+
+type ThemeContextValue = {
+  mode: ResolvedThemeMode;
+  preference: ThemePreference;
+  setPreference: (preference: ThemePreference) => void;
+};
+
+const ThemeContext = createContext<ThemeContextValue>({
   mode: "light",
-  toggleMode: () => undefined,
+  preference: "light",
+  setPreference: () => undefined,
 });
 
-function persistTheme(mode: ThemeMode) {
+function isThemePreference(value: string | null | undefined): value is ThemePreference {
+  return value === "system" || value === "light" || value === "dark";
+}
+
+function persistTheme(preference: ThemePreference) {
   try {
-    window.localStorage.setItem(THEME_STORAGE_KEY, mode);
-    document.cookie = `${THEME_COOKIE_KEY}=${mode}; Path=/; Max-Age=31536000; SameSite=Lax`;
+    window.localStorage.setItem(THEME_STORAGE_KEY, preference);
+    document.cookie = `${THEME_COOKIE_KEY}=${preference}; Path=/; Max-Age=31536000; SameSite=Lax`;
   } catch {
     // Theme still works for the current session if browser storage is unavailable.
   }
 }
 
+function getSystemMode(): ResolvedThemeMode {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 export function ThemeProvider({
   children,
-  initialMode = "light",
+  initialPreference = "light",
 }: {
   children: React.ReactNode;
-  initialMode?: ThemeMode;
+  initialPreference?: ThemePreference;
 }) {
-  // The server reads the same preference cookie, so the first server and client
-  // renders use the saved theme instead of briefly painting the default theme.
-  const [mode, setMode] = useState<ThemeMode>(initialMode);
+  const [preference, setPreferenceState] = useState<ThemePreference>(initialPreference);
+  const [systemMode, setSystemMode] = useState<ResolvedThemeMode>("light");
 
   useEffect(() => {
-    // Migrate the previous localStorage-only preference once. After this,
-    // the server-readable cookie is the source used for first paint.
     const cookieExists = document.cookie.split("; ").some(item => item.startsWith(`${THEME_COOKIE_KEY}=`));
     if (!cookieExists) {
-      const legacyMode = window.localStorage.getItem(THEME_STORAGE_KEY);
-      if (legacyMode === "light" || legacyMode === "dark") {
-        persistTheme(legacyMode);
-        if (legacyMode !== initialMode) setMode(legacyMode);
-        return;
+      const legacyPreference = window.localStorage.getItem(THEME_STORAGE_KEY);
+      if (isThemePreference(legacyPreference)) {
+        setPreferenceState(legacyPreference);
+        persistTheme(legacyPreference);
+      } else {
+        persistTheme(initialPreference);
       }
     }
-    persistTheme(initialMode);
-  }, [initialMode]);
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const updateSystemMode = () => setSystemMode(media.matches ? "dark" : "light");
+    updateSystemMode();
+    media.addEventListener("change", updateSystemMode);
+    return () => media.removeEventListener("change", updateSystemMode);
+  }, [initialPreference]);
+
+  const mode: ResolvedThemeMode = preference === "system" ? systemMode : preference;
+
+  const setPreference = (nextPreference: ThemePreference) => {
+    setPreferenceState(nextPreference);
+    persistTheme(nextPreference);
+  };
 
   const theme = useMemo(() => createTheme({
     palette: {
@@ -70,11 +98,24 @@ export function ThemeProvider({
         : { default: "#F8F7FA", paper: "#FFFFFF" },
       divider: mode === "dark" ? "rgba(230,235,255,0.10)" : "rgba(34,42,74,0.09)",
     },
-    shape: { borderRadius: 14 },
+    shape: { borderRadius: 12 },
     typography: {
+      htmlFontSize: 14,
       fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      h4: { fontSize: "clamp(1.65rem, 3vw, 2.15rem)" },
-      button: { fontWeight: 650, textTransform: "none" },
+      fontSize: 14,
+      h1: { fontSize: "1.9rem", lineHeight: 1.2, fontWeight: 750, letterSpacing: "-0.035em" },
+      h2: { fontSize: "1.65rem", lineHeight: 1.25, fontWeight: 750, letterSpacing: "-0.03em" },
+      h3: { fontSize: "1.4rem", lineHeight: 1.3, fontWeight: 750, letterSpacing: "-0.025em" },
+      h4: { fontSize: "1.25rem", lineHeight: 1.35, fontWeight: 750, letterSpacing: "-0.02em" },
+      h5: { fontSize: "1.1rem", lineHeight: 1.4, fontWeight: 700 },
+      h6: { fontSize: "1rem", lineHeight: 1.45, fontWeight: 700 },
+      subtitle1: { fontSize: "0.95rem", lineHeight: 1.5, fontWeight: 600 },
+      subtitle2: { fontSize: "0.85rem", lineHeight: 1.45, fontWeight: 650 },
+      body1: { fontSize: "0.9rem", lineHeight: 1.6 },
+      body2: { fontSize: "0.82rem", lineHeight: 1.55 },
+      button: { fontSize: "0.84rem", fontWeight: 650, textTransform: "none" },
+      caption: { fontSize: "0.72rem", lineHeight: 1.45 },
+      overline: { fontSize: "0.68rem", lineHeight: 1.5, fontWeight: 750, letterSpacing: "0.09em" },
     },
     components: {
       MuiCard: {
@@ -84,13 +125,15 @@ export function ThemeProvider({
             overflow: "hidden",
             border: "1px solid",
             borderColor: mode === "dark" ? "rgba(230,235,255,0.09)" : "rgba(34,42,74,0.075)",
-            borderRadius: 18,
+            borderRadius: 16,
             boxShadow: mode === "dark" ? "0 8px 28px rgba(0,0,0,0.16)" : "0 6px 24px rgba(38, 45, 85, 0.045)",
             transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
-            "&:hover": {
-              transform: "translateY(-3px)",
-              borderColor: mode === "dark" ? "rgba(255,130,146,0.30)" : "rgba(217,54,80,0.20)",
-              boxShadow: mode === "dark" ? "0 12px 32px rgba(0,0,0,0.24)" : "0 12px 30px rgba(38, 45, 85, 0.085)",
+            "@media (hover: hover) and (prefers-reduced-motion: no-preference)": {
+              "&:hover": {
+                transform: "translateY(-2px)",
+                borderColor: mode === "dark" ? "rgba(255,130,146,0.30)" : "rgba(217,54,80,0.20)",
+                boxShadow: mode === "dark" ? "0 12px 32px rgba(0,0,0,0.24)" : "0 12px 30px rgba(38, 45, 85, 0.085)",
+              },
             },
           },
         },
@@ -98,7 +141,7 @@ export function ThemeProvider({
       MuiPaper: {
         styleOverrides: {
           root: { backgroundImage: "none" },
-          rounded: { borderRadius: 18 },
+          rounded: { borderRadius: 16 },
         },
       },
       MuiAppBar: {
@@ -112,16 +155,22 @@ export function ThemeProvider({
       MuiButton: {
         defaultProps: { disableRipple: true },
         styleOverrides: {
-          root: { borderRadius: 11, minHeight: 38, fontWeight: 700 },
+          root: { borderRadius: 10, minHeight: 36, fontWeight: 650 },
           contained: {
             boxShadow: mode === "dark" ? "0 5px 16px rgba(217,54,80,0.18)" : "0 5px 14px rgba(217,54,80,0.16)",
             "&:hover": { boxShadow: "0 8px 20px rgba(217,54,80,0.22)" },
           },
         },
       },
+      MuiIconButton: {
+        styleOverrides: {
+          root: { borderRadius: 10 },
+        },
+      },
       MuiChip: {
         styleOverrides: {
-          root: { borderRadius: 9, fontWeight: 700 },
+          root: { borderRadius: 8, fontWeight: 650 },
+          label: { fontSize: "0.76rem" },
         },
       },
       MuiInputLabel: {
@@ -132,16 +181,16 @@ export function ThemeProvider({
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
-            minHeight: 56,
+            minHeight: 48,
             alignItems: "center",
-            "&.MuiInputBase-sizeSmall": { minHeight: 40 },
+            "&.MuiInputBase-sizeSmall": { minHeight: 38 },
             "&.MuiInputBase-multiline": { minHeight: "unset", alignItems: "flex-start" },
           },
           input: {
             boxSizing: "content-box",
             lineHeight: "1.4375em",
-            padding: "16.5px 14px",
-            "&.MuiInputBase-inputSizeSmall": { padding: "8.5px 14px" },
+            padding: "13px 14px",
+            "&.MuiInputBase-inputSizeSmall": { padding: "7.5px 12px" },
             "&::placeholder": { opacity: 0.62 },
           },
           inputMultiline: {
@@ -153,20 +202,17 @@ export function ThemeProvider({
           },
         },
       },
+      MuiTableCell: {
+        styleOverrides: {
+          root: { padding: "11px 14px", fontSize: "0.82rem" },
+          head: { fontWeight: 700, color: mode === "dark" ? "#C8CDE0" : "#555B70" },
+        },
+      },
     },
   }), [mode]);
 
-  const toggleMode = () => {
-    setMode(current => {
-      const nextMode = current === "dark" ? "light" : "dark";
-      // Write immediately so a quick route change cannot race the persistence effect.
-      persistTheme(nextMode);
-      return nextMode;
-    });
-  };
-
   return (
-    <ThemeContext.Provider value={{ mode, toggleMode }}>
+    <ThemeContext.Provider value={{ mode, preference, setPreference }}>
       <MuiThemeProvider theme={theme}>
         <CssBaseline />
         {children}
