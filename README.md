@@ -391,11 +391,11 @@ Backend (`backend/.env`, and the Vercel backend project):
 ```dotenv
 SUPABASE_URL=https://your-project-ref.supabase.co
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
-FRONTEND_URLS=http://localhost:3000
+FRONTEND_URL=http://localhost:3000
 PORT=4000
 ```
 
-For the deployed backend, set `FRONTEND_URLS` to the exact frontend production origin. Multiple origins can be comma-separated, for example the local origin and the production frontend origin. Do not add a service-role key for this user-scoped API foundation.
+For the deployed backend, set `FRONTEND_URL` to the exact frontend origin allowed to call the API. This setting accepts one origin; use `http://localhost:3000` for local development and your deployed frontend origin for the Vercel environment. Do not add a service-role key for this user-scoped API foundation.
 
 ### Gradual migration plan
 
