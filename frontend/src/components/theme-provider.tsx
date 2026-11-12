@@ -114,20 +114,20 @@ export function ThemeProvider({
     typography: {
       htmlFontSize: 16,
       fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
-      fontSize: 14,
-      h1: { fontSize: "2rem", lineHeight: 1.2, fontWeight: 700, letterSpacing: "-0.03em" },
-      h2: { fontSize: "1.75rem", lineHeight: 1.25, fontWeight: 700, letterSpacing: "-0.025em" },
-      h3: { fontSize: "1.5rem", lineHeight: 1.3, fontWeight: 700, letterSpacing: "-0.02em" },
-      h4: { fontSize: "1.3rem", lineHeight: 1.35, fontWeight: 700, letterSpacing: "-0.015em" },
-      h5: { fontSize: "1.15rem", lineHeight: 1.4, fontWeight: 700 },
-      h6: { fontSize: "1.05rem", lineHeight: 1.45, fontWeight: 700 },
-      subtitle1: { fontSize: "1rem", lineHeight: 1.5, fontWeight: 600 },
-      subtitle2: { fontSize: "0.9rem", lineHeight: 1.45, fontWeight: 600 },
-      body1: { fontSize: "0.95rem", lineHeight: 1.6 },
-      body2: { fontSize: "0.875rem", lineHeight: 1.55 },
-      button: { fontSize: "0.875rem", fontWeight: 600, textTransform: "none" },
-      caption: { fontSize: "0.75rem", lineHeight: 1.45 },
-      overline: { fontSize: "0.7rem", lineHeight: 1.5, fontWeight: 700, letterSpacing: "0.08em" },
+      fontSize: 15,
+      h1: { fontSize: "2.05rem", lineHeight: 1.2, fontWeight: 650, letterSpacing: "-0.03em" },
+      h2: { fontSize: "1.8rem", lineHeight: 1.25, fontWeight: 650, letterSpacing: "-0.025em" },
+      h3: { fontSize: "1.55rem", lineHeight: 1.3, fontWeight: 650, letterSpacing: "-0.02em" },
+      h4: { fontSize: "1.35rem", lineHeight: 1.35, fontWeight: 650, letterSpacing: "-0.015em" },
+      h5: { fontSize: "1.2rem", lineHeight: 1.4, fontWeight: 650 },
+      h6: { fontSize: "1.1rem", lineHeight: 1.45, fontWeight: 650 },
+      subtitle1: { fontSize: "1.05rem", lineHeight: 1.5, fontWeight: 550 },
+      subtitle2: { fontSize: "0.95rem", lineHeight: 1.45, fontWeight: 550 },
+      body1: { fontSize: "1rem", lineHeight: 1.6, fontWeight: 400 },
+      body2: { fontSize: "0.9375rem", lineHeight: 1.55, fontWeight: 400 },
+      button: { fontSize: "0.9375rem", fontWeight: 550, textTransform: "none" },
+      caption: { fontSize: "0.8125rem", lineHeight: 1.45, fontWeight: 400 },
+      overline: { fontSize: "0.75rem", lineHeight: 1.5, fontWeight: 600, letterSpacing: "0.08em" },
     },
     components: {
       MuiCard: {
@@ -188,9 +188,28 @@ export function ThemeProvider({
           label: { fontSize: "0.8rem" },
         },
       },
+      MuiMenuItem: {
+        styleOverrides: {
+          root: {
+            minHeight: 42,
+            fontFamily: "inherit",
+            fontSize: "0.9375rem",
+            fontWeight: 450,
+          },
+        },
+      },
+      MuiSelect: {
+        styleOverrides: {
+          select: {
+            fontFamily: "inherit",
+            fontSize: "0.9375rem",
+            fontWeight: 400,
+          },
+        },
+      },
       MuiInputLabel: {
         styleOverrides: {
-          root: { lineHeight: 1.4375, "&.MuiInputLabel-sizeSmall": { lineHeight: 1.4 } },
+          root: { fontFamily: "inherit", lineHeight: 1.4375, "&.MuiInputLabel-sizeSmall": { lineHeight: 1.4 } },
         },
       },
       MuiOutlinedInput: {
