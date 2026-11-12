@@ -162,19 +162,17 @@ export function AuthPage({
         </Stack>
         <Box sx={{ width: "100%", maxWidth: 430, position: "relative", zIndex: 1 }}>
           <Box sx={{ display: "flex", justifyContent: "flex-end", mb: { xs: 2.5, sm: 3 } }}>
-            <Box
-              component={Link}
-              href="/"
-              sx={{
-                color: "text.secondary",
-                textDecoration: "none",
-                fontSize: 13,
-                fontWeight: 700,
-                "&:hover": { color: "primary.main" },
-              }}
-            >
-              ← Back to BudgetNest
-            </Box>
+            <Link
+            href="/"
+            style={{
+              color: "inherit",
+              textDecoration: "none",
+              fontSize: 13,
+              fontWeight: 700,
+            }}
+          >
+            <span style={{ color: "inherit" }}>← Back to BudgetNest</span>
+          </Link>
           </Box>
           <Typography sx={{ mb: 1, color: "primary.main", fontSize: 11, fontWeight: 800, letterSpacing: 1.6, textTransform: "uppercase" }}>
             {isLogin ? "Your finances, in focus" : "A better money routine starts here"}
