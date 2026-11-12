@@ -17,7 +17,7 @@ import {
   SwapHorizOutlined, TrendingUpOutlined, AccountCircleOutlined, CloseRounded, PolicyOutlined
 } from "@mui/icons-material";
 import {
-  AppBar, Avatar, Badge, Box, Button, Divider, Drawer, IconButton, List,
+  AppBar, Avatar, Badge, Box, Button, CircularProgress, Divider, Drawer, IconButton, List,
   ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, Toolbar,
   Popover, Tooltip, Typography, Dialog, DialogContent, useMediaQuery, useTheme
 } from "@mui/material";
@@ -79,13 +79,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   async function handleSignOut() {
     const supabase = createSupabaseClient();
-    if (!supabase) return;
+    if (!supabase || isSigningOut) return;
+
+    setAccountMenu(null);
+    setIsSigningOut(true);
+    await new Promise((resolve) => window.setTimeout(resolve, 450));
+
     const { error } = await supabase.auth.signOut();
+    setIsSigningOut(false);
     if (error) {
       console.error("Unable to sign out:", error);
       return;
     }
-    setAccountMenu(null);
+
     setWelcomeMode("signed-out");
     setWelcomeOpen(true);
     router.replace("/");
@@ -141,6 +147,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountMenu, setAccountMenu] = useState<HTMLElement | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [welcomeMode, setWelcomeMode] = useState<"first-visit" | "signed-out">("first-visit");
   const pageTitle = useMemo(
@@ -256,6 +263,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           </Toolbar>
         </AppBar>
+        <Dialog
+          open={isSigningOut}
+          disableEscapeKeyDown
+          onClose={() => undefined}
+          maxWidth="xs"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 4, mx: 2 } }}
+        >
+          <DialogContent sx={{ py: 4, px: 3 }}>
+            <Stack alignItems="center" spacing={2}>
+              <CircularProgress size={30} />
+              <Box sx={{ textAlign: "center" }}>
+                <Typography fontWeight={800}>Signing you out</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  Just a moment while we safely end your session…
+                </Typography>
+              </Box>
+            </Stack>
+          </DialogContent>
+        </Dialog>
         <Dialog
           open={welcomeOpen}
           onClose={() => {
