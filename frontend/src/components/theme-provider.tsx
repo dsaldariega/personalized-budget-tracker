@@ -220,7 +220,7 @@ export function ThemeProvider({
       MuiTableCell: {
         styleOverrides: {
           root: { padding: "12px 14px", fontSize: "0.875rem" },
-          head: { fontWeight: 700, color: mode === "dark" ? "#C8CDE0" : "#555B70" },
+          head: { fontWeight: 700, color: mode === "dark" ? "rgba(255,255,255,0.70)" : "#555B70" },
         },
       },
     },
