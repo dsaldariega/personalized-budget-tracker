@@ -97,7 +97,7 @@ Current authenticated endpoints:
 | PATCH | `/api/accounts/:id/archive` | Archive or restore an account |
 | DELETE | `/api/accounts/:id` | Delete an unlinked account |
 | GET | `/api/loans` | Load accounts, loans, and repayment history |
-| POST | `/api/loans` | Create a loan using a monthly interest rate |
+| POST | `/api/loans` | Create a loan with a selected interest method and generated due date |
 | PUT | `/api/loans/:id` | Update an owned loan |
 | PATCH | `/api/loans/:id/status` | Update an owned loan status |
 | POST | `/api/loans/:id/payments` | Record a total payment with automatic interest/principal allocation |
@@ -217,6 +217,8 @@ The dashboard implementation is committed to `dev`; manual acceptance testing is
 - [x] Create, edit, and delete loans linked to one account
 - [x] Record principal, monthly interest rate, term, start date, and due date
 - [x] Estimate equal monthly installments
+- [x] Select Flat Rate or Reducing Balance interest calculation per loan
+- [x] Generate the final due date from the start date and loan term
 - [x] Record only the total repayment amount and automatically allocate interest/principal
 - [x] Preserve historical manual repayment allocations
 - [x] Calculate outstanding principal and repayment progress
@@ -311,7 +313,7 @@ The transaction workflow records income and expenses against one account. Transf
 
 Budgets are linked to one account and an expense category. Spending is calculated from expense transactions that match both the selected account and category within the current budget period. Weekly, monthly, and yearly budgets repeat from their configured start date; custom budgets use an explicit start and end date. Editing or deleting a transaction automatically changes the calculated budget progress the next time the page data is refreshed. The existing `budgets` table and its owner-scoped RLS policy are used; no additional database migration is required for the budget manager.
 
-Loans are linked to one account and store the original principal, monthly interest rate, term, start date, optional due date, notes, and status. When a user records a payment, they enter only the total amount paid; BudgetNest estimates accrued interest from the monthly rate and elapsed time since the previous payment, applies the interest portion first, and applies the remainder to principal. Unpaid interest carries forward. Existing manually allocated payment history is preserved. The monthly installment is an estimate using a fixed-rate amortization formula and is not a lender-generated payment schedule. Loan repayments do not automatically create account transactions or change account balances. Because `dev` and `main` temporarily share one database, the legacy `annual_interest_rate` column is retained and synchronized with `monthly_interest_rate` by a database trigger until the old production frontend is migrated.
+Loans are linked to one account and store the original principal, monthly interest rate, interest calculation method (Flat Rate or Reducing Balance), term, start date, generated final due date, notes, and status. The due date is calculated from the start date plus the term, clamping month-end dates to the last valid day. Flat Rate accrues agreed interest against the original principal over the full term; Reducing Balance accrues interest against the remaining principal. Users enter only the total payment amount; BudgetNest allocates accrued interest first and then principal. Flat Rate interest is not reduced automatically by early principal repayment. Existing loans default to Reducing Balance, preserving current behavior. Calculation terms cannot be edited after repayments exist, preventing historical allocations from silently changing. Monthly installments are estimates, not lender-generated schedules. Loan repayments do not create account transactions or change account balances. The legacy `annual_interest_rate` column remains synchronized with `monthly_interest_rate` while the old production frontend is still in use.
 
 Subscriptions are linked to one account and store the service name, recurring amount, billing frequency (weekly, monthly, quarterly, or yearly), next billing date, category, notes, and active/inactive status. The page estimates monthly recurring costs, highlights due-soon and overdue services, and lets users record payments with a billing date, paid date, amount, and optional notes. Recording a payment advances the next billing date by one frequency interval. Payment history is stored separately in the owner-scoped `subscription_payments` table; it does not create a transaction or change the linked account balance. Deleting a subscription also deletes its payment history.
 
