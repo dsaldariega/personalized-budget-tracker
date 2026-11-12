@@ -85,11 +85,11 @@ The frontend will never contain a Supabase service-role key. The Express API ver
 
 ### Authentication setup
 
-- New registrations require a unique username (3–24 lowercase letters, numbers, or underscores).
+- New registrations require a unique username (3–24 lowercase letters, numbers, or underscores), a unique email address, and a password.
 - Users can sign in with either their username or email address.
 - Usernames are stored in `public.profiles`; the auth trigger creates the profile when a Supabase Auth user is registered.
 - Apply all SQL files in `supabase/migrations/` to the BudgetNest Supabase project before testing username sign-in. In particular, apply `20261112000000_add_profile_usernames.sql`.
-- For immediate sign-in after registration, disable **Confirm email** in Supabase Dashboard → Authentication → Providers → Email. Supabase otherwise creates the account but withholds the session until the email address is confirmed. This setting is required for instant registration-to-app navigation.
+- Email is collected as an account identifier; BudgetNest does not require email verification or send confirmation emails. Disable **Confirm email** in Supabase Dashboard → Authentication → Providers → Email so registration returns a session and users can enter the app immediately. Supabase will not verify that the mailbox itself exists.
 
 ### Backend API migration
 
