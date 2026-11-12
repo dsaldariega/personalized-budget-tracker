@@ -308,12 +308,40 @@ export function DashboardManager() {
   }).length : 0;
   const defaultCurrency = currencies.length === 1 ? currencies[0] : "PHP";
 
-  return <Stack spacing={3}>
-    <Stack direction={{ xs: "column", md: "row" }} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between" spacing={2}>
-      <Box>
-        <Typography variant="h4" fontWeight={850} letterSpacing={-1}>Your money at a glance.</Typography>
-        <Typography color="text.secondary" sx={{ mt: 0.7 }}>A clear picture of what came in, what went out, and what you’re working toward.</Typography>
-      </Box>
+  return <Stack className="dashboard-page" spacing={3}>
+    <Box
+      sx={{
+        position: "relative",
+        overflow: "hidden",
+        p: { xs: 2.2, sm: 2.8, md: 3.2 },
+        borderRadius: 4,
+        border: 1,
+        borderColor: "divider",
+        background: theme => theme.palette.mode === "dark"
+          ? "linear-gradient(118deg, rgba(217,54,80,0.19) 0%, rgba(26,31,53,0.96) 58%, rgba(0,175,160,0.10) 100%)"
+          : "linear-gradient(118deg, rgba(217,54,80,0.105) 0%, rgba(255,255,255,0.96) 56%, rgba(0,175,160,0.085) 100%)",
+        "&::after": {
+          content: '""',
+          position: "absolute",
+          width: 230,
+          height: 230,
+          borderRadius: "50%",
+          right: { xs: -130, md: 55 },
+          top: -150,
+          border: "34px solid",
+          borderColor: "rgba(217,54,80,0.075)",
+          pointerEvents: "none",
+        },
+      }}
+    >
+      <Stack direction={{ xs: "column", md: "row" }} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between" spacing={2} sx={{ position: "relative", zIndex: 1 }}>
+        <Box>
+          <Typography sx={{ color: "primary.main", fontSize: 10.5, fontWeight: 850, letterSpacing: 1.5, textTransform: "uppercase", mb: 0.8 }}>
+            Your financial overview
+          </Typography>
+          <Typography variant="h4" fontWeight={850} letterSpacing={-1}>Your money at a glance.</Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.7, maxWidth: 560 }}>A clear picture of what came in, what went out, and what you’re working toward.</Typography>
+        </Box>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
         <FormControl size="small" sx={{ minWidth: 145 }}>
           <Select value={period} onChange={event => setPeriod(event.target.value as Period)} aria-label="Reporting period">
