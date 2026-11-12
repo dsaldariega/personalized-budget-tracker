@@ -5,7 +5,7 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 const router = Router();
 const subscriptionSelect = "id,user_id,account_id,name,amount,billing_frequency,next_billing_date,category,notes,is_active,created_at";
 const paymentSelect = "id,user_id,subscription_id,amount,billing_date,paid_date,notes,created_at";
-const dateSchema = z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/);
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const subscriptionSchema = z.object({
   account_id: z.string().uuid(),
   name: z.string().trim().min(1).max(100),
