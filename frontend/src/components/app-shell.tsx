@@ -192,7 +192,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           </Toolbar>
         </AppBar>
-        <AuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />\n        <Snackbar open={noticeOpen} autoHideDuration={3000} onClose={() => setNoticeOpen(false)} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
+        <AuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+        <Snackbar open={noticeOpen} autoHideDuration={3000} onClose={() => setNoticeOpen(false)} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
           <Alert severity="info" variant="filled" onClose={() => setNoticeOpen(false)}>You’re all caught up.</Alert>
         </Snackbar>
         <Box component="main" sx={{ width: "100%", maxWidth: 1600, mx: "auto", px: { xs: 2, sm: 3, xl: 4 }, py: { xs: 3, md: 4 }, flexGrow: 1 }}>
