@@ -36,11 +36,20 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   headers.set("Authorization", `Bearer ${session.access_token}`);
 
-  const response = await fetch(`${API_URL}${path.startsWith("/") ? path : `/${path}`}`, {
-    ...init,
-    headers,
-    cache: "no-store",
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path.startsWith("/") ? path : `/${path}`}`, {
+      ...init,
+      headers,
+      cache: "no-store",
+    });
+  } catch (cause) {
+    const error = new Error(
+      `Unable to reach the BudgetNest API. Check that the backend is running, NEXT_PUBLIC_API_URL is correct, and the frontend origin is allowed by the API's CORS settings. Configured API URL: ${API_URL}`,
+      { cause },
+    ) as ApiError;
+    throw error;
+  }
 
   if (!response.ok) {
     const payload = await response.json().catch(() => null) as { error?: string; details?: unknown; issues?: unknown } | null;
