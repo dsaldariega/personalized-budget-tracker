@@ -160,7 +160,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const sidebar = (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "background.paper" }}>
       <Stack direction="row" alignItems="center" spacing={1.5} sx={{ px: 2.5, height: 76 }}>
-        <Box sx={{ width: 38, height: 38, borderRadius: 2.5, display: "grid", placeItems: "center", bgcolor: "primary.main", color: "primary.contrastText", fontWeight: 900, fontSize: 20 }}>B</Box>
+        <Box sx={{ width: 40, height: 40, borderRadius: 2.7, display: "grid", placeItems: "center", background: "linear-gradient(145deg, #F16B7D 0%, #D93650 58%, #B9233D 100%)", color: "#FFFFFF", fontWeight: 900, fontSize: 20, boxShadow: "0 6px 15px rgba(217,54,80,0.24)" }}>B</Box>
         <Box>
           <Typography fontWeight={850} letterSpacing={-0.5} lineHeight={1.1}>BudgetNest</Typography>
           <Typography variant="caption" color="text.secondary">PERSONAL FINANCE</Typography>
@@ -184,9 +184,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     selected={selected}
                     onClick={() => setMobileOpen(false)}
                     sx={{
-                      minHeight: 44, px: 1.5, mb: 0.35, borderRadius: 2.5,
+                      minHeight: 46, px: 1.5, mb: 0.45, borderRadius: 2.5, position: "relative", overflow: "hidden",
                       color: selected ? "primary.main" : "text.secondary",
-                      "&.Mui-selected": { bgcolor: "action.selected", color: "primary.main" },
+                      "&.Mui-selected": { bgcolor: "rgba(217,54,80,0.085)", color: "primary.main", "&::before": { content: '""', position: "absolute", left: 0, top: 8, bottom: 8, width: 3, borderRadius: 4, bgcolor: "primary.main" } },
                       "&.Mui-selected:hover": { bgcolor: "action.selected" },
                       "&:hover": { bgcolor: "action.hover" }
                     }}
@@ -227,7 +227,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </Box>
 
       <Box sx={{ ml: { lg: `${drawerWidth}px` }, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-        <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "background.default" }}>
+        <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "background.default", backdropFilter: "blur(16px)" }}>
           <Toolbar sx={{ minHeight: "72px !important", px: { xs: 2, md: 3 } }}>
             <IconButton onClick={() => setMobileOpen(true)} sx={{ display: { lg: "none" }, mr: 1 }} aria-label="Open navigation"><MenuRounded /></IconButton>
             <Box sx={{ flexGrow: 1 }}>
