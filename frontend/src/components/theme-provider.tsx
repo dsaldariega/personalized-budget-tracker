@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { CssBaseline, ThemeProvider as MuiThemeProvider, createTheme } from "@mui/material";
+import CssBaseline from "@mui/material/CssBaseline";
+import { ThemeProvider as MuiThemeProvider, createTheme } from "@mui/material/styles";
 
 export type ThemePreference = "system" | "light" | "dark";
 export type ResolvedThemeMode = "light" | "dark";
