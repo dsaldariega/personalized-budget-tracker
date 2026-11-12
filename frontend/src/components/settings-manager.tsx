@@ -21,9 +21,11 @@ function csvEscape(value: unknown) {
   const text = value === null || value === undefined ? "" : typeof value === "object" ? JSON.stringify(value) : String(value);
   return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
 }
-function makeCsv(rows: Record<string, unknown>[]) {
-  if (!rows.length) return "";
-  const headers = Object.keys(rows[0]);
+const transactionCsvHeaders = [
+  "account_name", "currency", "transaction_type", "amount",
+  "category", "description", "transaction_date",
+];
+function makeCsv(rows: Record<string, unknown>[], headers: string[] = transactionCsvHeaders) {
   return "\uFEFF" + [headers.map(csvEscape).join(","), ...rows.map(row => headers.map(header => csvEscape(row[header])).join(","))].join("\r\n");
 }
 function downloadFile(filename: string, content: string, type: string) {
@@ -153,14 +155,18 @@ export function SettingsManager() {
     const tx = (data.transactions ?? []) as Transaction[];
     const accountRows = (data.accounts ?? []) as Account[];
     const names = new Map(accountRows.map(a => [a.id, a.name]));
-    const csvRows = tx.filter(item => item.transaction_type !== "transfer").map(item => ({
-      account_name: names.get(item.account_id) ?? "", currency: accountRows.find(a => a.id === item.account_id)?.currency ?? "",
-      transaction_type: item.transaction_type, amount: item.amount, category: item.category ?? "",
-      description: item.description ?? "", transaction_date: item.transaction_date,
-      transfer_group_id: item.transfer_group_id ?? "", transfer_direction: item.transfer_direction ?? "",
+    const csvRows = tx.filter(item => item.transaction_type === "income" || item.transaction_type === "expense").map(item => ({
+      account_name: names.get(item.account_id) ?? "",
+      currency: accountRows.find(a => a.id === item.account_id)?.currency ?? "",
+      transaction_type: item.transaction_type,
+      amount: Number(item.amount).toFixed(2),
+      category: item.category ?? "",
+      description: item.description ?? "",
+      transaction_date: item.transaction_date.slice(0, 10),
     }));
-    if (csvRows.length) downloadFile("budgetnest-transactions-" + localDateStamp() + ".csv", makeCsv(csvRows), "text/csv;charset=utf-8");
-    setNotice("Your full JSON backup and Excel-compatible transaction CSV have been downloaded."); setExporting(false);
+    // Always include the import-compatible header, even when there are no income/expense rows.
+    downloadFile("budgetnest-transactions-" + localDateStamp() + ".csv", makeCsv(csvRows), "text/csv;charset=utf-8");
+    setNotice("Your full JSON backup and import-ready transaction CSV have been downloaded. Transfers are preserved in the JSON backup."); setExporting(false);
   }
 
   async function importTransactions(event: ChangeEvent<HTMLInputElement>) {
