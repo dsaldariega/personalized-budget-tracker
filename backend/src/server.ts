@@ -23,9 +23,9 @@ const configuredOrigins = [
 ]
   .map((origin) => origin?.trim())
   .filter((origin): origin is string => Boolean(origin));
-const localDevelopmentOrigin = /^https?:\\/\\/(?:localhost|127\\.0\\.0\\.1)(?::\\d+)?$/;
+const localDevelopmentOrigin = /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/;
 const budgetNestPreviewOrigin =
-  /^https:\\/\\/budgetnest-(?:[a-z0-9]+|web-git-[a-z0-9-]+)-dsaldariegas-projects\\.vercel\\.app$/;
+  /^https:\/\/budgetnest-(?:[a-z0-9]+|web-git-[a-z0-9-]+)-dsaldariegas-projects\.vercel\.app$/;
 
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
