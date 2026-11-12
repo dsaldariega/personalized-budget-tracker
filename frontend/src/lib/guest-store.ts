@@ -64,7 +64,7 @@ function expenses() {
     }));
 }
 
-function addRecord(collection: GuestRecord[], value: GuestRecord) {
+function addRecord(collection: GuestRecord[], value: GuestRecord): GuestRecord {
   const record = {
     ...value, id: value.id ?? id(), user_id: GUEST_USER_ID, created_at: value.created_at ?? now(),
   };
