@@ -19,8 +19,9 @@ import {
 import {
   AppBar, Avatar, Badge, Box, Button, CircularProgress, Divider, Drawer, IconButton, List,
   ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, Toolbar,
-  Popover, Tooltip, Typography, Dialog, DialogContent, useMediaQuery, useTheme, ToggleButton, ToggleButtonGroup
+  Popover, Tooltip, Typography, Dialog, DialogContent, useMediaQuery, ToggleButton, ToggleButtonGroup
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useThemeMode } from "@/components/theme-provider";
 
 const drawerWidth = 252;
