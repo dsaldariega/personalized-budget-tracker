@@ -14,10 +14,11 @@ import {
 import { apiRequest } from "@/lib/api";
 
 type Status = "active" | "paid" | "paused";
+type InterestType = "flat_rate" | "reducing_balance";
 type Account = { id: string; name: string; currency: string; is_archived: boolean };
 type Loan = {
   id: string; user_id: string; account_id: string; name: string;
-  principal_amount: number; monthly_interest_rate: number; term_months: number;
+  principal_amount: number; monthly_interest_rate: number; interest_type: InterestType; term_months: number;
   start_date: string; due_date: string | null; notes: string | null;
   status: Status; created_at: string;
 };
@@ -28,7 +29,7 @@ type Payment = {
 };
 type LoanForm = {
   account_id: string; name: string; principal_amount: string;
-  monthly_interest_rate: string; term_months: string;
+  monthly_interest_rate: string; interest_type: InterestType; term_months: string;
   start_date: string; due_date: string; notes: string; status: Status;
 };
 type PaymentForm = { amount: string; payment_date: string; notes: string };
@@ -36,11 +37,20 @@ const today = () => {
   const d = new Date();
   return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
 };
-const emptyLoan = (): LoanForm => ({ account_id: "", name: "", principal_amount: "", monthly_interest_rate: "0", term_months: "12", start_date: today(), due_date: "", notes: "", status: "active" });
+const emptyLoan = (): LoanForm => ({ account_id: "", name: "", principal_amount: "", monthly_interest_rate: "0", interest_type: "reducing_balance", term_months: "12", start_date: today(), due_date: "", notes: "", status: "active" });
 const emptyPayment = (): PaymentForm => ({ amount: "", payment_date: today(), notes: "" });
 function money(amount: number, currency: string) {
   try { return new Intl.NumberFormat("en-PH", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount); }
   catch { return currency + " " + amount.toLocaleString("en-PH", { maximumFractionDigits: 2 }); }
+}
+function calculateDueDate(startDate: string, months: number) {
+  if (!startDate || !Number.isInteger(months) || months < 1) return "";
+  const [year, month, day] = startDate.split("-").map(Number);
+  const targetMonth = month - 1 + months;
+  const targetYear = year + Math.floor(targetMonth / 12);
+  const normalizedMonth = targetMonth % 12;
+  const lastDay = new Date(Date.UTC(targetYear, normalizedMonth + 1, 0)).getUTCDate();
+  return [targetYear, String(normalizedMonth + 1).padStart(2, "0"), String(Math.min(day, lastDay)).padStart(2, "0")].join("-");
 }
 function dateLabel(value: string) {
   const [y, m, d] = value.split("-").map(Number);
@@ -52,24 +62,36 @@ function monthsBetween(from: string, to: string) {
   const end = Date.parse(`${to}T00:00:00.000Z`);
   return Number.isFinite(start) && Number.isFinite(end) ? Math.max(0, (end - start) / 86400000 / 30.4375) : 0;
 }
-function monthlyEstimate(principal: number, monthlyRatePercent: number, months: number) {
+function monthlyEstimate(principal: number, monthlyRatePercent: number, months: number, interestType: InterestType) {
   if (!months) return 0;
   const rate = monthlyRatePercent / 100;
+  if (interestType === "flat_rate") return roundMoney((principal + principal * rate * months) / months);
   return rate === 0 ? principal / months : principal * rate / (1 - Math.pow(1 + rate, -months));
 }
 function paymentSnapshot(loan: Loan, loanPayments: Payment[]) {
   let remainingPrincipal = Number(loan.principal_amount);
   let accruedInterest = 0;
+  let flatInterestAccrued = 0;
+  let totalInterestPaid = 0;
   let accrualDate = loan.start_date;
+  const originalPrincipal = Number(loan.principal_amount);
   const monthlyRate = Number(loan.monthly_interest_rate) / 100;
+  const totalFlatInterest = roundMoney(originalPrincipal * monthlyRate * Number(loan.term_months));
   const ordered = [...loanPayments].sort((a, b) => a.payment_date.localeCompare(b.payment_date) || a.created_at.localeCompare(b.created_at));
   for (const payment of ordered) {
-    accruedInterest = roundMoney(accruedInterest + remainingPrincipal * monthlyRate * monthsBetween(accrualDate, payment.payment_date));
+    const elapsed = monthsBetween(accrualDate, payment.payment_date);
+    if (loan.interest_type === "flat_rate") {
+      flatInterestAccrued = roundMoney(Math.min(totalFlatInterest, flatInterestAccrued + originalPrincipal * monthlyRate * elapsed));
+      accruedInterest = roundMoney(Math.max(0, flatInterestAccrued - totalInterestPaid));
+    } else {
+      accruedInterest = roundMoney(accruedInterest + remainingPrincipal * monthlyRate * elapsed);
+    }
+    totalInterestPaid = roundMoney(totalInterestPaid + Number(payment.interest_paid));
     accruedInterest = roundMoney(Math.max(0, accruedInterest - Number(payment.interest_paid)));
     remainingPrincipal = roundMoney(Math.max(0, remainingPrincipal - Number(payment.principal_paid)));
     accrualDate = payment.payment_date;
   }
-  return { remainingPrincipal, accruedInterest, lastPaymentDate: accrualDate };
+  return { remainingPrincipal, accruedInterest, flatInterestAccrued, totalInterestPaid, lastPaymentDate: accrualDate };
 }
 
 function LoanDialog({ open, accounts, initial, saving, onClose, onSave }: {
@@ -88,11 +110,11 @@ function LoanDialog({ open, accounts, initial, saving, onClose, onSave }: {
     if (!Number.isFinite(rate) || rate < 0 || rate > 100) return setFormError("Enter a monthly interest rate between 0 and 100.");
     if (!Number.isInteger(months) || months < 1 || months > 600) return setFormError("Enter a loan term between 1 and 600 months.");
     if (!form.start_date) return setFormError("Choose a start date.");
-    if (form.due_date && form.due_date < form.start_date) return setFormError("The due date cannot be before the start date.");
-    onSave({ ...form, name: form.name.trim(), principal_amount: String(principal), monthly_interest_rate: String(rate), term_months: String(months) });
+    onSave({ ...form, due_date: calculateDueDate(form.start_date, months), name: form.name.trim(), principal_amount: String(principal), monthly_interest_rate: String(rate), term_months: String(months) });
   }
   const currency = accounts.find(a => a.id === form.account_id)?.currency ?? "PHP";
-  const estimate = monthlyEstimate(Number(form.principal_amount) || 0, Number(form.monthly_interest_rate) || 0, Number(form.term_months) || 0);
+  const estimate = monthlyEstimate(Number(form.principal_amount) || 0, Number(form.monthly_interest_rate) || 0, Number(form.term_months) || 0, form.interest_type);
+  const calculatedDueDate = calculateDueDate(form.start_date, Number(form.term_months));
   return <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
     <Box component="form" onSubmit={submit}>
       <DialogTitle sx={{ fontWeight: 800 }}>{initial.name ? "Edit loan" : "Add a loan"}</DialogTitle>
@@ -101,16 +123,20 @@ function LoanDialog({ open, accounts, initial, saving, onClose, onSave }: {
           <TextField label="Loan name" placeholder="e.g. Personal loan, Car loan" value={form.name} onChange={e => setForm(v => ({ ...v, name: e.target.value }))} fullWidth required inputProps={{ maxLength: 100 }} />
           <TextField select label="Linked account" value={form.account_id} onChange={e => setForm(v => ({ ...v, account_id: e.target.value }))} fullWidth>{accounts.map(a => <MenuItem key={a.id} value={a.id}>{a.name} · {a.currency}</MenuItem>)}</TextField>
           <TextField label="Principal amount" type="number" value={form.principal_amount} onChange={e => setForm(v => ({ ...v, principal_amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "0.01" }} InputProps={{ startAdornment: <Typography color="text.secondary" sx={{ mr: 1 }}>{currency}</Typography> }} />
+          <TextField select label="Interest calculation method" value={form.interest_type} onChange={e => setForm(v => ({ ...v, interest_type: e.target.value as InterestType }))} fullWidth>
+            <MenuItem value="flat_rate">Flat Rate — fixed interest for the full term</MenuItem>
+            <MenuItem value="reducing_balance">Reducing Balance — interest decreases as principal is repaid</MenuItem>
+          </TextField>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             <TextField label="Monthly interest rate (%)" type="number" value={form.monthly_interest_rate} onChange={e => setForm(v => ({ ...v, monthly_interest_rate: e.target.value }))} fullWidth required inputProps={{ min: "0", max: "100", step: "0.01" }} />
             <TextField label="Term (months)" type="number" value={form.term_months} onChange={e => setForm(v => ({ ...v, term_months: e.target.value }))} fullWidth required inputProps={{ min: "1", max: "600", step: "1" }} />
           </Stack>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             <TextField label="Start date" type="date" value={form.start_date} onChange={e => setForm(v => ({ ...v, start_date: e.target.value }))} fullWidth InputLabelProps={{ shrink: true }} />
-            <TextField label="Final due date (optional)" type="date" value={form.due_date} onChange={e => setForm(v => ({ ...v, due_date: e.target.value }))} fullWidth InputLabelProps={{ shrink: true }} />
+            <TextField label="Final due date (calculated)" type="date" value={calculatedDueDate} fullWidth disabled InputLabelProps={{ shrink: true }} />
           </Stack>
           <TextField label="Notes (optional)" value={form.notes} onChange={e => setForm(v => ({ ...v, notes: e.target.value }))} fullWidth multiline minRows={2} inputProps={{ maxLength: 500 }} />
-          <Paper variant="outlined" sx={{ p: 1.7, borderRadius: 2 }}><Typography variant="caption" color="text.secondary">Estimated monthly installment</Typography><Typography variant="h6" fontWeight={800}>{money(estimate, currency)}</Typography><Typography variant="caption" color="text.secondary">Estimate uses a fixed monthly rate and equal monthly installments. Actual lender terms may differ.</Typography></Paper>
+          <Paper variant="outlined" sx={{ p: 1.7, borderRadius: 2 }}><Typography variant="caption" color="text.secondary">Estimated monthly installment</Typography><Typography variant="h6" fontWeight={800}>{money(estimate, currency)}</Typography><Typography variant="caption" color="text.secondary">{form.interest_type === "flat_rate" ? "Flat interest is calculated on the original principal for the full term." : "Reducing-balance interest is estimated against the remaining principal."} Actual lender terms may differ.</Typography></Paper>
           {formError && <Alert severity="error">{formError}</Alert>}
         </Stack>
       </DialogContent>
@@ -119,9 +145,9 @@ function LoanDialog({ open, accounts, initial, saving, onClose, onSave }: {
   </Dialog>;
 }
 
-function PaymentDialog({ open, loan, currency, remainingPrincipal, accruedInterest, lastPaymentDate, saving, onClose, onSave }: {
+function PaymentDialog({ open, loan, currency, remainingPrincipal, accruedInterest, flatInterestAccrued, totalInterestPaid, lastPaymentDate, saving, onClose, onSave }: {
   open: boolean; loan: Loan | null; currency: string; remainingPrincipal: number;
-  accruedInterest: number; lastPaymentDate: string;
+  accruedInterest: number; flatInterestAccrued: number; totalInterestPaid: number; lastPaymentDate: string;
   saving: boolean; onClose: () => void; onSave: (value: PaymentForm) => void;
 }) {
   const [form, setForm] = useState<PaymentForm>(emptyPayment());
@@ -129,7 +155,11 @@ function PaymentDialog({ open, loan, currency, remainingPrincipal, accruedIntere
   useEffect(() => { if (open) { setForm({ ...emptyPayment(), payment_date: lastPaymentDate > today() ? lastPaymentDate : today() }); setFormError(""); } }, [open, loan?.id, lastPaymentDate]);
   const amount = Number(form.amount) || 0;
   const elapsedMonths = monthsBetween(lastPaymentDate, form.payment_date);
-  const interestDue = roundMoney(accruedInterest + remainingPrincipal * (Number(loan?.monthly_interest_rate) || 0) / 100 * elapsedMonths);
+  const monthlyRate = (Number(loan?.monthly_interest_rate) || 0) / 100;
+  const flatTotalInterest = roundMoney(Number(loan?.principal_amount ?? 0) * monthlyRate * Number(loan?.term_months ?? 0));
+  const interestDue = loan?.interest_type === "flat_rate"
+    ? roundMoney(Math.max(0, Math.min(flatTotalInterest, flatInterestAccrued + Number(loan?.principal_amount ?? 0) * monthlyRate * elapsedMonths) - totalInterestPaid))
+    : roundMoney(accruedInterest + remainingPrincipal * monthlyRate * elapsedMonths);
   const interestPaid = roundMoney(Math.min(amount, interestDue));
   const principalPaid = roundMoney(Math.min(Math.max(0, amount - interestPaid), remainingPrincipal));
   const remainingAfterPayment = roundMoney(Math.max(0, remainingPrincipal - principalPaid));
@@ -156,7 +186,7 @@ function PaymentDialog({ open, loan, currency, remainingPrincipal, accruedIntere
             <Stack direction="row" justifyContent="space-between"><Typography variant="body2" color="text.secondary">Principal remaining</Typography><Typography fontWeight={800}>{money(remainingAfterPayment, currency)}</Typography></Stack>
             {amount > 0 && amount < interestDue && <Typography variant="caption" color="warning.main" display="block" sx={{ mt: 1 }}>The payment is below accrued interest; the unpaid interest will carry forward.</Typography>}
           </Paper>
-          <Alert severity="info">BudgetNest estimates interest using the monthly rate and time since your last payment. You only need to enter the total amount paid.</Alert>
+          <Alert severity="info">{loan?.interest_type === "flat_rate" ? "Flat Rate accrues agreed interest against the original principal over the loan term." : "Reducing Balance calculates interest against the remaining principal."} Enter only the total amount paid; BudgetNest allocates it automatically.</Alert>
           <TextField label="Payment date" type="date" value={form.payment_date} onChange={e => setForm(v => ({ ...v, payment_date: e.target.value }))} fullWidth InputLabelProps={{ shrink: true }} inputProps={{ min: lastPaymentDate }} />
           <TextField label="Notes (optional)" value={form.notes} onChange={e => setForm(v => ({ ...v, notes: e.target.value }))} fullWidth inputProps={{ maxLength: 300 }} />
           {formError && <Alert severity="error">{formError}</Alert>}
@@ -201,7 +231,7 @@ export function LoansManager() {
 
   function openCreate() { setEditing(null); setLoanForm({ ...emptyLoan(), account_id: accounts.find(a => !a.is_archived)?.id ?? "" }); setLoanDialog(true); }
   function openEdit(loan: Loan) {
-    setEditing(loan); setLoanForm({ account_id: loan.account_id, name: loan.name, principal_amount: String(loan.principal_amount), monthly_interest_rate: String(loan.monthly_interest_rate), term_months: String(loan.term_months), start_date: loan.start_date, due_date: loan.due_date ?? "", notes: loan.notes ?? "", status: loan.status }); setMenu(null); setLoanDialog(true);
+    setEditing(loan); setLoanForm({ account_id: loan.account_id, name: loan.name, principal_amount: String(loan.principal_amount), monthly_interest_rate: String(loan.monthly_interest_rate), interest_type: loan.interest_type ?? "reducing_balance", term_months: String(loan.term_months), start_date: loan.start_date, due_date: loan.due_date ?? "", notes: loan.notes ?? "", status: loan.status }); setMenu(null); setLoanDialog(true);
   }
   async function saveLoan(value: LoanForm) {
     setSaving(true); setError(""); setNotice("");
@@ -212,9 +242,9 @@ export function LoansManager() {
     const payload = {
       account_id: value.account_id, name: value.name,
       principal_amount: Number(value.principal_amount),
-      monthly_interest_rate: Number(value.monthly_interest_rate),
+      monthly_interest_rate: Number(value.monthly_interest_rate), interest_type: value.interest_type,
       term_months: Number(value.term_months), start_date: value.start_date,
-      due_date: value.due_date || null, notes: value.notes.trim() || null, status: value.status,
+      due_date: calculateDueDate(value.start_date, Number(value.term_months)), notes: value.notes.trim() || null, status: value.status,
     };
     try {
       await apiRequest<{ loan: Loan }>(editing ? `/loans/${editing.id}` : "/loans", {
@@ -276,12 +306,13 @@ export function LoansManager() {
     const paid = loanPayments.reduce((sum, p) => sum + Number(p.amount), 0);
     const snapshot = paymentSnapshot(loan, loanPayments);
     const remaining = snapshot.remainingPrincipal;
-    return { loan, loanPayments, principalPaid, interestPaid, paid, remaining, accruedInterest: snapshot.accruedInterest, lastPaymentDate: snapshot.lastPaymentDate, account: accountById.get(loan.account_id), progress: Math.min(100, principalPaid / Number(loan.principal_amount) * 100) };
+    const remainingInterest = loan.interest_type === "flat_rate" ? Math.max(0, roundMoney(Number(loan.principal_amount) * Number(loan.monthly_interest_rate) / 100 * Number(loan.term_months)) - interestPaid) : snapshot.accruedInterest;
+    return { loan, loanPayments, principalPaid, interestPaid, paid, remaining, remainingInterest, accruedInterest: snapshot.accruedInterest, flatInterestAccrued: snapshot.flatInterestAccrued, totalInterestPaid: snapshot.totalInterestPaid, lastPaymentDate: snapshot.lastPaymentDate, account: accountById.get(loan.account_id), progress: Math.min(100, principalPaid / Number(loan.principal_amount) * 100) };
   });
   const filtered = rows.filter(r => (accountFilter === "all" || r.loan.account_id === accountFilter) && (statusFilter === "all" || r.loan.status === statusFilter) && (!search || [r.loan.name, r.account?.name].join(" ").toLowerCase().includes(search.toLowerCase())));
   const activeRows = rows.filter(r => r.loan.status === "active");
   const sumByCurrency = new Map<string, { remaining: number; interest: number }>();
-  activeRows.forEach(r => { const c = r.account?.currency ?? "PHP"; const v = sumByCurrency.get(c) ?? { remaining: 0, interest: 0 }; v.remaining += r.remaining; v.interest += r.interestPaid; sumByCurrency.set(c, v); });
+  activeRows.forEach(r => { const c = r.account?.currency ?? "PHP"; const v = sumByCurrency.get(c) ?? { remaining: 0, interest: 0 }; v.remaining += r.remaining + r.remainingInterest; v.interest += r.interestPaid; sumByCurrency.set(c, v); });
   const balanceLabel = Array.from(sumByCurrency, ([c, v]) => money(v.remaining, c)).join(" · ") || "—";
   const interestLabel = Array.from(sumByCurrency, ([c, v]) => money(v.interest, c)).join(" · ") || "—";
 
@@ -295,7 +326,7 @@ export function LoansManager() {
     {!accounts.some(a => !a.is_archived) && !loading && <Alert severity="info" action={<Button color="inherit" size="small" onClick={() => window.location.assign("/accounts")}>Go to accounts</Button>}>Add an active account before creating a loan.</Alert>}
     <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3,minmax(0,1fr))" }, gap: 2 }}>
       <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><PaymentsRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Active loans</Typography><Typography variant="h6" fontWeight={800}>{activeRows.length}</Typography></Box></Stack></Paper>
-      <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "warning.main" }}><TrendingDownRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Outstanding principal</Typography><Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: 18, sm: 20 } }}>{balanceLabel}</Typography></Box></Stack></Paper>
+      <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "warning.main" }}><TrendingDownRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Outstanding balance</Typography><Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: 18, sm: 20 } }}>{balanceLabel}</Typography></Box></Stack></Paper>
       <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "success.main" }}><PaymentsRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Interest paid (active loans)</Typography><Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: 18, sm: 20 } }}>{interestLabel}</Typography></Box></Stack></Paper>
     </Box>
     <Stack direction={{ xs: "column", md: "row" }} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between" spacing={1.5}>
@@ -308,21 +339,21 @@ export function LoansManager() {
       </Stack>
     </Stack>
     {loading ? <Paper sx={{ minHeight: 220, display: "grid", placeItems: "center", borderRadius: 3 }}><CircularProgress size={28} /></Paper> : filtered.length === 0 ? <Paper variant="outlined" sx={{ p: { xs: 3, md: 5 }, minHeight: 250, display: "grid", placeItems: "center", textAlign: "center", borderRadius: 3 }}><Stack alignItems="center" spacing={1.2} sx={{ maxWidth: 410 }}><Avatar variant="rounded" sx={{ width: 58, height: 58, bgcolor: "action.hover", color: "text.secondary" }}><PaymentsRounded fontSize="large" /></Avatar><Typography fontWeight={750} fontSize={18}>{loans.length ? "No matching loans" : "Keep your loan details together"}</Typography><Typography color="text.secondary" variant="body2">{loans.length ? "Try adjusting your search or filters." : "Add a loan, record repayments, and see your outstanding principal at a glance."}</Typography>{loans.length === 0 && accounts.some(a => !a.is_archived) && <Button variant="contained" startIcon={<AddRounded />} onClick={openCreate} sx={{ mt: 1 }}>Add your first loan</Button>}</Stack></Paper> : <Stack spacing={2}>
-      {filtered.map(({ loan, loanPayments, principalPaid, interestPaid, paid, remaining, accruedInterest, account, progress }) => {
+      {filtered.map(({ loan, loanPayments, principalPaid, interestPaid, paid, remaining, remainingInterest, accruedInterest, account, progress }) => {
         const currency = account?.currency ?? "PHP";
-        const estimate = monthlyEstimate(Number(loan.principal_amount), Number(loan.monthly_interest_rate), Number(loan.term_months));
+        const estimate = monthlyEstimate(Number(loan.principal_amount), Number(loan.monthly_interest_rate), Number(loan.term_months), loan.interest_type ?? "reducing_balance");
         const expandedNow = expanded === loan.id;
         return <Paper key={loan.id} variant="outlined" sx={{ p: 2.4, borderRadius: 3 }}>
           <Stack direction="row" spacing={1.2} alignItems="flex-start">
             <Avatar variant="rounded" sx={{ bgcolor: "action.hover", color: "primary.main" }}><PaymentsRounded /></Avatar>
-            <Box sx={{ flex: 1, minWidth: 0 }}><Typography fontWeight={800}>{loan.name}</Typography><Typography variant="body2" color="text.secondary">{account?.name ?? "Unknown account"} · {Number(loan.monthly_interest_rate).toFixed(2)}% monthly · {loan.term_months} months</Typography></Box>
+            <Box sx={{ flex: 1, minWidth: 0 }}><Typography fontWeight={800}>{loan.name}</Typography><Typography variant="body2" color="text.secondary">{account?.name ?? "Unknown account"} · {loan.interest_type === "flat_rate" ? "Flat Rate" : "Reducing Balance"} · {Number(loan.monthly_interest_rate).toFixed(2)}% monthly · {loan.term_months} months</Typography></Box>
             <Chip size="small" variant="outlined" color={loan.status === "paid" ? "success" : loan.status === "paused" ? "default" : "primary"} label={loan.status.charAt(0).toUpperCase() + loan.status.slice(1)} />
             <IconButton size="small" aria-label={`Actions for ${loan.name}`} onClick={e => setMenu({ element: e.currentTarget, loan })}><MoreHorizRounded /></IconButton>
           </Stack>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,minmax(0,1fr))", sm: "repeat(4,minmax(0,1fr))" }, gap: 2, mt: 2.2 }}>
             <Box><Typography variant="caption" color="text.secondary">Original principal</Typography><Typography fontWeight={800}>{money(Number(loan.principal_amount), currency)}</Typography></Box>
             <Box><Typography variant="caption" color="text.secondary">Principal paid</Typography><Typography fontWeight={800}>{money(principalPaid, currency)}</Typography></Box>
-            <Box><Typography variant="caption" color="text.secondary">Outstanding</Typography><Typography fontWeight={800} color={remaining > 0 ? "warning.main" : "success.main"}>{money(remaining, currency)}</Typography></Box>
+            <Box><Typography variant="caption" color="text.secondary">Outstanding</Typography><Typography fontWeight={800} color={remaining + remainingInterest > 0 ? "warning.main" : "success.main"}>{money(remaining + remainingInterest, currency)}</Typography></Box>
             <Box><Typography variant="caption" color="text.secondary">Est. monthly</Typography><Typography fontWeight={800}>{money(estimate, currency)}</Typography></Box>
           </Box>
           <LinearProgress variant="determinate" value={progress} color={loan.status === "paid" ? "success" : "primary"} sx={{ height: 8, borderRadius: 99, mt: 2, bgcolor: "action.hover" }} />
@@ -330,7 +361,7 @@ export function LoansManager() {
             <Typography variant="caption" color="text.secondary">{progress.toFixed(0)}% principal repaid · {loan.due_date ? `Due ${dateLabel(loan.due_date)}` : `Started ${dateLabel(loan.start_date)}`}</Typography>
             <Stack direction="row" spacing={1}>
               <Button size="small" onClick={() => setExpanded(expandedNow ? null : loan.id)}>{expandedNow ? "Hide history" : `Payment history (${loanPayments.length})`}</Button>
-              <Button size="small" variant="contained" onClick={() => { setPaymentLoan(loan); setPaymentDialog(true); }} disabled={loan.status === "paid" || (remaining <= 0 && accruedInterest <= 0)}>Record payment</Button>
+              <Button size="small" variant="contained" onClick={() => { setPaymentLoan(loan); setPaymentDialog(true); }} disabled={loan.status === "paid" || (remaining <= 0 && remainingInterest <= 0)}>Record payment</Button>
             </Stack>
           </Stack>
           {expandedNow && <Box sx={{ mt: 2 }}><Divider sx={{ mb: 1.5 }} /><Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}><Typography fontWeight={750}>Repayment history</Typography><Typography variant="caption" color="text.secondary">Total paid {money(paid, currency)} · Interest {money(interestPaid, currency)}</Typography></Stack>
@@ -349,7 +380,7 @@ export function LoansManager() {
       <Divider /><MenuItem sx={{ color: "error.main" }} onClick={() => { setDeleteTarget(menu?.loan ?? null); setMenu(null); }}><DeleteOutlineRounded fontSize="small" sx={{ mr: 1 }} /> Delete loan</MenuItem>
     </Menu>
     <LoanDialog open={loanDialog} accounts={accounts.filter(a => !a.is_archived || a.id === editing?.account_id)} initial={loanForm} saving={saving} onClose={() => setLoanDialog(false)} onSave={saveLoan} />
-    <PaymentDialog open={paymentDialog} loan={paymentLoan} currency={accountById.get(paymentLoan?.account_id ?? "")?.currency ?? "PHP"} remainingPrincipal={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).remainingPrincipal : 0} accruedInterest={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).accruedInterest : 0} lastPaymentDate={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).lastPaymentDate : today()} saving={saving} onClose={() => { setPaymentDialog(false); setPaymentLoan(null); }} onSave={recordPayment} />
+    <PaymentDialog open={paymentDialog} loan={paymentLoan} currency={accountById.get(paymentLoan?.account_id ?? "")?.currency ?? "PHP"} remainingPrincipal={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).remainingPrincipal : 0} accruedInterest={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).accruedInterest : 0} flatInterestAccrued={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).flatInterestAccrued : 0} totalInterestPaid={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).totalInterestPaid : 0} lastPaymentDate={paymentLoan ? paymentSnapshot(paymentLoan, payments.filter(p => p.loan_id === paymentLoan.id)).lastPaymentDate : today()} saving={saving} onClose={() => { setPaymentDialog(false); setPaymentLoan(null); }} onSave={recordPayment} />
     <Dialog open={Boolean(deleteTarget)} onClose={() => !saving && setDeleteTarget(null)} maxWidth="xs" fullWidth><DialogTitle sx={{ fontWeight: 800 }}>Delete this loan?</DialogTitle><DialogContent><Typography variant="body2" color="text.secondary">This also deletes its repayment history. Your account transactions and balance will not be changed.</Typography></DialogContent><DialogActions sx={{ px: 3, pb: 2.5 }}><Button color="inherit" onClick={() => setDeleteTarget(null)} disabled={saving}>Cancel</Button><Button color="error" variant="contained" onClick={() => void deleteLoan()} disabled={saving}>{saving ? <CircularProgress size={18} color="inherit" /> : "Delete"}</Button></DialogActions></Dialog>
     <Dialog open={Boolean(paymentDeleteTarget)} onClose={() => !saving && setPaymentDeleteTarget(null)} maxWidth="xs" fullWidth><DialogTitle sx={{ fontWeight: 800 }}>Delete this payment?</DialogTitle><DialogContent><Typography variant="body2" color="text.secondary">The outstanding principal and loan status will be recalculated from the remaining payment records.</Typography></DialogContent><DialogActions sx={{ px: 3, pb: 2.5 }}><Button color="inherit" onClick={() => setPaymentDeleteTarget(null)} disabled={saving}>Cancel</Button><Button color="error" variant="contained" onClick={() => void deletePayment()} disabled={saving}>{saving ? <CircularProgress size={18} color="inherit" /> : "Delete payment"}</Button></DialogActions></Dialog>
   </Stack>;
