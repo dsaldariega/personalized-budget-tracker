@@ -319,7 +319,7 @@ export function LoansManager() {
   const filtered = rows.filter(r => (accountFilter === "all" || r.loan.account_id === accountFilter) && (statusFilter === "all" || r.loan.status === statusFilter) && (!search || [r.loan.name, r.account?.name].join(" ").toLowerCase().includes(search.toLowerCase())));
   const activeRows = rows.filter(r => r.loan.status === "active");
   const sumByCurrency = new Map<string, { remaining: number; interest: number }>();
-  activeRows.forEach(r => { const c = r.account?.currency ?? "PHP"; const v = sumByCurrency.get(c) ?? { remaining: 0, interest: 0 }; v.remaining += r.remaining + r.remainingInterest; v.interest += r.interestPaid; sumByCurrency.set(c, v); });
+  rows.forEach(r => { const c = r.account?.currency ?? "PHP"; const v = sumByCurrency.get(c) ?? { remaining: 0, interest: 0 }; v.remaining += r.remaining + r.remainingInterest; v.interest += r.interestPaid; sumByCurrency.set(c, v); });
   const balanceLabel = Array.from(sumByCurrency, ([c, v]) => money(v.remaining, c)).join(" · ") || "—";
   const interestLabel = Array.from(sumByCurrency, ([c, v]) => money(v.interest, c)).join(" · ") || "—";
 
@@ -334,7 +334,7 @@ export function LoansManager() {
     <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3,minmax(0,1fr))" }, gap: 2 }}>
       <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><PaymentsRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Active loans</Typography><Typography variant="h6" fontWeight={800}>{activeRows.length}</Typography></Box></Stack></Paper>
       <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "warning.main" }}><TrendingDownRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Outstanding balance</Typography><Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: 18, sm: 20 } }}>{balanceLabel}</Typography></Box></Stack></Paper>
-      <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "success.main" }}><PaymentsRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Interest paid (active loans)</Typography><Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: 18, sm: 20 } }}>{interestLabel}</Typography></Box></Stack></Paper>
+      <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "success.main" }}><PaymentsRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Total interest paid</Typography><Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: 18, sm: 20 } }}>{interestLabel}</Typography></Box></Stack></Paper>
     </Box>
     <Stack direction={{ xs: "column", md: "row" }} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between" spacing={1.5}>
       <Box><Typography variant="h6" fontWeight={800}>Your loans</Typography><Typography variant="body2" color="text.secondary">{filtered.length} {filtered.length === 1 ? "loan" : "loans"}</Typography></Box>
