@@ -13,6 +13,7 @@ import {
   TableContainer, TableHead, TableRow, TextField, Tooltip, Typography,
 } from "@mui/material";
 import { apiRequest } from "@/lib/api";
+import { SuccessToast } from "@/components/success-toast";
 
 type TransactionType = "income" | "expense" | "transfer";
 type TransferDirection = "in" | "out";
@@ -244,7 +245,7 @@ export function TransactionsManager() {
         <Button variant="contained" color="primary" startIcon={<AddRounded />} onClick={openCreate} disabled={activeAccounts.length === 0} sx={{ bgcolor: "primary.main", color: "primary.contrastText", "&:hover": { bgcolor: "primary.dark" }, "&.Mui-disabled": { bgcolor: "action.disabledBackground", color: "action.disabled" } }}>Add transaction</Button>
       </Stack>
       {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
-      {notice && <Alert severity="success" onClose={() => setNotice("")}>{notice}</Alert>}
+      <SuccessToast message={notice} onClose={() => setNotice("")} />
       {activeAccounts.length === 0 && !loading && <Alert severity="info" action={<Button color="inherit" size="small" onClick={() => window.location.assign("/accounts")}>Go to accounts</Button>}>Add an active account before recording transactions.</Alert>}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3,minmax(0,1fr))" }, gap: 2 }}>
         <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" spacing={1.2} alignItems="center"><Avatar sx={{ bgcolor: "success.light", color: "success.dark" }}><ArrowDownwardRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Income this month</Typography><Typography variant="h6" fontWeight={800}>{totalByCurrency(currentMonth, "income")}</Typography></Box></Stack></Paper>

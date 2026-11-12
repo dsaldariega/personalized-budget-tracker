@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { createClient } from "@/lib/supabase/client";
 import { apiRequest } from "@/lib/api";
+import { SuccessToast } from "@/components/success-toast";
 import { useThemeMode } from "@/components/theme-provider";
 
 type Profile = { full_name: string | null; default_currency: string };
@@ -225,7 +226,7 @@ export function SettingsManager() {
     <Stack spacing={3}>
       <Box><Typography variant="h4" fontWeight={800} letterSpacing={-0.8}>Settings</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>Manage your profile, preferences, and personal data.</Typography></Box>
       {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
-      {notice && <Alert severity="success" onClose={() => setNotice("")}>{notice}</Alert>}
+      <SuccessToast message={notice} onClose={() => setNotice("")} />
       {loading ? <Paper variant="outlined" sx={{ minHeight: 180, display: "grid", placeItems: "center", borderRadius: 3 }}><CircularProgress /></Paper> : (
         <>
           <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>

@@ -12,6 +12,7 @@ import {
   TextField, Tooltip, Typography,
 } from "@mui/material";
 import { apiRequest } from "@/lib/api";
+import { SuccessToast } from "@/components/success-toast";
 
 type Status = "active" | "paid" | "paused";
 type InterestType = "flat_rate" | "reducing_balance";
@@ -353,7 +354,7 @@ export function LoansManager() {
       <Button variant="contained" startIcon={<AddRounded />} onClick={openCreate} disabled={!accounts.some(a => !a.is_archived)}>Add loan</Button>
     </Stack>
     {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
-    {notice && <Alert severity="success" onClose={() => setNotice("")}>{notice}</Alert>}
+    <SuccessToast message={notice} onClose={() => setNotice("")} />
     {!accounts.some(a => !a.is_archived) && !loading && <Alert severity="info" action={<Button color="inherit" size="small" onClick={() => window.location.assign("/accounts")}>Go to accounts</Button>}>Add an active account before creating a loan.</Alert>}
     <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3,minmax(0,1fr))" }, gap: 2 }}>
       <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><PaymentsRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Active loans</Typography><Typography variant="h6" fontWeight={800}>{activeRows.length}</Typography></Box></Stack></Paper>
