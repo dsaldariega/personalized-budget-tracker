@@ -129,10 +129,10 @@ export function SettingsManager() {
 
   async function saveProfile() {
     if (!supabase || !userId) return;
-    if (!profile.full_name.trim()) { setError("Please enter your name."); return; }
+    const name = profile.full_name?.trim() ?? "";
+    if (!name) { setError("Please enter your name."); return; }
     if (!/^[A-Z]{3}$/.test(profile.default_currency)) { setError("Choose a valid three-letter currency code."); return; }
     setSaving(true); setError(""); setNotice("");
-    const name = profile.full_name.trim();
     try {
       await apiRequest("/settings/profile", { method: "PUT", body: JSON.stringify({ full_name: name, default_currency: profile.default_currency }) });
       const authUpdate = await supabase.auth.updateUser({ data: { full_name: name } });
