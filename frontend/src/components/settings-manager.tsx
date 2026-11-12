@@ -302,7 +302,7 @@ export function SettingsManager() {
                   "& .Mui-selected": {
                     bgcolor: "background.paper !important",
                     color: "primary.main",
-                    boxShadow: "0 1px 5px rgba(20,24,40,0.12)",
+                    boxShadow: 1,
                   },
                 }}
               >

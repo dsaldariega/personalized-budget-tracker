@@ -36,7 +36,7 @@ export function AuthPage({
           overflow: "hidden",
           p: { md: 5, lg: 7 },
           color: "#fff",
-          background: "linear-gradient(145deg, #241C35 0%, #35213D 48%, #6A3048 100%)",
+          background: "linear-gradient(145deg, #263238 0%, #37474F 48%, #B71C1C 100%)",
           "&::before": {
             content: '""',
             position: "absolute",
@@ -56,13 +56,13 @@ export function AuthPage({
             borderRadius: "50%",
             left: -190,
             bottom: -160,
-            bgcolor: "rgba(246,116,133,0.12)",
+            bgcolor: "rgba(239,83,80,0.14)",
             filter: "blur(2px)",
           },
         }}
       >
         <Stack direction="row" alignItems="center" spacing={1.5} sx={{ position: "relative", zIndex: 1 }}>
-          <Box sx={{ width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: 3, bgcolor: "#F16B7D", boxShadow: "0 8px 24px rgba(0,0,0,0.18)" }}>
+          <Box sx={{ width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: 3, bgcolor: "#D32F2F", boxShadow: "0 8px 24px rgba(0,0,0,0.18)" }}>
             <AccountBalanceWalletRounded sx={{ color: "#fff", fontSize: 25 }} />
           </Box>
           <Box>
@@ -90,9 +90,9 @@ export function AuthPage({
               p: 2.5,
               maxWidth: 440,
               borderRadius: 4,
-              bgcolor: "rgba(255,255,255,0.095)",
+              bgcolor: "rgba(255,255,255,0.10)",
               border: "1px solid rgba(255,255,255,0.13)",
-              boxShadow: "0 24px 70px rgba(10,5,20,0.18)",
+              boxShadow: 3,
               backdropFilter: "blur(12px)",
             }}
           >
@@ -131,7 +131,7 @@ export function AuthPage({
           py: { xs: 4, md: 5 },
           position: "relative",
           overflow: "hidden",
-          background: "linear-gradient(145deg, #fffafb 0%, #f8f6fb 100%)",
+          bgcolor: "background.default",
           "&::before": {
             content: '""',
             position: "absolute",
@@ -140,7 +140,7 @@ export function AuthPage({
             borderRadius: "50%",
             right: -190,
             top: -180,
-            bgcolor: "rgba(241,107,125,0.07)",
+            bgcolor: "action.hover",
           },
           "&::after": {
             content: '""',
@@ -150,7 +150,7 @@ export function AuthPage({
             borderRadius: "50%",
             left: -170,
             bottom: -170,
-            bgcolor: "rgba(106,48,72,0.055)",
+            bgcolor: "action.hover",
           },
         }}
       >

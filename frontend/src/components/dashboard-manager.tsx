@@ -296,7 +296,7 @@ function CashFlowChart({
                 width="13"
                 height={incomeHeight}
                 rx="5"
-                fill="#25A77A"
+                fill="var(--budgetnest-income, #2E7D32)"
                 opacity="0.9"
               />
               <rect
@@ -305,7 +305,7 @@ function CashFlowChart({
                 width="13"
                 height={expenseHeight}
                 rx="5"
-                fill="#F08B65"
+                fill="var(--budgetnest-expense, #ED6C02)"
                 opacity="0.9"
               />
               <text
@@ -330,7 +330,7 @@ function CashFlowChart({
       >
         <Stack direction="row" alignItems="center" spacing={0.7}>
           <Box
-            sx={{ width: 9, height: 9, borderRadius: 1, bgcolor: "#25A77A" }}
+            sx={{ width: 9, height: 9, borderRadius: 1, bgcolor: "success.main" }}
           />
           <Typography variant="caption" color="text.secondary">
             Income
@@ -338,7 +338,7 @@ function CashFlowChart({
         </Stack>
         <Stack direction="row" alignItems="center" spacing={0.7}>
           <Box
-            sx={{ width: 9, height: 9, borderRadius: 1, bgcolor: "#F08B65" }}
+            sx={{ width: 9, height: 9, borderRadius: 1, bgcolor: "warning.main" }}
           />
           <Typography variant="caption" color="text.secondary">
             Expenses
@@ -742,8 +742,8 @@ export function DashboardManager() {
           borderColor: "divider",
           background: (theme) =>
             theme.palette.mode === "dark"
-              ? "linear-gradient(118deg, rgba(217,54,80,0.19) 0%, rgba(26,31,53,0.96) 58%, rgba(0,175,160,0.10) 100%)"
-              : "linear-gradient(118deg, rgba(217,54,80,0.105) 0%, rgba(255,255,255,0.96) 56%, rgba(0,175,160,0.085) 100%)",
+              ? "linear-gradient(118deg, rgba(239,83,80,0.18) 0%, rgba(30,30,30,0.98) 58%, rgba(144,164,174,0.10) 100%)"
+              : "linear-gradient(118deg, rgba(211,47,47,0.09) 0%, rgba(255,255,255,0.98) 56%, rgba(69,90,100,0.06) 100%)",
           "&::after": {
             content: '""',
             position: "absolute",
@@ -753,7 +753,7 @@ export function DashboardManager() {
             right: { xs: -130, md: 55 },
             top: -150,
             border: "34px solid",
-            borderColor: "rgba(217,54,80,0.075)",
+            borderColor: "rgba(211,47,47,0.08)",
             pointerEvents: "none",
           },
         }}
@@ -821,15 +821,15 @@ export function DashboardManager() {
               component={Link}
               href="/transactions"
               sx={{
-                bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(255,130,146,0.16)" : "rgba(217,54,80,0.09)",
+                bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(239,83,80,0.16)" : "rgba(211,47,47,0.09)",
                 color: (theme) => theme.palette.mode === "dark" ? "primary.light" : "primary.dark",
                 border: "1px solid",
-                borderColor: (theme) => theme.palette.mode === "dark" ? "rgba(255,130,146,0.24)" : "rgba(217,54,80,0.16)",
+                borderColor: (theme) => theme.palette.mode === "dark" ? "rgba(239,83,80,0.24)" : "rgba(211,47,47,0.16)",
                 fontWeight: 550,
                 textTransform: "none",
                 boxShadow: "none",
                 "&:hover": {
-                  bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(255,130,146,0.23)" : "rgba(217,54,80,0.14)",
+                  bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(239,83,80,0.23)" : "rgba(211,47,47,0.14)",
                   borderColor: "primary.main",
                   boxShadow: "none",
                 },
@@ -889,7 +889,7 @@ export function DashboardManager() {
                     <Avatar
                       variant="rounded"
                       sx={{
-                        bgcolor: "rgba(217,54,80,.12)",
+                        bgcolor: "rgba(211,47,47,.12)",
                         color: "primary.main",
                       }}
                     >
@@ -937,7 +937,7 @@ export function DashboardManager() {
                     </Typography>
                     <Avatar
                       variant="rounded"
-                      sx={{ bgcolor: "rgba(37,167,122,.12)", color: "#25A77A" }}
+                      sx={{ bgcolor: "rgba(46,125,50,.12)", color: "success.main" }}
                     >
                       <ArrowDownwardRounded />
                     </Avatar>
@@ -1003,8 +1003,8 @@ export function DashboardManager() {
                     <Avatar
                       variant="rounded"
                       sx={{
-                        bgcolor: "rgba(240,139,101,.14)",
-                        color: "#E47B59",
+                        bgcolor: "rgba(237,108,2,.14)",
+                        color: "warning.main",
                       }}
                     >
                       <ArrowUpwardRounded />
@@ -1070,7 +1070,7 @@ export function DashboardManager() {
                     </Typography>
                     <Avatar
                       variant="rounded"
-                      sx={{ bgcolor: "rgba(65,157,208,.13)", color: "#419DD0" }}
+                      sx={{ bgcolor: "rgba(2,136,209,.13)", color: "info.main" }}
                     >
                       <SavingsOutlined />
                     </Avatar>
@@ -1508,7 +1508,7 @@ export function DashboardManager() {
                             sx={{
                               bgcolor: isIncome
                                 ? "rgba(37,167,122,.12)"
-                                : "rgba(240,139,101,.13)",
+                                : "rgba(237,108,2,.13)",
                               color: isIncome ? "success.main" : "error.main",
                               width: 38,
                               height: 38,

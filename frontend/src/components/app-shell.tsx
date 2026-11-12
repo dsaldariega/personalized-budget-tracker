@@ -161,7 +161,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const sidebar = (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "background.paper" }}>
       <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 1.5 }} sx={{ px: { xs: 1.5, sm: 2.5 }, height: 76, minWidth: 0 }}>
-        <Box sx={{ width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 }, flexShrink: 0, borderRadius: 2.7, display: "grid", placeItems: "center", background: "linear-gradient(145deg, #F16B7D 0%, #D93650 58%, #B9233D 100%)", color: "#FFFFFF", fontWeight: 800, fontSize: { xs: 18, sm: 20 }, boxShadow: "0 5px 12px rgba(217,54,80,0.18)" }}>B</Box>
+        <Box sx={{ width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 }, flexShrink: 0, borderRadius: 2.7, display: "grid", placeItems: "center", background: "linear-gradient(145deg, #EF5350 0%, #D32F2F 58%, #B71C1C 100%)", color: "primary.contrastText", fontWeight: 800, fontSize: { xs: 18, sm: 20 }, boxShadow: "0 3px 10px rgba(211,47,47,0.16)" }}>B</Box>
         <Box sx={{ minWidth: 0, flexShrink: 0 }}>
           <Typography sx={{ fontSize: { xs: 16.5, sm: 18 }, fontWeight: 700, letterSpacing: "-0.035em", lineHeight: 1.15, whiteSpace: "nowrap" }}>BudgetNest</Typography>
           <Typography sx={{ display: "block", mt: 0.2, fontSize: { xs: 9, sm: 9.5 }, fontWeight: 550, letterSpacing: "0.105em", lineHeight: 1.3, color: "text.secondary", whiteSpace: "nowrap" }}>PERSONAL FINANCE</Typography>
@@ -187,7 +187,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     sx={{
                       minHeight: 46, px: 1.5, mb: 0.45, borderRadius: 2.5, position: "relative", overflow: "hidden",
                       color: selected ? "primary.main" : "text.secondary",
-                      "&.Mui-selected": { bgcolor: "rgba(217,54,80,0.085)", color: "primary.main", "&::before": { content: '""', position: "absolute", left: 0, top: 8, bottom: 8, width: 3, borderRadius: 4, bgcolor: "primary.main" } },
+                      "&.Mui-selected": { bgcolor: "action.selected", color: "primary.main", "&::before": { content: '""', position: "absolute", left: 0, top: 8, bottom: 8, width: 3, borderRadius: 4, bgcolor: "primary.main" } },
                       "&.Mui-selected:hover": { bgcolor: "action.selected" },
                       "&:hover": { bgcolor: "action.hover" }
                     }}
@@ -251,7 +251,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 borderRadius: 2.5,
                 bgcolor: "action.hover",
                 "& .MuiToggleButtonGroup-grouped": { border: 0, borderRadius: "8px !important", mx: 0, px: { xs: 0.65, sm: 0.9 }, py: 0.55, color: "text.secondary" },
-                "& .Mui-selected": { bgcolor: "background.paper !important", color: "primary.main", boxShadow: "0 1px 4px rgba(20,24,40,0.12)" },
+                "& .Mui-selected": { bgcolor: "background.paper !important", color: "primary.main", boxShadow: 1 },
               }}
             >
               <ToggleButton value="system" aria-label="Use system appearance" title="System"><ComputerOutlined sx={{ fontSize: 18 }} /></ToggleButton>
