@@ -72,3 +72,76 @@ a { color: inherit; text-decoration: none; }
     box-shadow: 0 10px 26px rgba(38, 45, 85, 0.055);
   }
 }
+
+/* Small-screen ergonomics: keep dense financial data usable without shrinking it. */
+.MuiTableContainer-root {
+  max-width: 100%;
+  overscroll-behavior-x: contain;
+}
+
+@media (max-width: 600px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .MuiTableContainer-root {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .MuiTable-root {
+    min-width: 600px;
+  }
+
+  .MuiDialog-paper {
+    width: calc(100% - 24px);
+    max-width: calc(100% - 24px);
+    max-height: calc(100% - 24px);
+    margin: 12px;
+  }
+
+  .MuiDialogTitle-root {
+    padding: 18px 20px 12px;
+  }
+
+  .MuiDialogContent-root {
+    padding: 16px 20px;
+  }
+
+  .MuiDialogActions-root {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 20px 18px;
+  }
+
+  .MuiDialogActions-root .MuiButton-root {
+    min-height: 40px;
+  }
+
+  .MuiCardContent-root {
+    padding: 16px;
+  }
+
+  .MuiButton-root {
+    min-height: 40px;
+  }
+
+  .MuiFormControl-root,
+  .MuiTextField-root {
+    max-width: 100%;
+  }
+
+  .MuiPopover-paper,
+  .MuiMenu-paper {
+    max-width: calc(100vw - 24px);
+  }
+}
+
+@media (max-width: 380px) {
+  .MuiToggleButtonGroup-root .MuiToggleButton-root {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+
