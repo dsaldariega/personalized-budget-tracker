@@ -356,7 +356,7 @@ export function DashboardManager() {
         <Button variant="contained" component={Link} href="/transactions" sx={{ bgcolor: "primary.main", color: "primary.contrastText", fontWeight: 750, textTransform: "none", "&:hover": { bgcolor: "primary.dark" }, "&:focus-visible": { outline: "3px solid", outlineColor: "primary.light", outlineOffset: 2 } }}>Add transaction</Button>
         <Button color="inherit" variant="outlined" onClick={() => void loadData()} disabled={loading} aria-label="Refresh dashboard"><RefreshRounded /></Button>
       </Stack>
-    </Stack>
+    </Box>
 
     {error && <Alert severity="error">{error}</Alert>}
     {loading ? <Paper variant="outlined" sx={{ minHeight: 360, display: "grid", placeItems: "center", borderRadius: 3 }}><CircularProgress /></Paper> : <>
