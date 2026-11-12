@@ -199,7 +199,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default", scrollbarGutter: "stable" }}>
       <Box component="nav" sx={{ width: { lg: drawerWidth }, flexShrink: { lg: 0 } }}>
         <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)}
           ModalProps={{ keepMounted: true }}
@@ -256,16 +256,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             setWelcomeOpen(false);
           }}
           fullWidth
-          maxWidth="xs"
-          PaperProps={{ sx: { borderRadius: 4, overflow: "hidden" } }}
+          maxWidth="sm"
+          PaperProps={{ sx: { borderRadius: 4, overflow: "hidden", mx: { xs: 1.5, sm: 2 } } }}
         >
-          <DialogContent sx={{ p: { xs: 3, sm: 4 } }}>
+          <DialogContent sx={{ p: { xs: 3.5, sm: 5 } }}>
             <Stack spacing={2.2}>
               <Box>
                 <Typography sx={{ color: "primary.main", fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase" }}>
                   Welcome to BudgetNest
                 </Typography>
-                <Typography variant="h5" fontWeight={800} letterSpacing={-0.7} sx={{ mt: 0.7 }}>
+                <Typography variant="h4" fontWeight={800} letterSpacing={-0.8} sx={{ mt: 0.8, fontSize: { xs: "1.75rem", sm: "2.125rem" } }}>
                   A calmer place for your money.
                 </Typography>
                 <Typography color="text.secondary" sx={{ mt: 1, lineHeight: 1.7 }}>
