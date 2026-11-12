@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider as MuiThemeProvider, createTheme } from "@mui/material/styles";
 
 export type ThemePreference = "system" | "light" | "dark";
@@ -230,7 +229,6 @@ export function ThemeProvider({
   return (
     <ThemeContext.Provider value={{ mode, preference, setPreference }}>
       <MuiThemeProvider theme={theme}>
-        <CssBaseline />
         {children}
       </MuiThemeProvider>
     </ThemeContext.Provider>
