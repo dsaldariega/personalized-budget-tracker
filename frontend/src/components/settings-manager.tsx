@@ -15,7 +15,8 @@ import { apiRequest } from "@/lib/api";
 import { SuccessToast } from "@/components/success-toast";
 import { useThemeMode } from "@/components/theme-provider";
 
-type Profile = { full_name: string | null; default_currency: string };
+type Profile = { full_name: string; default_currency: string };
+type ProfileResponse = { full_name: string | null; default_currency: string | null };
 type Account = { id: string; name: string; currency: string; account_type: string; opening_balance: number; is_archived: boolean; created_at: string };
 type Transaction = { id: string; account_id: string; transaction_type: string; amount: number; category: string | null; description: string | null; transaction_date: string; transfer_group_id: string | null; transfer_direction: string | null; created_at: string };
 const currencies = ["PHP","USD","EUR","GBP","JPY","SGD","AUD","CAD","NZD","AED","INR"];
@@ -118,7 +119,7 @@ export function SettingsManager() {
     setRequiresLogin(false);
     setUserId(user.id); setEmail(user.email ?? "");
     try {
-      const result = await apiRequest<{ profile: Profile }>("/settings/profile");
+      const result = await apiRequest<{ profile: ProfileResponse }>("/settings/profile");
       const value = { full_name: result.profile.full_name ?? user.user_metadata?.full_name ?? "", default_currency: result.profile.default_currency ?? "PHP" };
       setProfile(value); setInitialProfile(value);
     } catch (cause) {
