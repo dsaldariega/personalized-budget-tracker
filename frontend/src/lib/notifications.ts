@@ -26,7 +26,8 @@ type Subscription = {
   is_active: boolean; account_id: string;
 };
 
-const dateOnly = (date: Date) => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+const dateOnly = (date: Date) => date.toISOString().slice(0, 10);
+const localDateOnly = (date: Date) => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
 const parseDate = (value: string) => new Date(`${value}T00:00:00.000Z`);
 const dayDiff = (a: Date, b: Date) => Math.floor((b.getTime() - a.getTime()) / 86400000);
 const money = (value: number, currency = "PHP") =>
@@ -75,7 +76,7 @@ export function buildNotifications(data: {
   goals: Goal[];
   subscriptions: Subscription[];
 }): AppNotification[] {
-  const today = parseDate(dateOnly(new Date()));
+  const today = parseDate(localDateOnly(new Date()));
   const currencyByAccount = new Map(data.accounts.map(account => [account.id, account.currency ?? "PHP"]));
   const notifications: AppNotification[] = [];
 
