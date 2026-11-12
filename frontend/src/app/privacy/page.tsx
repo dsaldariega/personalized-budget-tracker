@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import {
   ArrowBackRounded, BackupOutlined, CloudOutlined, LockOutlined, PersonOutlineRounded,
   SecurityOutlined, StorageRounded,
@@ -64,7 +63,7 @@ export default function PrivacyPage() {
   return (
     <Stack spacing={3}>
       <Box>
-        <Button component={Link} href="/about" startIcon={<ArrowBackRounded />} color="inherit" sx={{ mb: 1 }}>
+        <Button href="/about" startIcon={<ArrowBackRounded />} color="inherit" sx={{ mb: 1 }}>
           Back to About & Help
         </Button>
         <Typography variant="h4" fontWeight={850} letterSpacing={-0.8}>Privacy policy</Typography>
@@ -97,7 +96,7 @@ export default function PrivacyPage() {
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, lineHeight: 1.8 }}>
           Use the feedback form on the About & Help page to send a privacy-related question. Do not include passwords or sensitive banking details.
         </Typography>
-        <Button component={Link} href="/about" variant="outlined" sx={{ mt: 1.5 }}>Go to About & Help</Button>
+        <Button href="/about" variant="outlined" sx={{ mt: 1.5 }}>Go to About & Help</Button>
       </Paper>
     </Stack>
   );

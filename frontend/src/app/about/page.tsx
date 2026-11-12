@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import FeedbackForm from "@/components/feedback-form";
 import {
   AccountBalanceWalletOutlined, AutoAwesomeOutlined, BackupOutlined, CalendarMonthOutlined,
@@ -165,7 +164,7 @@ export default function AboutPage() {
             <Typography fontWeight={800}>Want to know how your information is handled?</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Read the full BudgetNest privacy policy, including the data we store and the controls available to you.</Typography>
           </Box>
-          <Button component={Link} href="/privacy" variant="outlined" sx={{ flexShrink: 0 }}>Read privacy policy</Button>
+          <Button href="/privacy" variant="outlined" sx={{ flexShrink: 0 }}>Read privacy policy</Button>
         </Stack>
       </Paper>
 
