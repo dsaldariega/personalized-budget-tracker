@@ -157,19 +157,26 @@ function PaymentDialog({ open, loan, currency, remainingPrincipal, accruedIntere
   const elapsedMonths = monthsBetween(lastPaymentDate, form.payment_date);
   const monthlyRate = (Number(loan?.monthly_interest_rate) || 0) / 100;
   const flatTotalInterest = roundMoney(Number(loan?.principal_amount ?? 0) * monthlyRate * Number(loan?.term_months ?? 0));
-  const interestDue = loan?.interest_type === "flat_rate"
+  const accruedInterestDue = loan?.interest_type === "flat_rate"
     ? roundMoney(Math.max(0, Math.min(flatTotalInterest, flatInterestAccrued + Number(loan?.principal_amount ?? 0) * monthlyRate * elapsedMonths) - totalInterestPaid))
     : roundMoney(accruedInterest + remainingPrincipal * monthlyRate * elapsedMonths);
-  const interestPaid = roundMoney(Math.min(amount, interestDue));
-  const principalPaid = roundMoney(Math.min(Math.max(0, amount - interestPaid), remainingPrincipal));
+  const principalPaid = roundMoney(Math.min(Math.max(0, amount - accruedInterestDue), remainingPrincipal));
+  const futureFlatInterest = loan?.interest_type === "flat_rate"
+    ? Math.max(0, flatTotalInterest - totalInterestPaid - accruedInterestDue)
+    : 0;
+  const futureInterestPaid = roundMoney(Math.min(Math.max(0, amount - accruedInterestDue - principalPaid), futureFlatInterest));
+  const interestPaid = roundMoney(Math.min(amount, accruedInterestDue) + futureInterestPaid);
   const remainingAfterPayment = roundMoney(Math.max(0, remainingPrincipal - principalPaid));
+  const maxPayable = loan?.interest_type === "flat_rate"
+    ? remainingPrincipal + Math.max(0, flatTotalInterest - totalInterestPaid)
+    : remainingPrincipal + accruedInterestDue;
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!form.payment_date) return setFormError("Choose the payment date.");
     if (form.payment_date < lastPaymentDate) return setFormError("Payment date cannot be earlier than the previous payment.");
     if (form.payment_date < (loan?.start_date ?? lastPaymentDate)) return setFormError("Payment date cannot be before the loan start date.");
     if (!Number.isFinite(amount) || amount <= 0) return setFormError("Enter a payment amount greater than zero.");
-    if (amount > interestDue + remainingPrincipal + 0.009) return setFormError("Payment cannot exceed the remaining principal and accrued interest.");
+    if (amount > maxPayable + 0.009) return setFormError("Payment cannot exceed the remaining loan obligation.");
     onSave(form);
   }
   return <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
@@ -184,7 +191,7 @@ function PaymentDialog({ open, loan, currency, remainingPrincipal, accruedIntere
             <Stack direction="row" justifyContent="space-between"><Typography variant="body2" color="text.secondary">Principal portion</Typography><Typography fontWeight={750}>{money(principalPaid, currency)}</Typography></Stack>
             <Divider sx={{ my: 1 }} />
             <Stack direction="row" justifyContent="space-between"><Typography variant="body2" color="text.secondary">Principal remaining</Typography><Typography fontWeight={800}>{money(remainingAfterPayment, currency)}</Typography></Stack>
-            {amount > 0 && amount < interestDue && <Typography variant="caption" color="warning.main" display="block" sx={{ mt: 1 }}>The payment is below accrued interest; the unpaid interest will carry forward.</Typography>}
+            {amount > 0 && amount < accruedInterestDue && <Typography variant="caption" color="warning.main" display="block" sx={{ mt: 1 }}>The payment is below accrued interest; the unpaid interest will carry forward.</Typography>}{futureInterestPaid > 0 && <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>This payment also settles part of the remaining fixed-term interest.</Typography>}
           </Paper>
           <Alert severity="info">{loan?.interest_type === "flat_rate" ? "Flat Rate accrues agreed interest against the original principal over the loan term." : "Reducing Balance calculates interest against the remaining principal."} Enter only the total amount paid; BudgetNest allocates it automatically.</Alert>
           <TextField label="Payment date" type="date" value={form.payment_date} onChange={e => setForm(v => ({ ...v, payment_date: e.target.value }))} fullWidth InputLabelProps={{ shrink: true }} inputProps={{ min: lastPaymentDate }} />
