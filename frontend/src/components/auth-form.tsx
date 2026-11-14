@@ -108,6 +108,11 @@ export function AuthForm({ mode, modal = false, onAuthenticated }: { mode: AuthM
         router.replace(destination);
         router.refresh();
       } else {
+        if (!supabase) {
+          setMessage({ type: "error", text: "Username sign-in is temporarily unavailable because the authentication service is not configured." });
+          return;
+        }
+
         const data = await publicApiRequest<{ session: { access_token: string; refresh_token: string } }>("/auth/login", {
           method: "POST",
           body: JSON.stringify({ identifier: identifier.trim(), password }),
