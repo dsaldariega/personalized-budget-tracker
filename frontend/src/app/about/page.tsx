@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import FeedbackForm from "@/components/feedback-form";
+import { FeedbackOutlined } from "@mui/icons-material";
 import {
   AccountBalanceWalletOutlined, AutoAwesomeOutlined, BackupOutlined, CalendarMonthOutlined,
   CategoryOutlined, CompareArrowsRounded, HelpOutlineRounded, LockOutlined, SavingsOutlined,
@@ -156,7 +156,15 @@ export default function AboutPage() {
         </Stack>
       </Box>
 
-      <FeedbackForm />
+      <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>
+        <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "flex-start", sm: "center" }} justifyContent="space-between" spacing={2}>
+          <Box>
+            <Typography fontWeight={800}>Help us improve BudgetNest</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Have an idea, suggestion, or something we could do better? We’d love to hear from you.</Typography>
+          </Box>
+          <Button variant="contained" startIcon={<FeedbackOutlined />} onClick={() => window.dispatchEvent(new Event("budgetnest:open-feedback"))} sx={{ flexShrink: 0 }}>Send feedback</Button>
+        </Stack>
+      </Paper>
 
       <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>
         <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "flex-start", sm: "center" }} justifyContent="space-between" spacing={2}>

@@ -1,10 +1,23 @@
 "use client";
 
-import { Dialog, DialogContent, DialogTitle, Fade, IconButton, Typography } from "@mui/material";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Fade,
+  IconButton,
+  Typography,
+} from "@mui/material";
 import { CloseRounded } from "@mui/icons-material";
 import { AuthForm } from "@/components/auth-form";
 
-export function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function AuthModal({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   return (
     <Dialog
       scroll="paper"
@@ -38,7 +51,11 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
           pb: 0,
         }}
       >
-        <Typography variant="body2" color="text.secondary" sx={{ mr: "auto", pl: { xs: 0.75, sm: 1 }, fontWeight: 700 }}>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mr: "auto", pl: { xs: 0.75, sm: 1 }, fontWeight: 700 }}
+        >
           Sign in to BudgetNest
         </Typography>
         <IconButton
@@ -50,8 +67,15 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
           <CloseRounded />
         </IconButton>
       </DialogTitle>
-      <DialogContent sx={{ px: { xs: 2, sm: 3 }, pt: 0.75, pb: { xs: 2.5, sm: 3 } }}>
-        <AuthForm mode="login" modal onAuthenticated={onClose} />
+      <DialogContent
+        sx={{ px: { xs: 2, sm: 3 }, pt: 0.75, pb: { xs: 2.5, sm: 3 } }}
+      >
+        <AuthForm
+          mode="login"
+          modal
+          onAuthenticated={onClose}
+          onSwitchAuthMode={onClose}
+        />
       </DialogContent>
     </Dialog>
   );
