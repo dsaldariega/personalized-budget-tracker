@@ -144,8 +144,8 @@ function AccountDialog({
   }
 
   return (
-    <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
-      <Box component="form" onSubmit={submit}>
+    <Dialog scroll="paper" open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
+      <Box component="form" onSubmit={submit} sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
         <DialogTitle sx={{ pb: 1, fontWeight: 800 }}>
           {initialValue.name ? "Edit account" : "Add an account"}
         </DialogTitle>
@@ -350,7 +350,7 @@ export function AccountsManager() {
     <Stack spacing={3}>
       <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between" spacing={2}>
         <Box>
-          <Typography variant="h4" fontWeight={800} letterSpacing={-0.8}>Accounts</Typography>
+          <Typography variant="h4" fontWeight={700} letterSpacing={-0.8}>Accounts</Typography>
           <Typography color="text.secondary" sx={{ mt: 0.7 }}>Keep your cash, bank accounts, and e-wallets organized in one place.</Typography>
         </Box>
         <Button variant="contained" startIcon={<AddRounded />} onClick={openCreate} sx={{ alignSelf: { xs: "stretch", sm: "auto" } }}>
@@ -362,21 +362,21 @@ export function AccountsManager() {
       <SuccessToast message={notice} onClose={() => setNotice("")} />
 
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" }, gap: 2 }}>
-        <Paper sx={{ p: 2.5, borderRadius: 3 }}>
+        <Paper sx={{ p: 2.5, borderRadius: 1.5 }}>
           <Stack direction="row" alignItems="center" spacing={1.2}>
             <Avatar variant="rounded" sx={{ bgcolor: "action.hover", color: "primary.main", width: 42, height: 42 }}><AccountBalanceWalletOutlined /></Avatar>
             <Box>
               <Typography variant="caption" color="text.secondary">Active accounts</Typography>
-              <Typography variant="h5" fontWeight={800}>{activeAccounts.length}</Typography>
+              <Typography variant="h5" fontWeight={700}>{activeAccounts.length}</Typography>
             </Box>
           </Stack>
         </Paper>
-        <Paper sx={{ p: 2.5, borderRadius: 3 }}>
+        <Paper sx={{ p: 2.5, borderRadius: 1.5 }}>
           <Stack direction="row" alignItems="center" spacing={1.2}>
             <Avatar variant="rounded" sx={{ bgcolor: "action.hover", color: "success.main", width: 42, height: 42 }}><AttachMoneyRounded /></Avatar>
             <Box>
               <Typography variant="caption" color="text.secondary">Combined current balance</Typography>
-              <Typography variant="h5" fontWeight={800} sx={{ fontSize: { xs: 21, sm: 24 } }}>{summaryBalance}</Typography>
+              <Typography variant="h5" fontWeight={700} sx={{ fontSize: { xs: 21, sm: 24 } }}>{summaryBalance}</Typography>
             </Box>
           </Stack>
         </Paper>
@@ -384,7 +384,7 @@ export function AccountsManager() {
 
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Box>
-          <Typography variant="h6" fontWeight={800}>Your accounts</Typography>
+          <Typography variant="h6" fontWeight={700}>Your accounts</Typography>
           <Typography variant="body2" color="text.secondary">{visibleAccounts.length} {visibleAccounts.length === 1 ? "account" : "accounts"} shown</Typography>
         </Box>
         <Stack direction="row" spacing={1} alignItems="center">
@@ -398,14 +398,14 @@ export function AccountsManager() {
       </Stack>
 
       {loading ? (
-        <Paper sx={{ minHeight: 220, display: "grid", placeItems: "center", borderRadius: 3 }}>
+        <Paper sx={{ minHeight: 220, display: "grid", placeItems: "center", borderRadius: 1.5 }}>
           <CircularProgress size={28} />
         </Paper>
       ) : visibleAccounts.length === 0 ? (
-        <Paper sx={{ p: { xs: 3, md: 5 }, minHeight: 260, display: "grid", placeItems: "center", textAlign: "center", borderRadius: 3 }}>
+        <Paper sx={{ p: { xs: 3, md: 5 }, minHeight: 260, display: "grid", placeItems: "center", textAlign: "center", borderRadius: 1.5 }}>
           <Stack alignItems="center" spacing={1.2} sx={{ maxWidth: 390 }}>
             <Avatar variant="rounded" sx={{ width: 58, height: 58, bgcolor: "action.hover", color: "text.secondary" }}><AccountBalanceWalletOutlined fontSize="large" /></Avatar>
-            <Typography fontWeight={750} fontSize={18}>{showArchived ? "No archived accounts" : "Start with your first account"}</Typography>
+            <Typography variant="h6">{showArchived ? "No archived accounts" : "Start with your first account"}</Typography>
             <Typography color="text.secondary" variant="body2">
               {showArchived ? "Accounts you archive will appear here." : "Add the places where you keep your money. You can connect transactions, budgets, and goals to an account later."}
             </Typography>
@@ -417,18 +417,18 @@ export function AccountsManager() {
           {visibleAccounts.map((account) => {
             const Icon = typeIcon[account.account_type] ?? AccountBalanceWalletOutlined;
             return (
-              <Paper key={account.id} sx={{ p: 2.3, borderRadius: 3, opacity: account.is_archived ? 0.68 : 1, transition: "border-color 160ms ease, transform 160ms ease", "&:hover": { borderColor: "primary.main", transform: "translateY(-2px)" } }} variant="outlined">
+              <Paper key={account.id} sx={{ p: 2.3, borderRadius: 1.5, opacity: account.is_archived ? 0.68 : 1, transition: "border-color 160ms ease, transform 160ms ease", "&:hover": { borderColor: "primary.main", transform: "translateY(-2px)" } }} variant="outlined">
                 <Stack direction="row" alignItems="flex-start" spacing={1.5}>
                   <Avatar variant="rounded" sx={{ width: 46, height: 46, bgcolor: "action.hover", color: "primary.main" }}><Icon /></Avatar>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography fontWeight={750} noWrap>{account.name}</Typography>
+                    <Typography fontWeight={600} noWrap>{account.name}</Typography>
                     <Typography variant="caption" color="text.secondary">{accountTypes.find((type) => type.value === account.account_type)?.label ?? "Account"}</Typography>
                   </Box>
                   <IconButton size="small" aria-label={`Actions for ${account.name}`} onClick={(event) => setActiveMenu({ element: event.currentTarget, account })}><MoreHorizRounded /></IconButton>
                 </Stack>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="caption" color="text.secondary">Current balance</Typography>
-                <Typography variant="h5" fontWeight={800} letterSpacing={-0.5} sx={{ mt: 0.35 }}>
+                <Typography variant="h5" fontWeight={700} letterSpacing={-0.5} sx={{ mt: 0.35 }}>
                   {formatMoney(currentBalance(account), account.currency)}
                 </Typography>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 2 }}>
@@ -456,8 +456,8 @@ export function AccountsManager() {
         onSave={saveAccount}
       />
 
-      <Dialog open={Boolean(deleteTarget)} onClose={() => !saving && setDeleteTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle fontWeight={800}>Delete this account?</DialogTitle>
+      <Dialog scroll="paper" open={Boolean(deleteTarget)} onClose={() => !saving && setDeleteTarget(null)} maxWidth="xs" fullWidth>
+        <DialogTitle fontWeight={700}>Delete this account?</DialogTitle>
         <DialogContent>
           <Typography color="text.secondary" variant="body2">
             You are about to delete <strong>{deleteTarget?.name}</strong>. Accounts with linked transactions, budgets, goals, loans, or subscriptions cannot be deleted. You can archive them instead.

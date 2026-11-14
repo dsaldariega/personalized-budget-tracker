@@ -106,14 +106,14 @@ export default function FeedbackForm() {
 
   return (
     <>
-      <Paper component="section" variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>
+      <Paper component="section" variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5 }}>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ xs: "flex-start", sm: "center" }} justifyContent="space-between">
           <Stack direction="row" spacing={1.3} alignItems="center">
             <Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}>
               <FeedbackOutlined />
             </Avatar>
             <Box>
-              <Typography variant="h5" fontWeight={800} letterSpacing={-0.5}>Help us improve BudgetNest</Typography>
+              <Typography variant="h5" fontWeight={700} letterSpacing={-0.5}>Help us improve BudgetNest</Typography>
               <Typography variant="body2" color="text.secondary">
                 Found an issue or have an idea? Tell us what would make BudgetNest better.
               </Typography>
@@ -134,7 +134,7 @@ export default function FeedbackForm() {
         </Stack>
       </Paper>
 
-      <Dialog
+      <Dialog scroll="paper"
         open={open}
         onClose={closeDialog}
         fullWidth
@@ -157,7 +157,7 @@ export default function FeedbackForm() {
             <FeedbackOutlined sx={{ fontSize: 20 }} />
           </Avatar>
           <Box sx={{ flexGrow: 1 }}>
-            <Typography fontWeight={800}>Help us improve BudgetNest</Typography>
+            <Typography fontWeight={700}>Help us improve BudgetNest</Typography>
             <Typography variant="caption" color="text.secondary">
               Your email app will be used to send the feedback.
             </Typography>
@@ -167,8 +167,8 @@ export default function FeedbackForm() {
           </IconButton>
         </DialogTitle>
 
-        <Box component="form" onSubmit={submitFeedback}>
-          <DialogContent sx={{ pt: 1.5 }}>
+        <Box component="form" onSubmit={submitFeedback} sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+          <DialogContent sx={{ pt: 1.5, scrollbarGutter: "stable" }}>
             <Stack spacing={2}>
               {error && (
                 <Alert severity="error" onClose={() => setError("")}>

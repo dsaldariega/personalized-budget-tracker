@@ -7,6 +7,7 @@ import { AuthForm } from "@/components/auth-form";
 export function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Dialog
+      scroll="paper"
       open={open}
       onClose={onClose}
       fullWidth

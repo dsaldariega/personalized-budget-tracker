@@ -157,7 +157,7 @@ export function AuthForm({ mode, modal = false, onAuthenticated }: { mode: AuthM
         >
           <Stack spacing={2.1}>
             <Box>
-              <Typography variant="h4" fontWeight={800} letterSpacing={-1.2} sx={{ fontSize: { xs: 27, sm: 31 } }}>
+              <Typography variant="h4" fontWeight={700} letterSpacing={-1.2} sx={{ fontSize: { xs: 27, sm: 31 } }}>
                 {isRegister ? "Create your account" : "Welcome back"}
               </Typography>
               <Typography color="text.secondary" sx={{ mt: 0.75 }}>
@@ -238,7 +238,7 @@ export function AuthForm({ mode, modal = false, onAuthenticated }: { mode: AuthM
                   disabled={loading || switchingAuthMode}
                   sx={{
                     py: 1.3,
-                    borderRadius: 2.5,
+                    borderRadius: 1,
                     textTransform: "none",
                     fontWeight: 600,
                     boxShadow: "none",

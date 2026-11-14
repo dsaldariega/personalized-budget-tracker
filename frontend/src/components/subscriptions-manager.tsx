@@ -90,8 +90,8 @@ function SubscriptionDialog({
     onSave({ ...form, name: form.name.trim(), amount: String(amount), category: form.category.trim() });
   }
   return (
-    <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
-      <Box component="form" onSubmit={submit}>
+    <Dialog scroll="paper" open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
+      <Box component="form" onSubmit={submit} sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
         <DialogTitle sx={{ fontWeight: 800 }}>{initial.name ? "Edit subscription" : "Add a subscription"}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Keep recurring services, billing dates, and the account you use to pay them in one place.</Typography>
@@ -299,19 +299,19 @@ export function SubscriptionsManager() {
   return (
     <Stack spacing={3}>
       <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between" spacing={2}>
-        <Box><Typography variant="h4" fontWeight={800} letterSpacing={-0.8}>Subscriptions</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>Stay ahead of recurring charges and keep track of what you pay.</Typography></Box>
+        <Box><Typography variant="h4" fontWeight={700} letterSpacing={-0.8}>Subscriptions</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>Stay ahead of recurring charges and keep track of what you pay.</Typography></Box>
         <Button variant="contained" startIcon={<AddRounded />} onClick={openCreate} disabled={!accounts.some(a => !a.is_archived)}>Add subscription</Button>
       </Stack>
       {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
       <SuccessToast message={notice} onClose={() => setNotice("")} />
       {!accounts.some(a => !a.is_archived) && !loading && <Alert severity="info" action={<Button color="inherit" size="small" onClick={() => window.location.assign("/accounts")}>Go to accounts</Button>}>Add an active account before creating a subscription.</Alert>}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3,minmax(0,1fr))" }, gap: 2 }}>
-        <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><SubscriptionsRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Active subscriptions</Typography><Typography variant="h6" fontWeight={800}>{active.length}</Typography></Box></Stack></Paper>
-        <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "info.main" }}><CalendarMonthRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Estimated monthly cost</Typography><Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: 17, sm: 20 } }}>{monthlyEstimate}</Typography></Box></Stack></Paper>
-        <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: overdue.length ? "error.main" : "success.main" }}><AutorenewRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Due in 7 days · Overdue</Typography><Typography variant="h6" fontWeight={800}>{dueSoon.length} · {overdue.length}</Typography></Box></Stack></Paper>
+        <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 1.5 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><SubscriptionsRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Active subscriptions</Typography><Typography variant="h6" fontWeight={700}>{active.length}</Typography></Box></Stack></Paper>
+        <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 1.5 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "info.main" }}><CalendarMonthRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Estimated monthly cost</Typography><Typography variant="h6" fontWeight={700} sx={{ fontSize: { xs: 17, sm: 20 } }}>{monthlyEstimate}</Typography></Box></Stack></Paper>
+        <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 1.5 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: overdue.length ? "error.main" : "success.main" }}><AutorenewRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Due in 7 days · Overdue</Typography><Typography variant="h6" fontWeight={700}>{dueSoon.length} · {overdue.length}</Typography></Box></Stack></Paper>
       </Box>
       <Stack direction={{ xs: "column", md: "row" }} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between" spacing={1.5}>
-        <Box><Typography variant="h6" fontWeight={800}>Your subscriptions</Typography><Typography variant="body2" color="text.secondary">{filtered.length} {filtered.length === 1 ? "subscription" : "subscriptions"}</Typography></Box>
+        <Box><Typography variant="h6" fontWeight={700}>Your subscriptions</Typography><Typography variant="body2" color="text.secondary">{filtered.length} {filtered.length === 1 ? "subscription" : "subscriptions"}</Typography></Box>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
           <TextField size="small" placeholder="Search subscriptions" value={search} onChange={e => setSearch(e.target.value)} InputProps={{ startAdornment: <SearchRounded fontSize="small" sx={{ mr: 1, color: "text.secondary" }} /> }} />
           <TextField select size="small" label="Account" value={accountFilter} onChange={e => setAccountFilter(e.target.value)} sx={{ minWidth: 145 }}><MenuItem value="all">All accounts</MenuItem>{accounts.map(a => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}</TextField>
@@ -319,12 +319,12 @@ export function SubscriptionsManager() {
           <Tooltip title="Refresh"><IconButton onClick={() => void loadData()} disabled={loading}><RefreshRounded /></IconButton></Tooltip>
         </Stack>
       </Stack>
-      {loading ? <Paper sx={{ minHeight: 220, display: "grid", placeItems: "center", borderRadius: 3 }}><CircularProgress size={28} /></Paper> : filtered.length === 0 ? (
-        <Paper variant="outlined" sx={{ p: { xs: 3, md: 5 }, minHeight: 250, display: "grid", placeItems: "center", textAlign: "center", borderRadius: 3 }}>
-          <Stack alignItems="center" spacing={1.2} sx={{ maxWidth: 420 }}><Avatar variant="rounded" sx={{ width: 58, height: 58, bgcolor: "action.hover", color: "text.secondary" }}><SubscriptionsRounded fontSize="large" /></Avatar><Typography fontWeight={750} fontSize={18}>{subscriptions.length ? "No matching subscriptions" : "Keep your recurring bills in view"}</Typography><Typography color="text.secondary" variant="body2">{subscriptions.length ? "Try adjusting your search or filters." : "Add services like streaming, music, cloud storage, or memberships to see upcoming billing dates and estimated monthly costs."}</Typography>{subscriptions.length === 0 && accounts.some(a => !a.is_archived) && <Button variant="contained" startIcon={<AddRounded />} onClick={openCreate} sx={{ mt: 1 }}>Add your first subscription</Button>}</Stack>
+      {loading ? <Paper sx={{ minHeight: 220, display: "grid", placeItems: "center", borderRadius: 1.5 }}><CircularProgress size={28} /></Paper> : filtered.length === 0 ? (
+        <Paper variant="outlined" sx={{ p: { xs: 3, md: 5 }, minHeight: 250, display: "grid", placeItems: "center", textAlign: "center", borderRadius: 1.5 }}>
+          <Stack alignItems="center" spacing={1.2} sx={{ maxWidth: 420 }}><Avatar variant="rounded" sx={{ width: 58, height: 58, bgcolor: "action.hover", color: "text.secondary" }}><SubscriptionsRounded fontSize="large" /></Avatar><Typography variant="h6">{subscriptions.length ? "No matching subscriptions" : "Keep your recurring bills in view"}</Typography><Typography color="text.secondary" variant="body2">{subscriptions.length ? "Try adjusting your search or filters." : "Add services like streaming, music, cloud storage, or memberships to see upcoming billing dates and estimated monthly costs."}</Typography>{subscriptions.length === 0 && accounts.some(a => !a.is_archived) && <Button variant="contained" startIcon={<AddRounded />} onClick={openCreate} sx={{ mt: 1 }}>Add your first subscription</Button>}</Stack>
         </Paper>
       ) : (
-        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3 }}>
+        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
           <Table size="medium">
             <TableHead><TableRow><TableCell>Service</TableCell><TableCell>Account</TableCell><TableCell>Amount</TableCell><TableCell>Next billing</TableCell><TableCell>Status</TableCell><TableCell align="right"> </TableCell></TableRow></TableHead>
             <TableBody>
@@ -332,7 +332,7 @@ export function SubscriptionsManager() {
                 const account = accountById.get(subscription.account_id);
                 const days = daysUntil(subscription.next_billing_date);
                 return <TableRow key={subscription.id} hover>
-                  <TableCell><Stack spacing={0.35}><Typography fontWeight={750}>{subscription.name}</Typography><Typography variant="caption" color="text.secondary">{subscription.category || "Uncategorized"} · {subscription.billing_frequency}</Typography></Stack></TableCell>
+                  <TableCell><Stack spacing={0.35}><Typography fontWeight={600}>{subscription.name}</Typography><Typography variant="caption" color="text.secondary">{subscription.category || "Uncategorized"} · {subscription.billing_frequency}</Typography></Stack></TableCell>
                   <TableCell>{account?.name ?? "Unknown account"}</TableCell>
                   <TableCell sx={{ whiteSpace: "nowrap" }}>{money(Number(subscription.amount), account?.currency ?? "PHP")}</TableCell>
                   <TableCell sx={{ whiteSpace: "nowrap" }}><Stack spacing={0.35}><Typography variant="body2">{dateLabel(subscription.next_billing_date)}</Typography>{subscription.is_active && <Typography variant="caption" color={days < 0 ? "error.main" : days <= 7 ? "warning.main" : "text.secondary"}>{days < 0 ? `${Math.abs(days)} days overdue` : days === 0 ? "Due today" : days <= 7 ? `In ${days} days` : ""}</Typography>}</Stack></TableCell>
@@ -353,7 +353,7 @@ export function SubscriptionsManager() {
         <MenuItem sx={{ color: "error.main" }} onClick={() => { if (menu) { setDeleteTarget(menu.subscription); setMenu(null); } }}><DeleteOutlineRounded fontSize="small" sx={{ mr: 1 }} />Delete</MenuItem>
       </Menu>
       <SubscriptionDialog open={dialogOpen} accounts={accounts} initial={form} saving={saving} onClose={() => setDialogOpen(false)} onSave={saveSubscription} />
-      <Dialog open={Boolean(paymentTarget)} onClose={saving ? undefined : () => setPaymentTarget(null)} fullWidth maxWidth="xs">
+      <Dialog scroll="paper" open={Boolean(paymentTarget)} onClose={saving ? undefined : () => setPaymentTarget(null)} fullWidth maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 800 }}>Record subscription payment</DialogTitle>
         <DialogContent><Stack spacing={2} sx={{ pt: 1 }}>
           <Typography variant="body2" color="text.secondary">{paymentTarget?.name} · Billing date {paymentTarget ? dateLabel(paymentTarget.next_billing_date) : ""}</Typography>
@@ -364,14 +364,14 @@ export function SubscriptionsManager() {
         </Stack></DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}><Button color="inherit" onClick={() => setPaymentTarget(null)} disabled={saving}>Cancel</Button><Button variant="contained" onClick={() => void recordPayment()} disabled={saving}>{saving ? <CircularProgress size={18} color="inherit" /> : "Record payment"}</Button></DialogActions>
       </Dialog>
-      <Dialog open={Boolean(historyTarget)} onClose={() => setHistoryTarget(null)} fullWidth maxWidth="md">
+      <Dialog scroll="paper" open={Boolean(historyTarget)} onClose={() => setHistoryTarget(null)} fullWidth maxWidth="md">
         <DialogTitle sx={{ fontWeight: 800 }}>Payment history · {historyTarget?.name}</DialogTitle>
         <DialogContent>
           {history.length === 0 ? <Alert severity="info">No payments have been recorded for this subscription yet.</Alert> : <TableContainer><Table size="small"><TableHead><TableRow><TableCell>Billing date</TableCell><TableCell>Paid date</TableCell><TableCell>Amount</TableCell><TableCell>Notes</TableCell><TableCell align="right"> </TableCell></TableRow></TableHead><TableBody>{history.map(payment => <TableRow key={payment.id}><TableCell>{dateLabel(payment.billing_date)}</TableCell><TableCell>{dateLabel(payment.paid_date)}</TableCell><TableCell>{money(Number(payment.amount), accountById.get(historyTarget?.account_id ?? "")?.currency ?? "PHP")}</TableCell><TableCell>{payment.notes || "—"}</TableCell><TableCell align="right"><Tooltip title="Delete history entry"><IconButton size="small" color="error" onClick={() => void deletePayment(payment)} disabled={saving}><DeleteOutlineRounded fontSize="small" /></IconButton></Tooltip></TableCell></TableRow>)}</TableBody></Table></TableContainer>}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}><Button onClick={() => setHistoryTarget(null)}>Close</Button></DialogActions>
       </Dialog>
-      <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} fullWidth maxWidth="xs">
+      <Dialog scroll="paper" open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} fullWidth maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 800 }}>Delete subscription?</DialogTitle>
         <DialogContent><Typography color="text.secondary">Delete {deleteTarget?.name} and its payment history? This cannot be undone.</Typography></DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}><Button color="inherit" onClick={() => setDeleteTarget(null)} disabled={saving}>Cancel</Button><Button color="error" variant="contained" onClick={() => void deleteSubscription()} disabled={saving}>{saving ? <CircularProgress size={18} color="inherit" /> : "Delete"}</Button></DialogActions>

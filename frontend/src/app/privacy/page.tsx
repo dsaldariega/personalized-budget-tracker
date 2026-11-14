@@ -72,25 +72,25 @@ export default function PrivacyPage() {
         <Button href="/about" startIcon={<ArrowBackRounded />} color="inherit" sx={{ mb: 1 }}>
           Back to About & Help
         </Button>
-        <Typography variant="h4" fontWeight={850} letterSpacing={-0.8}>Privacy policy</Typography>
+        <Typography variant="h4" fontWeight={700} letterSpacing={-0.8}>Privacy policy</Typography>
         <Typography color="text.secondary" sx={{ mt: 0.7 }}>
           A clear overview of what BudgetNest collects, how it is used, and the choices available to you.
         </Typography>
       </Box>
 
-      <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>
+      <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5 }}>
         <Typography variant="body2" color="text.secondary" lineHeight={1.8}>
           <strong>Last updated: November 12, 2026.</strong> This page describes the current behavior of BudgetNest in plain language. It is a product notice, not legal advice.
         </Typography>
       </Paper>
 
       {sections.map(section => (
-        <Paper key={section.title} variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>
+        <Paper key={section.title} variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5 }}>
           <Stack direction="row" spacing={1.2} alignItems="center" sx={{ mb: 1.5 }}>
-            <Box sx={{ width: 40, height: 40, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "action.hover", color: "primary.main" }}>
+            <Box sx={{ width: 40, height: 40, borderRadius: 1.25, display: "grid", placeItems: "center", bgcolor: "action.hover", color: "primary.main" }}>
               {section.icon}
             </Box>
-            <Typography variant="h6" fontWeight={800}>{section.title}</Typography>
+            <Typography variant="h6" fontWeight={700}>{section.title}</Typography>
           </Stack>
           <Stack spacing={1.4}>
             {section.paragraphs.map(paragraph => (
@@ -100,8 +100,8 @@ export default function PrivacyPage() {
         </Paper>
       ))}
 
-      <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3, bgcolor: "action.hover" }}>
-        <Typography fontWeight={800}>Questions about privacy?</Typography>
+      <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5, bgcolor: "action.hover" }}>
+        <Typography fontWeight={700}>Questions about privacy?</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, lineHeight: 1.8 }}>
           Use the feedback form on the About & Help page to ask a privacy-related question or request account deletion. Please do not include passwords, card PINs, or other sensitive banking credentials.
         </Typography>
