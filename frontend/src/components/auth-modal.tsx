@@ -51,7 +51,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
         </IconButton>
       </DialogTitle>
       <DialogContent sx={{ px: { xs: 2, sm: 3 }, pt: 0.75, pb: { xs: 2.5, sm: 3 } }}>
-        <AuthForm mode="login" modal onAuthenticated={onClose} />
+        <AuthForm mode="login" modal onAuthenticated={onClose} onSwitchAuthMode={onClose} />
       </DialogContent>
     </Dialog>
   );

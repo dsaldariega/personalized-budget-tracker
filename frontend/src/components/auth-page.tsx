@@ -8,7 +8,7 @@ import {
   InsightsRounded,
   ShieldRounded,
 } from "@mui/icons-material";
-import { Box, Chip, Slide, Stack, Typography } from "@mui/material";
+import { Box, Chip, Stack, Typography } from "@mui/material";
 
 export function AuthPage({
   children,
@@ -18,7 +18,6 @@ export function AuthPage({
   mode: "login" | "register";
 }) {
   const isLogin = mode === "login";
-  const transitionDirection = isLogin ? "left" : "right";
 
   return (
     <Box
@@ -183,17 +182,7 @@ export function AuthPage({
             {isLogin ? "Your finances, in focus" : "A better money routine starts here"}
           </Typography>
 
-          <Slide
-            key={mode}
-            direction={transitionDirection}
-            in
-            appear
-            timeout={{ enter: 320, exit: 240 }}
-            mountOnEnter
-            unmountOnExit
-          >
-            <Box>{children}</Box>
-          </Slide>
+          <Box>{children}</Box>
 
           <Typography variant="caption" color="text.disabled" textAlign="center" display="block" sx={{ mt: 2.5 }}>
             © {new Date().getFullYear()} BudgetNest

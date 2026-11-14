@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { apiRequest } from "@/lib/api";
 import {
   Alert,
   Avatar,
@@ -30,12 +32,32 @@ const categories = [
 ] as const;
 
 export default function FeedbackForm() {
+  const supabase = useMemo(() => createClient(), []);
+  const [authReady, setAuthReady] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [open, setOpen] = useState(false);
   const [subject, setSubject] = useState("");
   const [category, setCategory] = useState<(typeof categories)[number]>("General Feedback");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+
+  useEffect(() => {
+    if (!supabase) { setAuthReady(true); return; }
+    let active = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!active) return;
+      setIsAuthenticated(Boolean(data.user));
+      setAuthReady(true);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return;
+      setIsAuthenticated(Boolean(session?.user));
+      if (!session?.user) setOpen(false);
+    });
+    return () => { active = false; subscription.unsubscribe(); };
+  }, [supabase]);
 
   function resetForm() {
     setSubject("");
@@ -50,8 +72,9 @@ export default function FeedbackForm() {
     resetForm();
   }
 
-  function submitFeedback(event: FormEvent<HTMLFormElement>) {
+  async function submitFeedback(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!isAuthenticated || submitting) return;
 
     const trimmedSubject = subject.trim();
     const trimmedDescription = description.trim();
@@ -77,32 +100,29 @@ export default function FeedbackForm() {
     }
 
     setError("");
-
-    const body = [
-      "Hello BudgetNest team,",
-      "",
-      `Issue Category: ${category}`,
-      "",
-      "Description:",
-      trimmedDescription,
-      "",
-      "Sent from BudgetNest.",
-    ].join("\n");
-
-    const mailto = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(trimmedSubject)}&body=${encodeURIComponent(body)}`;
-
-    setStatus(
-      "Your email app should now open with the feedback prepared. BudgetNest cannot confirm whether the message was sent."
-    );
-
+    setStatus("");
+    setSubmitting(true);
     try {
-      window.location.href = mailto;
-    } catch {
-      setStatus(
-        `We couldn't open your email app automatically. Please open your email app and send your feedback to ${FEEDBACK_EMAIL}.`
-      );
+      const result = await apiRequest<{ message: string; notificationSent: boolean }>("/feedback", {
+        method: "POST",
+        body: JSON.stringify({
+          subject: trimmedSubject,
+          category: category === "Bug Report" ? "bug" : category === "Feature Request" ? "idea" : "other",
+          message: trimmedDescription,
+        }),
+      });
+      setStatus(result.message);
+      setSubject("");
+      setCategory("General Feedback");
+      setDescription("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Your feedback could not be submitted. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   }
+
+  if (!authReady || !isAuthenticated) return null;
 
   return (
     <>
@@ -159,7 +179,7 @@ export default function FeedbackForm() {
           <Box sx={{ flexGrow: 1 }}>
             <Typography fontWeight={700}>Help us improve BudgetNest</Typography>
             <Typography variant="caption" color="text.secondary">
-              Your email app will be used to send the feedback.
+              Feedback will be sent to {FEEDBACK_EMAIL}.
             </Typography>
           </Box>
           <IconButton onClick={closeDialog} aria-label="Close feedback dialog" size="small">
@@ -220,15 +240,15 @@ export default function FeedbackForm() {
               />
 
               <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                This opens your default email application and prepares a message addressed to {FEEDBACK_EMAIL}. Nothing is sent automatically by BudgetNest.
+                Feedback recipient: {FEEDBACK_EMAIL}
               </Typography>
             </Stack>
           </DialogContent>
 
           <DialogActions sx={{ px: { xs: 3, sm: 3.5 }, pb: { xs: 2.5, sm: 3 } }}>
             <Button onClick={closeDialog} color="inherit">Cancel</Button>
-            <Button type="submit" variant="contained" startIcon={<MailOutlineRounded />}>
-              Open email app
+            <Button type="submit" variant="contained" startIcon={<MailOutlineRounded />} disabled={submitting}>
+              {submitting ? "Submitting…" : "Submit feedback"}
             </Button>
           </DialogActions>
         </Box>

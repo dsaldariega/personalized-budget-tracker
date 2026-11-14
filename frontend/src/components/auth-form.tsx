@@ -10,7 +10,7 @@ import { publicApiRequest } from "@/lib/api";
 
 type AuthMode = "login" | "register";
 
-export function AuthForm({ mode, modal = false, onAuthenticated }: { mode: AuthMode; modal?: boolean; onAuthenticated?: () => void }) {
+export function AuthForm({ mode, modal = false, onAuthenticated, onSwitchAuthMode }: { mode: AuthMode; modal?: boolean; onAuthenticated?: () => void; onSwitchAuthMode?: () => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -37,6 +37,7 @@ export function AuthForm({ mode, modal = false, onAuthenticated }: { mode: AuthM
     if (switchingAuthMode || loading) return;
 
     setSwitchingAuthMode(true);
+    onSwitchAuthMode?.();
     window.setTimeout(() => {
       const target = isRegister ? "/login" : "/register";
       const query = searchParams.toString();
@@ -269,7 +270,7 @@ export function AuthForm({ mode, modal = false, onAuthenticated }: { mode: AuthM
                   px: 0.5,
                   fontWeight: 700,
                   bgcolor: "transparent",
-                  "&:hover": { bgcolor: "action.hover", textDecoration: "underline" },
+                  "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
                 }}
               >
                 {isRegister ? "Sign in" : "Create an account"}

@@ -106,9 +106,14 @@ FRONTEND_URL=http://localhost:3000
 SUPABASE_URL=https://your-project-ref.supabase.co
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Feedback email notifications (Resend)
+RESEND_API_KEY=re_your_resend_api_key
+FEEDBACK_FROM_EMAIL=BudgetNest <feedback@your-verified-domain.com>
+FEEDBACK_TO_EMAIL=dsaldariega@gmail.com
 ```
 
-Keep real credentials private. Never commit local environment files or expose a service-role key in frontend code, public repositories, screenshots, or client-side configuration.
+Feedback email delivery uses Resend from the backend. Configure a Resend API key and a sender address on a domain verified with Resend; the recipient defaults to the BudgetNest feedback address shown above. Keep real credentials private. Never commit local environment files or expose a service-role key or email API key in frontend code, public repositories, screenshots, or client-side configuration.
 
 ### 4. Configure Supabase
 

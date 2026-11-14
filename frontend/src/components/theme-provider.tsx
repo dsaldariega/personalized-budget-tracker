@@ -195,7 +195,13 @@ export function ThemeProvider({
         },
         MuiSelect: {
           styleOverrides: {
-            select: { fontFamily: "inherit", fontSize: "0.875rem", fontWeight: 400 },
+            select: {
+              fontFamily: "inherit",
+              fontSize: "0.9375rem",
+              fontWeight: 400,
+              lineHeight: 1.6,
+              color: "text.primary",
+            },
           },
         },
         MuiInputLabel: {

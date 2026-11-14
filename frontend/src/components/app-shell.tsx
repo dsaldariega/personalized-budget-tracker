@@ -151,6 +151,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [welcomeMode, setWelcomeMode] = useState<"first-visit" | "signed-out">("first-visit");
+
+  useEffect(() => {
+    if (!user) return;
+    setLoginOpen(false);
+    setWelcomeOpen(false);
+  }, [user?.id]);
   const pageTitle = useMemo(
     () => navGroups.flatMap((group) => group.items).find((item) => item.href === pathname)?.label ?? "BudgetNest",
     [pathname]
