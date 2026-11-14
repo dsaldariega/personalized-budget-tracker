@@ -306,22 +306,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 },
               }}
             >
-              {user ? (
-                <>
-                  <Box sx={{ px: 1.75, py: 1.25, maxWidth: 280 }}>
-                    <Typography variant="body2" fontWeight={700} noWrap>{accountFullName}</Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.25, overflowWrap: "anywhere" }}>{user.email ?? "Email unavailable"}</Typography>
-                  </Box>
-                  <Divider sx={{ my: 0.5 }} />
-                  <MenuItem
-                    onClick={handleSignOut}
-                    sx={{ gap: 1, borderRadius: 0.75, py: 0.85, px: 1.25, fontWeight: 500 }}
-                  >
-                    <LogoutRounded fontSize="small" sx={{ color: "text.secondary" }} />
-                    Sign out
-                  </MenuItem>
-                </>
-              ) : (
+              {user ? [
+                <Box key="profile-details" sx={{ px: 1.75, py: 1.25, maxWidth: 280 }}>
+                  <Typography variant="body2" fontWeight={700} noWrap>{accountFullName}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.25, overflowWrap: "anywhere" }}>{user.email ?? "Email unavailable"}</Typography>
+                </Box>,
+                <Divider key="profile-divider" sx={{ my: 0.5 }} />,
+                <MenuItem
+                  key="sign-out"
+                  onClick={handleSignOut}
+                  sx={{ gap: 1, borderRadius: 0.75, py: 0.85, px: 1.25, fontWeight: 500 }}
+                >
+                  <LogoutRounded fontSize="small" sx={{ color: "text.secondary" }} />
+                  Sign out
+                </MenuItem>,
+              ] : (
                 <MenuItem
                   onClick={() => { setAccountMenu(null); setLoginOpen(true); }}
                   sx={{ gap: 1, borderRadius: 0.75, py: 0.75, px: 1, fontWeight: 500 }}
@@ -471,19 +470,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {!feedbackOpen && (
           <Fab
             color="primary"
-            variant="extended"
+            variant="circular"
             aria-label="Send us feedback"
             onClick={() => setFeedbackOpen(true)}
             sx={{
               position: "fixed", right: { xs: 2, sm: 3 }, bottom: { xs: 2, sm: 3 }, zIndex: (theme) => theme.zIndex.speedDial,
-              minWidth: 52, width: 52, height: 52, px: 1.5, overflow: "hidden", whiteSpace: "nowrap",
-              transition: "width 180ms ease, border-radius 180ms ease",
-              "& .feedback-label": { maxWidth: 0, opacity: 0, overflow: "hidden", transition: "max-width 180ms ease, opacity 140ms ease" },
-              "&:hover, &:focus-visible": { width: 196, justifyContent: "flex-start", "& .feedback-label": { maxWidth: 150, opacity: 1, ml: 1 } },
+              minWidth: { xs: 42, sm: 46 }, width: { xs: 42, sm: 46 }, height: { xs: 42, sm: 46 },
+              p: 0, overflow: "hidden", whiteSpace: "nowrap", borderRadius: 999,
+              boxShadow: 3,
+              transition: "width 180ms ease, border-radius 180ms ease, box-shadow 180ms ease, transform 180ms ease",
+              "& .MuiSvgIcon-root": { fontSize: { xs: 20, sm: 22 }, flexShrink: 0 },
+              "& .feedback-label": { maxWidth: 0, opacity: 0, overflow: "hidden", fontSize: 13, fontWeight: 600, transition: "max-width 180ms ease, opacity 140ms ease" },
+              "&:hover, &:focus-visible": {
+                width: { xs: 178, sm: 190 }, borderRadius: 999, justifyContent: "flex-start", px: 1.5,
+                boxShadow: 5, transform: "translateY(-1px)",
+                "& .feedback-label": { maxWidth: 142, opacity: 1, ml: 1 },
+              },
             }}
           >
             <FeedbackOutlined />
-            <Box component="span" className="feedback-label" sx={{ fontSize: 14, fontWeight: 600 }}>Send us feedback...</Box>
+            <Box component="span" className="feedback-label">Send us feedback...</Box>
           </Fab>
         )}
         <Box
