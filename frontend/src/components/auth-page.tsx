@@ -52,7 +52,7 @@ export function AuthPage({
             boxShadow: "0 0 0 48px rgba(255,255,255,0.035), 0 0 0 100px rgba(255,255,255,0.025)",
           },
           "&::after": {
-            content: '\"\"',
+            content: '""',
             position: "absolute",
             width: 320,
             height: 320,
@@ -136,7 +136,7 @@ export function AuthPage({
           overflow: "hidden",
           bgcolor: "background.default",
           "&::before": {
-            content: '\"\"',
+            content: '""',
             position: "absolute",
             width: 360,
             height: 360,
@@ -146,7 +146,7 @@ export function AuthPage({
             bgcolor: "action.hover",
           },
           "&::after": {
-            content: '\"\"',
+            content: '""',
             position: "absolute",
             width: 280,
             height: 280,
