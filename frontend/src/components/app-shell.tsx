@@ -543,14 +543,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <MenuRounded />
             </IconButton>
-            <Box sx={{ flexGrow: 1 }}>
-              <Typography
-                fontWeight={600}
-                sx={{ fontSize: { xs: 14, sm: 16 }, lineHeight: 1.25 }}
-              >
-                {pageTitle}
-              </Typography>
-            </Box>
+            <Box sx={{ flexGrow: 1 }} />
             {isCompact ? (
               <>
                 <Tooltip title={`Appearance: ${preference}`}>
@@ -594,7 +587,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       setAppearanceMenuAnchor(null);
                     }}
                   >
-                    <ListItemIcon><ComputerOutlined fontSize="small" /></ListItemIcon>
+                    <ListItemIcon>
+                      <ComputerOutlined fontSize="small" />
+                    </ListItemIcon>
                     System
                   </MenuItem>
                   <MenuItem
@@ -604,7 +599,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       setAppearanceMenuAnchor(null);
                     }}
                   >
-                    <ListItemIcon><LightModeOutlined fontSize="small" /></ListItemIcon>
+                    <ListItemIcon>
+                      <LightModeOutlined fontSize="small" />
+                    </ListItemIcon>
                     Light
                   </MenuItem>
                   <MenuItem
@@ -614,7 +611,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       setAppearanceMenuAnchor(null);
                     }}
                   >
-                    <ListItemIcon><DarkModeOutlined fontSize="small" /></ListItemIcon>
+                    <ListItemIcon>
+                      <DarkModeOutlined fontSize="small" />
+                    </ListItemIcon>
                     Dark
                   </MenuItem>
                 </Menu>
