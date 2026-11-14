@@ -1366,7 +1366,7 @@ export function DashboardManager() {
                             <EventRepeatRounded />
                           </Avatar>
                           <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography fontWeight={700} noWrap>
+                            <Typography fontWeight={700} sx={{ whiteSpace: { xs: "normal", sm: "nowrap" }, overflowWrap: "anywhere", lineHeight: 1.35 }}>
                               {subscription.name}
                             </Typography>
                             <Typography
@@ -1500,7 +1500,7 @@ export function DashboardManager() {
                           direction="row"
                           alignItems="center"
                           spacing={1.2}
-                          sx={{ py: 1.2 }}
+                          sx={{ py: 1.35, flexWrap: { xs: "wrap", sm: "nowrap" }, rowGap: { xs: 0.75, sm: 0 } }}
                         >
                           <Avatar
                             variant="rounded"
@@ -1546,7 +1546,7 @@ export function DashboardManager() {
                                   ? "text.primary"
                                   : "error.main"
                             }
-                            sx={{ whiteSpace: "nowrap" }}
+                            sx={{ whiteSpace: "nowrap", flexShrink: 0, ml: { xs: "auto", sm: 0 }, width: { xs: "100%", sm: "auto" }, textAlign: { xs: "right", sm: "left" }, fontSize: { xs: "0.875rem", sm: "1rem" } }}
                           >
                             {isIncome
                               ? "+"

@@ -271,10 +271,10 @@ export function BudgetsManager() {
       </Box>
       <Stack direction={{ xs: "column", md: "row" }} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between" spacing={1.5}>
         <Box><Typography variant="h6" fontWeight={700}>Your budgets</Typography><Typography variant="body2" color="text.secondary">{filtered.length} {filtered.length === 1 ? "budget" : "budgets"}</Typography></Box>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", md: "auto" }, "& > *": { minWidth: { xs: "100%", sm: 135 } } }}>
           <TextField size="small" placeholder="Search budgets" value={search} onChange={e => setSearch(e.target.value)} InputProps={{ startAdornment: <SearchRounded fontSize="small" sx={{ mr: 1, color: "text.secondary" }} /> }} />
-          <TextField select size="small" label="Account" value={accountFilter} onChange={e => setAccountFilter(e.target.value)} sx={{ minWidth: 150 }}><MenuItem value="all">All accounts</MenuItem>{accounts.map(a => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}</TextField>
-          <TextField select size="small" label="Period" value={periodFilter} onChange={e => setPeriodFilter(e.target.value)} sx={{ minWidth: 135 }}><MenuItem value="all">All periods</MenuItem>{(["weekly","monthly","yearly","custom"] as Period[]).map(p => <MenuItem key={p} value={p}>{periodLabel(p)}</MenuItem>)}</TextField>
+          <TextField select size="small" label="Account" value={accountFilter} onChange={e => setAccountFilter(e.target.value)} sx={{ minWidth: { xs: "100%", sm: 150 } }}><MenuItem value="all">All accounts</MenuItem>{accounts.map(a => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}</TextField>
+          <TextField select size="small" label="Period" value={periodFilter} onChange={e => setPeriodFilter(e.target.value)} sx={{ minWidth: { xs: "100%", sm: 135 } }}><MenuItem value="all">All periods</MenuItem>{(["weekly","monthly","yearly","custom"] as Period[]).map(p => <MenuItem key={p} value={p}>{periodLabel(p)}</MenuItem>)}</TextField>
           <Tooltip title="Refresh"><IconButton onClick={() => void loadData()} disabled={loading}><RefreshRounded /></IconButton></Tooltip>
         </Stack>
       </Stack>
@@ -285,7 +285,7 @@ export function BudgetsManager() {
       ) : (
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "repeat(2,minmax(0,1fr))" }, gap: 2 }}>
           {filtered.map(({ budget, window, spent, account, remaining, progress }) => (
-            <Paper key={budget.id} variant="outlined" sx={{ p: 2.4, borderRadius: 1.5 }}>
+            <Paper key={budget.id} variant="outlined" sx={{ p: { xs: 2, sm: 2.4 }, borderRadius: 1.5, minWidth: 0 }}>
               <Stack direction="row" spacing={1.2} alignItems="flex-start">
                 <Avatar variant="rounded" sx={{ bgcolor: "action.hover", color: "primary.main" }}><SavingsRounded /></Avatar>
                 <Box sx={{ flex: 1, minWidth: 0 }}><Typography fontWeight={700}>{budget.name}</Typography><Typography variant="body2" color="text.secondary">{budget.category} · {account?.name ?? "Unknown account"}</Typography></Box>
@@ -297,7 +297,7 @@ export function BudgetsManager() {
               </Stack>
               <Typography variant="h5" fontWeight={700} letterSpacing={-0.5}>{money(spent, account?.currency ?? "PHP")} <Typography component="span" color="text.secondary" variant="body2" fontWeight={500}>of {money(Number(budget.amount), account?.currency ?? "PHP")}</Typography></Typography>
               <LinearProgress variant="determinate" value={window.state === "upcoming" ? 0 : progress} color={spent > Number(budget.amount) ? "error" : progress >= 80 ? "warning" : "primary"} sx={{ height: 9, borderRadius: 99, mt: 1.6, bgcolor: "action.hover" }} />
-              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1.2 }}>
+              <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={0.5} sx={{ mt: 1.2 }}>
                 <Typography variant="caption" color="text.secondary">{window.state === "upcoming" ? `Begins ${dateLabel(window.start)}` : window.state === "ended" ? `Ended ${dateLabel(window.end)}` : `${dateLabel(window.start)} – ${dateLabel(window.end)}`}</Typography>
                 <Typography variant="body2" fontWeight={600} color={remaining < 0 ? "error.main" : "text.primary"}>{window.state === "active" ? remaining >= 0 ? `${money(remaining, account?.currency ?? "PHP")} left` : `${money(Math.abs(remaining), account?.currency ?? "PHP")} over` : window.state === "upcoming" ? "Not started" : "Completed period"}</Typography>
               </Stack>
