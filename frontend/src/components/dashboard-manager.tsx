@@ -420,6 +420,16 @@ export function DashboardManager() {
       }
       return;
     }
+
+    // A signed-in session requires a configured Supabase client. Keep the
+    // narrowed client in a local constant for use by the async query helpers.
+    if (!supabase) {
+      setError("Authentication service is not configured.");
+      setLoading(false);
+      return;
+    }
+    const authenticatedSupabase = supabase;
+
     const fetchAllTransactions = async () => {
       const rows: Transaction[] = [];
       const pageSize = 1000;
