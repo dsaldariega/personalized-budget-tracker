@@ -41,7 +41,7 @@ export function AuthPage({
           color: "#fff",
           background: "linear-gradient(145deg, #263238 0%, #37474F 48%, #B71C1C 100%)",
           "&::before": {
-            content: '\"\"',
+            content: '""',
             position: "absolute",
             width: 520,
             height: 520,
