@@ -59,10 +59,10 @@ router.post("/", async (req, res) => {
 
   const apiKey = process.env.RESEND_API_KEY;
   const fromEmail = process.env.FEEDBACK_FROM_EMAIL;
-  const recipient = process.env.FEEDBACK_TO_EMAIL ?? "dsaldariega@gmail.com";
+  const recipient = process.env.FEEDBACK_TO_EMAIL;
   let notificationSent = false;
 
-  if (apiKey && fromEmail) {
+  if (apiKey && fromEmail && recipient) {
     const safeSubject = parsed.data.subject.replace(/[\r\n]+/g, " ").slice(0, 120);
     const categoryLabel = parsed.data.category === "bug" ? "Bug report" : parsed.data.category === "idea" ? "Feature idea" : "Other feedback";
     const emailText = [
@@ -99,7 +99,7 @@ router.post("/", async (req, res) => {
       console.error("BudgetNest feedback email notification failed:", error);
     }
   } else {
-    console.error("BudgetNest feedback email is not configured. Set RESEND_API_KEY and FEEDBACK_FROM_EMAIL.");
+    console.error("BudgetNest feedback email is not configured. Set RESEND_API_KEY, FEEDBACK_FROM_EMAIL, and FEEDBACK_TO_EMAIL.");
   }
 
   res.status(201).json({

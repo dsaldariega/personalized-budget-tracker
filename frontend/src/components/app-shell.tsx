@@ -7,17 +7,18 @@ import type { User } from "@supabase/supabase-js";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { usePathname } from "next/navigation";
 import { AuthModal } from "@/components/auth-modal";
+import FeedbackForm from "@/components/feedback-form";
 import { apiRequest } from "@/lib/api";
 import { buildNotifications } from "@/lib/notifications";
 import type { AppNotification } from "@/lib/notifications";
 import {
   AccountBalanceWalletOutlined, AccountBalanceWalletRounded, AssessmentOutlined, AutorenewOutlined,
   DashboardOutlined, DarkModeOutlined, HistoryRounded, InfoOutlined, KeyboardArrowDown, LightModeOutlined, ComputerOutlined,
-  MenuRounded, NotificationsNoneOutlined, SavingsOutlined, SettingsOutlined,
+  MenuRounded, NotificationsNoneOutlined, SavingsOutlined, SettingsOutlined, FeedbackOutlined,
   SwapHorizOutlined, TrendingUpOutlined, AccountCircleOutlined, CloseRounded, LogoutRounded, PolicyOutlined
 } from "@mui/icons-material";
 import {
-  AppBar, Avatar, Badge, Box, Button, CircularProgress, Divider, Drawer, IconButton, List,
+  AppBar, Avatar, Badge, Box, Button, CircularProgress, Divider, Drawer, Fab, IconButton, List,
   ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack, Toolbar,
   Popover, Tooltip, Typography, Dialog, DialogContent, useMediaQuery, ToggleButton, ToggleButtonGroup
 } from "@mui/material";
@@ -148,6 +149,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountMenu, setAccountMenu] = useState<HTMLElement | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [welcomeMode, setWelcomeMode] = useState<"first-visit" | "signed-out">("first-visit");
@@ -157,6 +159,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setLoginOpen(false);
     setWelcomeOpen(false);
   }, [user?.id]);
+  useEffect(() => {
+    const openFeedback = () => setFeedbackOpen(true);
+    window.addEventListener("budgetnest:open-feedback", openFeedback);
+    return () => window.removeEventListener("budgetnest:open-feedback", openFeedback);
+  }, []);
+
+  const profileFullName = typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name.trim() : "";
+  const profileUsername = typeof user?.user_metadata?.username === "string" ? user.user_metadata.username.trim() : "";
+  const accountFullName = profileFullName || profileUsername || user?.email?.split("@")[0] || "Guest";
+  const accountFirstName = accountFullName.split(/\s+/)[0] || "Guest";
+
   const pageTitle = useMemo(
     () => navGroups.flatMap((group) => group.items).find((item) => item.href === pathname)?.label ?? "BudgetNest",
     [pathname]
@@ -270,12 +283,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </Badge>
               </IconButton>
             </Tooltip>
-            <Button onClick={(event) => setAccountMenu(event.currentTarget)} color="inherit" sx={{ minWidth: 0, px: { xs: 0.75, sm: 1 }, py: 0.5, textTransform: "none", borderRadius: 1, "&:hover": { bgcolor: "action.hover" } }}>
-              <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main", fontSize: 13, mr: 1 }}>{user?.email?.[0]?.toUpperCase() ?? "G"}</Avatar>
-              <Box sx={{ display: { xs: "none", sm: "block" }, textAlign: "left", mr: 0.5 }}>
-                <Typography variant="body2" fontWeight={700} lineHeight={1.2}>{user?.user_metadata?.full_name ?? (user?.email ? user.email.split("@")[0] : "Guest")}</Typography>
-                <Typography variant="caption" color="text.secondary">{user?.email ?? (authReady ? "Not signed in" : "Checking session…")}</Typography>
-              </Box>
+            <Button onClick={(event) => setAccountMenu(event.currentTarget)} color="inherit" aria-label="Open profile menu" sx={{ minWidth: 0, px: { xs: 0.75, sm: 1 }, py: 0.5, textTransform: "none", borderRadius: 1, "&:hover": { bgcolor: "action.hover" } }}>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main", fontSize: 13, mr: 1 }}>{accountFullName[0]?.toUpperCase() ?? "G"}</Avatar>
+              <Typography variant="body2" fontWeight={700} sx={{ maxWidth: { xs: 72, sm: 120 }, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", mr: 0.5 }}>{accountFirstName}</Typography>
               <KeyboardArrowDown fontSize="small" />
             </Button>
             <Menu
@@ -297,13 +307,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               }}
             >
               {user ? (
-                <MenuItem
-                  onClick={handleSignOut}
-                  sx={{ gap: 1, borderRadius: 0.75, py: 0.75, px: 1, fontWeight: 500 }}
-                >
-                  <LogoutRounded fontSize="small" sx={{ color: "text.secondary" }} />
-                  Sign out
-                </MenuItem>
+                <>
+                  <Box sx={{ px: 1.75, py: 1.25, maxWidth: 280 }}>
+                    <Typography variant="body2" fontWeight={700} noWrap>{accountFullName}</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.25, overflowWrap: "anywhere" }}>{user.email ?? "Email unavailable"}</Typography>
+                  </Box>
+                  <Divider sx={{ my: 0.5 }} />
+                  <MenuItem
+                    onClick={handleSignOut}
+                    sx={{ gap: 1, borderRadius: 0.75, py: 0.85, px: 1.25, fontWeight: 500 }}
+                  >
+                    <LogoutRounded fontSize="small" sx={{ color: "text.secondary" }} />
+                    Sign out
+                  </MenuItem>
+                </>
               ) : (
                 <MenuItem
                   onClick={() => { setAccountMenu(null); setLoginOpen(true); }}
@@ -393,6 +410,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </DialogContent>
         </Dialog>
         <AuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+        <FeedbackForm open={feedbackOpen} isAuthenticated={Boolean(user)} onClose={() => setFeedbackOpen(false)} onRequireAuth={() => setLoginOpen(true)} />
         <Popover
           open={Boolean(notificationAnchor)}
           anchorEl={notificationAnchor}
@@ -450,6 +468,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Typography variant="caption" color="text.secondary">Dismissed alerts may appear again when you sign in if they still need attention.</Typography>
           </Box>
         </Popover>
+        {!feedbackOpen && (
+          <Fab
+            color="primary"
+            variant="extended"
+            aria-label="Send us feedback"
+            onClick={() => setFeedbackOpen(true)}
+            sx={{
+              position: "fixed", right: { xs: 2, sm: 3 }, bottom: { xs: 2, sm: 3 }, zIndex: (theme) => theme.zIndex.speedDial,
+              minWidth: 52, width: 52, height: 52, px: 1.5, overflow: "hidden", whiteSpace: "nowrap",
+              transition: "width 180ms ease, border-radius 180ms ease",
+              "& .feedback-label": { maxWidth: 0, opacity: 0, overflow: "hidden", transition: "max-width 180ms ease, opacity 140ms ease" },
+              "&:hover, &:focus-visible": { width: 196, justifyContent: "flex-start", "& .feedback-label": { maxWidth: 150, opacity: 1, ml: 1 } },
+            }}
+          >
+            <FeedbackOutlined />
+            <Box component="span" className="feedback-label" sx={{ fontSize: 14, fontWeight: 600 }}>Send us feedback...</Box>
+          </Fab>
+        )}
         <Box
           key={`${pathname}:${user?.id ?? "guest"}`}
           component="main"
