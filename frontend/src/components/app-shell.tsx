@@ -474,7 +474,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             aria-label="Send us feedback"
             onClick={() => setFeedbackOpen(true)}
             sx={{
-              position: "fixed", right: { xs: 8, sm: 8, md: 9 }, bottom: { xs: 8, sm: 8, md: 8 }, zIndex: (theme) => theme.zIndex.speedDial,
+              position: "fixed", right: { xs: 10, sm: 10, md: 11 }, bottom: { xs: 10, sm: 10, md: 10 }, zIndex: (theme) => theme.zIndex.speedDial,
               minWidth: { xs: 42, sm: 46 }, width: { xs: 42, sm: 46 }, height: { xs: 42, sm: 46 },
               p: 0, overflow: "hidden", whiteSpace: "nowrap", borderRadius: 999,
               boxShadow: 3,
