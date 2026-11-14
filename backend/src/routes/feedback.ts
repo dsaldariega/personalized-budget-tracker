@@ -104,8 +104,8 @@ router.post("/", async (req, res) => {
 
   res.status(201).json({
     message: notificationSent
-      ? "Thank you! Your feedback has been submitted successfully."
-      : "Your feedback was saved, but the email notification could not be delivered yet.",
+      ? "Thank you! Your feedback has been submitted successfully, and the administrators have been notified."
+      : "Thank you! Your feedback has been submitted successfully.",
     notificationSent,
   });
 });
