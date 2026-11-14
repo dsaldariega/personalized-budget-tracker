@@ -38,7 +38,9 @@ export function AuthForm({ mode, modal = false, onAuthenticated }: { mode: AuthM
 
     setSwitchingAuthMode(true);
     window.setTimeout(() => {
-      router.push(isRegister ? "/login" : "/register");
+      const target = isRegister ? "/login" : "/register";
+      const query = searchParams.toString();
+      router.push(query ? `${target}?${query}` : target);
     }, 240);
   }
 
