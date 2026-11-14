@@ -119,9 +119,6 @@ export function ThemeProvider({
         divider: dark ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.10)",
       },
       shape: { borderRadius: 8 },
-      motion: {
-        reducedMotion: "system",
-      },
       typography: {
         htmlFontSize: 16,
         fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
@@ -144,6 +141,14 @@ export function ThemeProvider({
         MuiCssBaseline: {
           styleOverrides: {
             body: { backgroundColor: dark ? "#121212" : "#F7F8FA", color: dark ? "rgba(255,255,255,0.92)" : "#1F2937" },
+            "@media (prefers-reduced-motion: reduce)": {
+              "*, *::before, *::after": {
+                animationDuration: "0.01ms !important",
+                animationIterationCount: "1 !important",
+                transitionDuration: "0.01ms !important",
+                scrollBehavior: "auto !important",
+              },
+            },
           },
         },
         MuiCard: {
