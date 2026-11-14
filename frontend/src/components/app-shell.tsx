@@ -160,7 +160,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const sidebar = (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "background.paper" }}>
-      <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 1.5 }} sx={{ px: { xs: 1.5, sm: 2.5 }, height: 68, minHeight: 68, boxSizing: "border-box", minWidth: 0, borderBottom: 1, borderColor: "divider" }}>
+      <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 1.5 }} sx={{ px: { xs: 1.5, sm: 2.5 }, height: 68, minHeight: 68, maxHeight: 68, flex: "0 0 68px", boxSizing: "border-box", minWidth: 0, borderBottom: 1, borderColor: "divider" }}>
         <Box sx={{ width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 }, flexShrink: 0, borderRadius: 1.5, display: "grid", placeItems: "center", background: "linear-gradient(145deg, #EF5350 0%, #D32F2F 58%, #B71C1C 100%)", color: "primary.contrastText", fontWeight: 700, fontSize: { xs: 18, sm: 20 }, boxShadow: "0 3px 10px rgba(211,47,47,0.16)" }}><AccountBalanceWalletRounded sx={{ fontSize: { xs: 21, sm: 23 } }} /></Box>
         <Box sx={{ minWidth: 0, flexShrink: 0 }}>
           <Typography sx={{ fontSize: { xs: 16.5, sm: 18 }, fontWeight: 700, letterSpacing: "-0.035em", lineHeight: 1.15, whiteSpace: "nowrap" }}>BudgetNest</Typography>
@@ -228,7 +228,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <Box sx={{ ml: { lg: `${drawerWidth}px` }, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "background.default", backdropFilter: "blur(16px)" }}>
-          <Toolbar sx={{ minHeight: { xs: "60px !important", sm: "68px !important" }, px: { xs: 1.25, sm: 2, md: 3 }, gap: { xs: 0.25, sm: 0.75 } }}>
+          <Toolbar sx={{ height: { xs: "60px", sm: "68px" }, minHeight: { xs: "60px !important", sm: "68px !important" }, px: { xs: 1.25, sm: 2, md: 3 }, gap: { xs: 0.25, sm: 0.75 } }}>
             <IconButton onClick={() => setMobileOpen(true)} sx={{ display: { lg: "none" }, mr: 1 }} aria-label="Open navigation"><MenuRounded /></IconButton>
             <Box sx={{ flexGrow: 1 }}>
               <Typography fontWeight={600} sx={{ fontSize: { xs: 14, sm: 16 }, lineHeight: 1.25 }}>{pageTitle}</Typography>
