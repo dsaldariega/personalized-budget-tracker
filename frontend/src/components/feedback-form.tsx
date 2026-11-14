@@ -114,10 +114,7 @@ export default function FeedbackForm({
         return;
       }
 
-      const result = await apiRequest<{
-        message: string;
-        notificationSent: boolean;
-      }>("/feedback", {
+      const result = await apiRequest<{ message: string }>("/feedback", {
         method: "POST",
         body: JSON.stringify({
           subject: trimmedSubject,
