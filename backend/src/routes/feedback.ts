@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { createClient } from "@supabase/supabase-js";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 const router = Router();
@@ -12,6 +13,49 @@ const feedbackSchema = z.object({
 function context(res: import("express").Response) {
   return { supabase: res.locals.supabase as SupabaseClient, user: res.locals.user as User };
 }
+
+router.get("/admin", async (_req, res) => {
+  const { user } = context(res);
+  if (user.email?.trim().toLowerCase() !== "dsaldariega@gmail.com") {
+    res.status(403).json({ error: "You are not authorized to view user feedback." });
+    return;
+  }
+  const url = process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceRoleKey) {
+    res.status(503).json({ error: "The feedback management service is not configured." });
+    return;
+  }
+  try {
+    const admin = createClient(url, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
+    });
+    const feedback: {
+      id: string; username: string | null; email: string | null; subject: string;
+      category: "bug" | "idea" | "other"; message: string; created_at: string;
+    }[] = [];
+    const pageSize = 1000;
+    for (let offset = 0; ; offset += pageSize) {
+      const { data, error } = await admin.from("user_feedback")
+        .select("id,username,email,subject,category,message,created_at")
+        .order("created_at", { ascending: false })
+        .range(offset, offset + pageSize - 1);
+      if (error) {
+        console.error("BudgetNest feedback retrieval failed:", error.message);
+        res.status(500).json({ error: "User feedback could not be loaded. Please try again." });
+        return;
+      }
+      const page = data ?? [];
+      feedback.push(...page);
+      if (page.length < pageSize) break;
+    }
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ feedback });
+  } catch (error) {
+    console.error("BudgetNest feedback retrieval failed:", error);
+    res.status(500).json({ error: "User feedback could not be loaded. Please try again." });
+  }
+});
 
 router.post("/", async (req, res) => {
   const parsed = feedbackSchema.safeParse(req.body);
@@ -57,56 +101,8 @@ router.post("/", async (req, res) => {
     return;
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.FEEDBACK_FROM_EMAIL;
-  const recipient = process.env.FEEDBACK_TO_EMAIL;
-  let notificationSent = false;
-
-  if (apiKey && fromEmail && recipient) {
-    const safeSubject = parsed.data.subject.replace(/[\r\n]+/g, " ").slice(0, 120);
-    const categoryLabel = parsed.data.category === "bug" ? "Bug report" : parsed.data.category === "idea" ? "Feature idea" : "Other feedback";
-    const emailText = [
-      "A new BudgetNest feedback submission was received.",
-      "",
-      `Subject: ${safeSubject}`,
-      `Category: ${categoryLabel}`,
-      `Username: ${username}`,
-      `Email: ${user.email}`,
-      `User ID: ${user.id}`,
-      `Submitted at (UTC): ${submittedAt}`,
-      "",
-      "Feedback:",
-      parsed.data.message,
-    ].join("\n");
-
-    try {
-      const response = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from: fromEmail,
-          to: [recipient],
-          reply_to: user.email,
-          subject: `BudgetNest feedback: ${safeSubject}`,
-          text: emailText,
-        }),
-      });
-      notificationSent = response.ok;
-      if (!response.ok) {
-        console.error("BudgetNest feedback email notification failed:", response.status, await response.text());
-      }
-    } catch (error) {
-      console.error("BudgetNest feedback email notification failed:", error);
-    }
-  } else {
-    console.error("BudgetNest feedback email is not configured. Set RESEND_API_KEY, FEEDBACK_FROM_EMAIL, and FEEDBACK_TO_EMAIL.");
-  }
-
   res.status(201).json({
-    message: notificationSent
-      ? "Thank you! Your feedback has been submitted successfully."
-      : "Your feedback was saved, but the email notification could not be delivered yet.",
-    notificationSent,
+    message: "Thank you! Your feedback has been submitted successfully.",
   });
 });
 

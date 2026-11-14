@@ -7,6 +7,8 @@ import {
   ArrowDownwardRounded,
   ArrowUpwardRounded,
   EventRepeatRounded,
+  FileDownloadOutlined,
+  FeedbackOutlined,
   RefreshRounded,
   SavingsOutlined,
   ShowChartRounded,
@@ -79,7 +81,28 @@ type Subscription = {
   next_billing_date: string;
   is_active: boolean;
 };
+type FeedbackEntry = {
+  id: string; username: string | null; email: string | null; subject: string;
+  category: "bug" | "idea" | "other"; message: string; created_at: string;
+};
 type Period = "month" | "lastMonth" | "90days" | "year";
+
+function feedbackCsvValue(value: unknown) {
+  const text = String(value ?? "");
+  const safe = /^[=+@-]/.test(text) ? `'${text}` : text;
+  return `"${safe.replace(/"/g, '""')}"`;
+}
+function exportFeedbackCsv(rows: FeedbackEntry[]) {
+  const columns: (keyof FeedbackEntry)[] = ["id", "username", "email", "subject", "category", "message", "created_at"];
+  const csv = [columns.map(feedbackCsvValue).join(","), ...rows.map((row) => columns.map((column) => feedbackCsvValue(row[column])).join(","))].join("\r\n");
+  const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `budgetnest-feedback-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 const periodOptions: { value: Period; label: string }[] = [
   { value: "month", label: "This month" },
@@ -378,6 +401,10 @@ export function DashboardManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currencyFilter, setCurrencyFilter] = useState("all");
+  const [isFeedbackAdmin, setIsFeedbackAdmin] = useState(false);
+  const [feedbackRows, setFeedbackRows] = useState<FeedbackEntry[]>([]);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackError, setFeedbackError] = useState("");
   const loadRequestId = useRef(0);
 
   const loadData = useCallback(async () => {
@@ -388,13 +415,14 @@ export function DashboardManager() {
     // Supabase is only needed for authenticated/cloud data. Guests use the
     // local guest store through apiRequest and should never be blocked by
     // missing authentication configuration.
-    let user: { id: string } | null = null;
+    let user: { id: string; email?: string } | null = null;
     if (supabase) {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       user = session?.user ?? null;
     }
+    setIsFeedbackAdmin(user?.email?.trim().toLowerCase() === "dsaldariega@gmail.com");
     if (!user) {
       try {
         const [
@@ -536,6 +564,25 @@ export function DashboardManager() {
 
     return () => subscription.unsubscribe();
   }, [loadData, supabase]);
+  useEffect(() => {
+    if (!isFeedbackAdmin) {
+      setFeedbackRows([]);
+      setFeedbackError("");
+      setFeedbackLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setFeedbackLoading(true);
+    setFeedbackError("");
+    void apiRequest<{ feedback: FeedbackEntry[] }>("/feedback/admin")
+      .then((result) => { if (!cancelled) setFeedbackRows(result.feedback ?? []); })
+      .catch((loadError) => {
+        if (!cancelled) setFeedbackError(loadError instanceof Error ? loadError.message : "Unable to load user feedback.");
+      })
+      .finally(() => { if (!cancelled) setFeedbackLoading(false); });
+    return () => { cancelled = true; };
+  }, [isFeedbackAdmin]);
+
   const accountMap = useMemo(
     () => new Map(accounts.map((account) => [account.id, account])),
     [accounts],
@@ -1638,6 +1685,48 @@ export function DashboardManager() {
               </Paper>
             </Grid>
           </Grid>
+          {isFeedbackAdmin && (
+            <Paper variant="outlined" sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}>
+              <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between" spacing={1.5} sx={{ mb: 2 }}>
+                <Stack direction="row" alignItems="center" spacing={1.2}>
+                  <Avatar variant="rounded" sx={{ bgcolor: "action.hover", color: "primary.main" }}><FeedbackOutlined /></Avatar>
+                  <Box>
+                    <Typography fontWeight={700}>User feedback</Typography>
+                    <Typography variant="caption" color="text.secondary">Feedback submitted by BudgetNest users</Typography>
+                  </Box>
+                  <Chip size="small" label={feedbackRows.length} />
+                </Stack>
+                <Button variant="outlined" size="small" startIcon={<FileDownloadOutlined />} onClick={() => exportFeedbackCsv(feedbackRows)} disabled={feedbackLoading || feedbackRows.length === 0} sx={{ textTransform: "none", alignSelf: { xs: "flex-start", sm: "center" } }}>
+                  Export CSV
+                </Button>
+              </Stack>
+              {feedbackError && <Alert severity="error" sx={{ mb: 2 }}>{feedbackError}</Alert>}
+              {feedbackLoading ? (
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ py: 2 }}>
+                  <CircularProgress size={18} /><Typography variant="body2" color="text.secondary">Loading feedback…</Typography>
+                </Stack>
+              ) : feedbackRows.length ? (
+                <Stack spacing={0} divider={<Box sx={{ borderBottom: 1, borderColor: "divider" }} />}>
+                  {feedbackRows.slice(0, 5).map((item) => (
+                    <Box key={item.id} sx={{ py: 1.5 }}>
+                      <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={0.5}>
+                        <Typography fontWeight={700}>{item.subject}</Typography>
+                        <Stack direction="row" spacing={0.8} alignItems="center">
+                          <Chip size="small" variant="outlined" label={item.category === "bug" ? "Bug report" : item.category === "idea" ? "Feature idea" : "Other"} />
+                          <Typography variant="caption" color="text.secondary">{new Date(item.created_at).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}</Typography>
+                        </Stack>
+                      </Stack>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{item.message}</Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.6 }}>{item.username || "User"} · {item.email || "No email"}</Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              ) : (
+                <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>No feedback submissions yet. New submissions will appear here.</Typography>
+              )}
+              {feedbackRows.length > 5 && <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>Showing the 5 most recent submissions. Export CSV to view all {feedbackRows.length}.</Typography>}
+            </Paper>
+          )}
           {currencies.length > 1 && selectedCurrency === "all" && (
             <Typography variant="caption" color="text.secondary">
               Totals are displayed separately by currency where applicable.

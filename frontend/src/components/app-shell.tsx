@@ -233,7 +233,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
+  const isCompact = useMediaQuery(theme.breakpoints.down("md"));
   const { preference, setPreference } = useThemeMode();
+  const [appearanceMenuAnchor, setAppearanceMenuAnchor] =
+    useState<HTMLElement | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountMenu, setAccountMenu] = useState<HTMLElement | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -548,59 +551,129 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {pageTitle}
               </Typography>
             </Box>
-            <ToggleButtonGroup
-              exclusive
-              size="small"
-              value={preference}
-              onChange={(_, value: "system" | "light" | "dark" | null) => {
-                if (value) setPreference(value);
-              }}
-              aria-label="Appearance preference"
-              sx={{
-                mr: { xs: 0.25, sm: 0.75 },
-                p: 0.35,
-                gap: 0.25,
-                border: 1,
-                borderColor: "divider",
-                borderRadius: 1,
-                bgcolor: "action.hover",
-                "& .MuiToggleButtonGroup-grouped": {
-                  border: 0,
-                  borderRadius: "8px !important",
-                  mx: 0,
-                  px: { xs: 0.65, sm: 0.9 },
-                  py: 0.55,
-                  color: "text.secondary",
-                },
-                "& .Mui-selected": {
-                  bgcolor: "background.paper !important",
-                  color: "primary.main",
-                  boxShadow: 1,
-                },
-              }}
-            >
-              <ToggleButton
-                value="system"
-                aria-label="Use system appearance"
-                title="System"
+            {isCompact ? (
+              <>
+                <Tooltip title={`Appearance: ${preference}`}>
+                  <IconButton
+                    onClick={(event) =>
+                      setAppearanceMenuAnchor(event.currentTarget)
+                    }
+                    aria-label={`Appearance: ${preference}. Change appearance`}
+                    aria-haspopup="menu"
+                    aria-expanded={Boolean(appearanceMenuAnchor)}
+                    sx={{
+                      mr: { xs: 0.25, sm: 0.75 },
+                      border: 1,
+                      borderColor: "divider",
+                      bgcolor: "action.hover",
+                      width: 38,
+                      height: 38,
+                    }}
+                  >
+                    {preference === "system" ? (
+                      <ComputerOutlined />
+                    ) : preference === "light" ? (
+                      <LightModeOutlined />
+                    ) : (
+                      <DarkModeOutlined />
+                    )}
+                  </IconButton>
+                </Tooltip>
+                <Menu
+                  anchorEl={appearanceMenuAnchor}
+                  open={Boolean(appearanceMenuAnchor)}
+                  onClose={() => setAppearanceMenuAnchor(null)}
+                  anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                  transformOrigin={{ vertical: "top", horizontal: "right" }}
+                  slotProps={{ paper: { sx: { minWidth: 172, mt: 0.75 } } }}
+                >
+                  <MenuItem
+                    selected={preference === "system"}
+                    onClick={() => {
+                      setPreference("system");
+                      setAppearanceMenuAnchor(null);
+                    }}
+                  >
+                    <ListItemIcon><ComputerOutlined fontSize="small" /></ListItemIcon>
+                    System
+                  </MenuItem>
+                  <MenuItem
+                    selected={preference === "light"}
+                    onClick={() => {
+                      setPreference("light");
+                      setAppearanceMenuAnchor(null);
+                    }}
+                  >
+                    <ListItemIcon><LightModeOutlined fontSize="small" /></ListItemIcon>
+                    Light
+                  </MenuItem>
+                  <MenuItem
+                    selected={preference === "dark"}
+                    onClick={() => {
+                      setPreference("dark");
+                      setAppearanceMenuAnchor(null);
+                    }}
+                  >
+                    <ListItemIcon><DarkModeOutlined fontSize="small" /></ListItemIcon>
+                    Dark
+                  </MenuItem>
+                </Menu>
+              </>
+            ) : (
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                value={preference}
+                onChange={(_, value: "system" | "light" | "dark" | null) => {
+                  if (value) setPreference(value);
+                }}
+                aria-label="Appearance preference"
+                sx={{
+                  mr: { xs: 0.25, sm: 0.75 },
+                  p: 0.35,
+                  gap: 0.25,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  bgcolor: "action.hover",
+                  "& .MuiToggleButtonGroup-grouped": {
+                    border: 0,
+                    borderRadius: "8px !important",
+                    mx: 0,
+                    px: { xs: 0.65, sm: 0.9 },
+                    py: 0.55,
+                    color: "text.secondary",
+                  },
+                  "& .Mui-selected": {
+                    bgcolor: "background.paper !important",
+                    color: "primary.main",
+                    boxShadow: 1,
+                  },
+                }}
               >
-                <ComputerOutlined sx={{ fontSize: 18 }} />
-              </ToggleButton>
-              <ToggleButton
-                value="light"
-                aria-label="Use light appearance"
-                title="Light"
-              >
-                <LightModeOutlined sx={{ fontSize: 18 }} />
-              </ToggleButton>
-              <ToggleButton
-                value="dark"
-                aria-label="Use dark appearance"
-                title="Dark"
-              >
-                <DarkModeOutlined sx={{ fontSize: 18 }} />
-              </ToggleButton>
-            </ToggleButtonGroup>
+                <ToggleButton
+                  value="system"
+                  aria-label="Use system appearance"
+                  title="System"
+                >
+                  <ComputerOutlined sx={{ fontSize: 18 }} />
+                </ToggleButton>
+                <ToggleButton
+                  value="light"
+                  aria-label="Use light appearance"
+                  title="Light"
+                >
+                  <LightModeOutlined sx={{ fontSize: 18 }} />
+                </ToggleButton>
+                <ToggleButton
+                  value="dark"
+                  aria-label="Use dark appearance"
+                  title="Dark"
+                >
+                  <DarkModeOutlined sx={{ fontSize: 18 }} />
+                </ToggleButton>
+              </ToggleButtonGroup>
+            )}
             <Tooltip title="Notifications">
               <IconButton
                 onClick={(event) => setNotificationAnchor(event.currentTarget)}
