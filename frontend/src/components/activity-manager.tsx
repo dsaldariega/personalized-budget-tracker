@@ -92,13 +92,13 @@ export function ActivityManager() {
   return (
     <Stack spacing={3}>
       <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "stretch", sm: "center" }} spacing={2}>
-        <Box><Typography variant="h4" fontWeight={800} letterSpacing={-0.8}>Activity Log</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>A clear timeline of the changes you make across BudgetNest.</Typography></Box>
+        <Box><Typography variant="h4" fontWeight={700} letterSpacing={-0.8}>Activity Log</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>A clear timeline of the changes you make across BudgetNest.</Typography></Box>
         <Button variant="outlined" startIcon={<RefreshRounded />} onClick={() => void load()} disabled={loading}>Refresh activity</Button>
       </Stack>
       {error && <Alert severity="error">{error}</Alert>}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2,minmax(0,1fr))" }, gap: 2 }}>
-        <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Typography variant="caption" color="text.secondary">Activities in selected period</Typography><Typography variant="h5" fontWeight={800}>{items.length}</Typography></Paper>
-        <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Typography variant="caption" color="text.secondary">Recorded today</Typography><Typography variant="h5" fontWeight={800}>{todayCount}</Typography></Paper>
+        <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 1.5 }}><Typography variant="caption" color="text.secondary">Activities in selected period</Typography><Typography variant="h5" fontWeight={700}>{items.length}</Typography></Paper>
+        <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 1.5 }}><Typography variant="caption" color="text.secondary">Recorded today</Typography><Typography variant="h5" fontWeight={700}>{todayCount}</Typography></Paper>
       </Box>
       <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
         <TextField size="small" placeholder="Search activity" value={search} onChange={e => setSearch(e.target.value)} fullWidth InputProps={{ startAdornment: <SearchRounded fontSize="small" sx={{ mr: 1, color: "text.secondary" }} /> }} />
@@ -109,12 +109,12 @@ export function ActivityManager() {
           <MenuItem value="7">Last 7 days</MenuItem><MenuItem value="30">Last 30 days</MenuItem><MenuItem value="90">Last 90 days</MenuItem><MenuItem value="365">Last year</MenuItem><MenuItem value="all">All available</MenuItem>
         </TextField>
       </Stack>
-      {loading ? <Paper variant="outlined" sx={{ minHeight: 240, display: "grid", placeItems: "center", borderRadius: 3 }}><CircularProgress /></Paper> : filtered.length === 0 ? (
-        <Paper variant="outlined" sx={{ p: 5, minHeight: 260, display: "grid", placeItems: "center", textAlign: "center", borderRadius: 3 }}>
-          <Stack alignItems="center" spacing={1}><Avatar sx={{ width: 56, height: 56, bgcolor: "action.hover", color: "text.secondary" }}><HistoryRounded /></Avatar><Typography fontWeight={750}>{items.length ? "No matching activity" : "Your activity will appear here"}</Typography><Typography color="text.secondary" variant="body2">{items.length ? "Try changing your search or filters." : "As you create accounts, record transactions, and manage your finances, important changes will show up here."}</Typography></Stack>
+      {loading ? <Paper variant="outlined" sx={{ minHeight: 240, display: "grid", placeItems: "center", borderRadius: 1.5 }}><CircularProgress /></Paper> : filtered.length === 0 ? (
+        <Paper variant="outlined" sx={{ p: 5, minHeight: 260, display: "grid", placeItems: "center", textAlign: "center", borderRadius: 1.5 }}>
+          <Stack alignItems="center" spacing={1}><Avatar sx={{ width: 56, height: 56, bgcolor: "action.hover", color: "text.secondary" }}><HistoryRounded /></Avatar><Typography fontWeight={600}>{items.length ? "No matching activity" : "Your activity will appear here"}</Typography><Typography color="text.secondary" variant="body2">{items.length ? "Try changing your search or filters." : "As you create accounts, record transactions, and manage your finances, important changes will show up here."}</Typography></Stack>
         </Paper>
       ) : (
-        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3 }}>
+        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
           <Table>
             <TableHead><TableRow><TableCell>Activity</TableCell><TableCell>Details</TableCell><TableCell>Date and time</TableCell></TableRow></TableHead>
             <TableBody>{filtered.map(item => <TableRow key={item.id} hover>

@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 import Link from "next/link";
 import {
@@ -6,7 +8,7 @@ import {
   InsightsRounded,
   ShieldRounded,
 } from "@mui/icons-material";
-import { Box, Chip, Stack, Typography } from "@mui/material";
+import { Box, Chip, Slide, Stack, Typography } from "@mui/material";
 
 export function AuthPage({
   children,
@@ -16,6 +18,7 @@ export function AuthPage({
   mode: "login" | "register";
 }) {
   const isLogin = mode === "login";
+  const transitionDirection = isLogin ? "left" : "right";
 
   return (
     <Box
@@ -160,29 +163,39 @@ export function AuthPage({
           </Box>
           <Typography fontWeight={850} fontSize={18} letterSpacing={-0.5}>BudgetNest</Typography>
         </Stack>
+
         <Box sx={{ width: "100%", maxWidth: 430, position: "relative", zIndex: 1 }}>
           <Box sx={{ display: "flex", justifyContent: "flex-end", mb: { xs: 2.5, sm: 3 } }}>
             <Link
-            href="/"
-            style={{
-              color: "inherit",
-              textDecoration: "none",
-              fontSize: 13,
-              fontWeight: 700,
-            }}
-          >
-            <span style={{ color: "inherit" }}>← Back to BudgetNest</span>
-          </Link>
+              href="/"
+              style={{
+                color: "inherit",
+                textDecoration: "none",
+                fontSize: 13,
+                fontWeight: 700,
+              }}
+            >
+              <span style={{ color: "inherit" }}>← Return to BudgetNest</span>
+            </Link>
           </Box>
+
           <Typography sx={{ mb: 1, color: "primary.main", fontSize: 11, fontWeight: 800, letterSpacing: 1.6, textTransform: "uppercase" }}>
             {isLogin ? "Your finances, in focus" : "A better money routine starts here"}
           </Typography>
-          {children}
-          <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.7} sx={{ mt: 2, color: "text.disabled" }}>
-            <ShieldRounded sx={{ fontSize: 15 }} />
-            <Typography variant="caption">Your account is protected with secure authentication</Typography>
-          </Stack>
-          <Typography variant="caption" color="text.disabled" textAlign="center" display="block" sx={{ mt: 2 }}>
+
+          <Slide
+            key={mode}
+            direction={transitionDirection}
+            in
+            appear
+            timeout={{ enter: 320, exit: 240 }}
+            mountOnEnter
+            unmountOnExit
+          >
+            <Box>{children}</Box>
+          </Slide>
+
+          <Typography variant="caption" color="text.disabled" textAlign="center" display="block" sx={{ mt: 2.5 }}>
             © {new Date().getFullYear()} BudgetNest
           </Typography>
         </Box>

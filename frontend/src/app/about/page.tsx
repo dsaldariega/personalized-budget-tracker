@@ -58,7 +58,7 @@ const faqs = [
   },
   {
     question: "Can I permanently delete my account from the app?",
-    answer: "Permanent account deletion is not currently available as a self-service action. It requires a trusted server-side process to remove the authentication account and its related records together. Export a backup first. You can use the feedback form below to record a deletion request, but submitting feedback does not delete your account automatically.",
+    answer: "You cannot permanently delete your BudgetNest account from the app yet. If you want to request deletion, use the feedback form on this page and tell us that you want your account removed. We will need to handle the request manually, so submitting the form does not delete the account immediately. Export a backup first if you want to keep a copy of your information.",
   },
 ];
 

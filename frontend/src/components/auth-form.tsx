@@ -1,17 +1,16 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Alert, Box, Button, Divider, Paper, Stack, TextField, Typography
+  Alert, Box, Button, Divider, Paper, Slide, Stack, TextField, Typography
 } from "@mui/material";
 import { createClient } from "@/lib/supabase/client";
 import { publicApiRequest } from "@/lib/api";
 
 type AuthMode = "login" | "register";
 
-export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: boolean; onAuthenticated?: () => void }) {
+export function AuthForm({ mode, modal = false, onAuthenticated }: { mode: AuthMode; modal?: boolean; onAuthenticated?: () => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -21,6 +20,7 @@ export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: bo
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [switchingAuthMode, setSwitchingAuthMode] = useState(false);
   const [message, setMessage] = useState<{ type: "error" | "success" | "info"; text: string } | null>(
     searchParams.get("error") === "configuration"
       ? { type: "info", text: "Supabase is not configured yet. Add your BudgetNest project URL and publishable key to frontend/.env.local." }
@@ -33,19 +33,30 @@ export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: bo
   const next = searchParams.get("next");
   const destination = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
 
+  function switchAuthMode() {
+    if (switchingAuthMode || loading) return;
+
+    setSwitchingAuthMode(true);
+    window.setTimeout(() => {
+      const target = isRegister ? "/login" : "/register";
+      const query = searchParams.toString();
+      router.push(query ? `${target}?${query}` : target);
+    }, 240);
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    if (!supabase) {
-      setMessage({ type: "info", text: "Supabase is not configured yet. Add the project URL and publishable key first." });
-      return;
-    }
 
     setLoading(true);
     setMessage(null);
 
     try {
       if (isRegister) {
+        if (!supabase) {
+          setMessage({ type: "error", text: "Account registration is temporarily unavailable because the authentication service is not configured." });
+          return;
+        }
+
         const normalizedUsername = username.trim().toLowerCase();
         const normalizedEmail = email.trim().toLowerCase();
         const authEmail = normalizedEmail;
@@ -78,6 +89,11 @@ export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: bo
           text: "Account created, but Supabase did not return a sign-in session. To enable instant sign-in after registration, turn off Confirm email in Supabase Authentication settings, then try again.",
         });
       } else if (identifier.includes("@")) {
+        if (!supabase) {
+          setMessage({ type: "error", text: "Email sign-in is temporarily unavailable because the authentication service is not configured. You can still try signing in with your username." });
+          return;
+        }
+
         const { error } = await supabase.auth.signInWithPassword({
           email: identifier.trim(),
           password,
@@ -92,6 +108,11 @@ export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: bo
         router.replace(destination);
         router.refresh();
       } else {
+        if (!supabase) {
+          setMessage({ type: "error", text: "Username sign-in is temporarily unavailable because the authentication service is not configured." });
+          return;
+        }
+
         const data = await publicApiRequest<{ session: { access_token: string; refresh_token: string } }>("/auth/login", {
           method: "POST",
           body: JSON.stringify({ identifier: identifier.trim(), password }),
@@ -118,120 +139,145 @@ export function AuthForm({ mode, onAuthenticated }: { mode: AuthMode; modal?: bo
   }
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        width: "100%",
-        maxWidth: 430,
-        p: { xs: 2.5, sm: 3.25 },
-        borderRadius: 4,
-        border: 1,
-        borderColor: "divider",
-        bgcolor: "background.paper",
-        boxShadow: 3,
-      }}
+    <Slide
+      in={!switchingAuthMode}
+      direction={isRegister ? "left" : "right"}
+      timeout={{ enter: 320, exit: 240 }}
+      mountOnEnter
+      unmountOnExit
     >
-      <Stack spacing={2.1}>
-        <Box>
-          <Typography variant="h4" fontWeight={800} letterSpacing={-1.2} sx={{ fontSize: { xs: 27, sm: 31 } }}>
-            {isRegister ? "Create your account" : "Welcome back"}
-          </Typography>
-          <Typography color="text.secondary" sx={{ mt: 0.75 }}>
-            {isRegister ? "Set up your personal finance space in a minute." : "Sign in to pick up where you left off."}
-          </Typography>
-        </Box>
+      <Box>
+        <Paper
+          elevation={0}
+          sx={{
+            width: "100%",
+            maxWidth: modal ? "none" : 430,
+            p: modal ? 0 : { xs: 2.5, sm: 3.25 },
+            borderRadius: modal ? 0 : 3,
+            border: modal ? 0 : 1,
+            borderColor: "divider",
+            bgcolor: "background.paper",
+            boxShadow: modal ? "none" : 3,
+          }}
+        >
+          <Stack spacing={2.1}>
+            <Box>
+              <Typography variant="h4" fontWeight={700} letterSpacing={-1.2} sx={{ fontSize: { xs: 27, sm: 31 } }}>
+                {isRegister ? "Create your account" : "Welcome back"}
+              </Typography>
+              <Typography color="text.secondary" sx={{ mt: 0.75 }}>
+                {isRegister ? "Set up your personal finance space in a minute." : "Sign in to pick up where you left off."}
+              </Typography>
+            </Box>
 
-        {message && <Alert severity={message.type}>{message.text}</Alert>}
+            {message && <Alert severity={message.type}>{message.text}</Alert>}
 
-        <Divider>
-          <Typography variant="caption" color="text.secondary">
-            {isRegister ? "YOUR ACCOUNT" : "SIGN IN"}
-          </Typography>
-        </Divider>
+            <Divider>
+              <Typography variant="caption" color="text.secondary">
+                {isRegister ? "YOUR ACCOUNT" : "SIGN IN"}
+              </Typography>
+            </Divider>
 
-        <Box component="form" onSubmit={handleSubmit}>
-          <Stack spacing={1.7}>
-            {isRegister ? (
-              <>
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stack spacing={1.7}>
+                {isRegister ? (
+                  <>
+                    <TextField
+                      label="Username"
+                      value={username}
+                      onChange={(event) => setUsername(event.target.value.replace(/\s/g, "").toLowerCase())}
+                      autoComplete="username"
+                      placeholder="e.g. budget_user"
+                      helperText="3–24 characters: letters, numbers, and underscores."
+                      inputProps={{ minLength: 3, maxLength: 24, pattern: "[a-z0-9_]+" }}
+                      required
+                      fullWidth
+                    />
+                    <TextField
+                      label="Full name"
+                      value={fullName}
+                      onChange={(event) => setFullName(event.target.value)}
+                      autoComplete="name"
+                      helperText="Optional. You can use your username to sign in."
+                      fullWidth
+                    />
+                    <TextField
+                      label="Email address"
+                      type="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      autoComplete="email"
+                      helperText="Required. Used as an account identifier; no confirmation email is sent."
+                      required
+                      fullWidth
+                    />
+                  </>
+                ) : (
+                  <TextField
+                    label="Username or email"
+                    value={identifier}
+                    onChange={(event) => setIdentifier(event.target.value)}
+                    autoComplete="username"
+                    placeholder="Enter your username or email"
+                    required
+                    fullWidth
+                  />
+                )}
+
                 <TextField
-                  label="Username"
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value.replace(/\s/g, "").toLowerCase())}
-                  autoComplete="username"
-                  placeholder="e.g. budget_user"
-                  helperText="3–24 characters: letters, numbers, and underscores."
-                  inputProps={{ minLength: 3, maxLength: 24, pattern: "[a-z0-9_]+" }}
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  autoComplete={isRegister ? "new-password" : "current-password"}
+                  inputProps={{ minLength: 8 }}
+                  helperText={isRegister ? "Use at least 8 characters." : undefined}
                   required
                   fullWidth
                 />
-                <TextField
-                  label="Full name"
-                  value={fullName}
-                  onChange={(event) => setFullName(event.target.value)}
-                  autoComplete="name"
-                  helperText="Optional. You can use your username to sign in."
-                  fullWidth
-                />
-                <TextField
-                  label="Email address"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  autoComplete="email"
-                  helperText="Required. Used as an account identifier; no confirmation email is sent."
-                  required
-                  fullWidth
-                />
-              </>
-            ) : (
-              <TextField
-                label="Username or email"
-                value={identifier}
-                onChange={(event) => setIdentifier(event.target.value)}
-                autoComplete="username"
-                placeholder="Enter your username or email"
-                required
-                fullWidth
-              />
-            )}
 
-            <TextField
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete={isRegister ? "new-password" : "current-password"}
-              inputProps={{ minLength: 8 }}
-              helperText={isRegister ? "Use at least 8 characters." : undefined}
-              required
-              fullWidth
-            />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disableElevation
+                  disabled={loading || switchingAuthMode}
+                  sx={{
+                    py: 1.3,
+                    borderRadius: 1,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    boxShadow: "none",
+                  }}
+                >
+                  {loading ? "Please wait…" : isRegister ? "Create account" : "Sign in"}
+                </Button>
+              </Stack>
+            </Box>
 
-            <Button
-              type="submit"
-              variant="contained"
-              disableElevation
-              disabled={loading || !supabase}
-              sx={{
-                py: 1.3,
-                borderRadius: 2.5,
-                textTransform: "none",
-                fontWeight: 600,
-                boxShadow: "none",
-              }}
-            >
-              {loading ? "Please wait…" : isRegister ? "Create account" : "Sign in"}
-            </Button>
+            <Stack direction="row" justifyContent="center" alignItems="center" spacing={0.5} sx={{ flexWrap: "wrap" }}>
+              <Typography variant="body2" color="text.secondary">
+                {isRegister ? "Already have an account?" : "New to BudgetNest?"}
+              </Typography>
+              <Button
+                type="button"
+                onClick={switchAuthMode}
+                disabled={switchingAuthMode || loading}
+                variant="text"
+                color="primary"
+                sx={{
+                  minHeight: 32,
+                  px: 0.5,
+                  fontWeight: 700,
+                  bgcolor: "transparent",
+                  "&:hover": { bgcolor: "action.hover", textDecoration: "underline" },
+                }}
+              >
+                {isRegister ? "Sign in" : "Create an account"}
+              </Button>
+            </Stack>
           </Stack>
-        </Box>
-
-        <Typography variant="body2" color="text.secondary" textAlign="center">
-          {isRegister ? "Already have an account? " : "New to BudgetNest? "}
-          <Box component={Link} href={isRegister ? "/login" : "/register"} sx={{ color: "primary.main", fontWeight: 700 }}>
-            {isRegister ? "Sign in" : "Create an account"}
-          </Box>
-        </Typography>
-      </Stack>
-    </Paper>
+        </Paper>
+      </Box>
+    </Slide>
   );
 }

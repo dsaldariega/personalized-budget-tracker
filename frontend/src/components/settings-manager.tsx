@@ -231,11 +231,11 @@ export function SettingsManager() {
   const dirty = profile.full_name !== initialProfile.full_name || profile.default_currency !== initialProfile.default_currency;
   if (requiresLogin) return (
     <Stack spacing={3}>
-      <Box><Typography variant="h4" fontWeight={800} letterSpacing={-0.8}>Settings</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>Manage your profile, preferences, and personal data.</Typography></Box>
-      <Paper variant="outlined" sx={{ p: { xs: 3, md: 5 }, borderRadius: 3, textAlign: "center" }}>
+      <Box><Typography variant="h4" fontWeight={700} letterSpacing={-0.8}>Settings</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>Manage your profile, preferences, and personal data.</Typography></Box>
+      <Paper variant="outlined" sx={{ p: { xs: 3, md: 5 }, borderRadius: 1.5, textAlign: "center" }}>
         <Stack alignItems="center" spacing={1.5} sx={{ maxWidth: 520, mx: "auto" }}>
           <Avatar sx={{ width: 56, height: 56, bgcolor: "action.hover", color: "primary.main" }}><LockOutlined /></Avatar>
-          <Typography variant="h6" fontWeight={800}>Login required</Typography>
+          <Typography variant="h6" fontWeight={700}>Login required</Typography>
           <Typography color="text.secondary">Please log in to use Profile, Data backup & transfer, and account management features. Your guest financial data can still be used while you try BudgetNest, but account settings belong to your signed-in account.</Typography>
           <Button variant="contained" onClick={() => setLoginOpen(true)}>Log in</Button>
           <AuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />
@@ -245,13 +245,13 @@ export function SettingsManager() {
   );
   return (
     <Stack spacing={3}>
-      <Box><Typography variant="h4" fontWeight={800} letterSpacing={-0.8}>Settings</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>Manage your profile, preferences, and personal data.</Typography></Box>
+      <Box><Typography variant="h4" fontWeight={700} letterSpacing={-0.8}>Settings</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>Manage your profile, preferences, and personal data.</Typography></Box>
       {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
       <SuccessToast message={notice} onClose={() => setNotice("")} />
-      {loading ? <Paper variant="outlined" sx={{ minHeight: 180, display: "grid", placeItems: "center", borderRadius: 3 }}><CircularProgress /></Paper> : (
+      {loading ? <Paper variant="outlined" sx={{ minHeight: 180, display: "grid", placeItems: "center", borderRadius: 1.5 }}><CircularProgress /></Paper> : (
         <>
-          <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>
-            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 2.5 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><PersonOutlineRounded /></Avatar><Box><Typography variant="h6" fontWeight={800}>Profile</Typography><Typography variant="body2" color="text.secondary">Your personal details used across BudgetNest.</Typography></Box></Stack>
+          <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5 }}>
+            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 2.5 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><PersonOutlineRounded /></Avatar><Box><Typography variant="h6" fontWeight={700}>Profile</Typography><Typography variant="body2" color="text.secondary">Your personal details used across BudgetNest.</Typography></Box></Stack>
             <Stack spacing={2} maxWidth={620}>
               <TextField label="Full name" value={profile.full_name ?? ""} onChange={e => setProfile(v => ({ ...v, full_name: e.target.value }))} fullWidth inputProps={{ maxLength: 100 }} />
               <TextField label="Email address" value={email} fullWidth disabled helperText="Email changes are managed through your authentication provider." />
@@ -261,8 +261,8 @@ export function SettingsManager() {
               <Box><Button variant="contained" onClick={() => void saveProfile()} disabled={!dirty || saving}>{saving ? <CircularProgress size={18} color="inherit" /> : "Save profile"}</Button></Box>
             </Stack>
           </Paper>
-          <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>
-            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 2 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><PaletteOutlined /></Avatar><Box><Typography variant="h6" fontWeight={800}>Appearance</Typography><Typography variant="body2" color="text.secondary">Choose how BudgetNest looks on this device.</Typography></Box></Stack>
+          <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5 }}>
+            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 2 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><PaletteOutlined /></Avatar><Box><Typography variant="h6" fontWeight={700}>Appearance</Typography><Typography variant="body2" color="text.secondary">Choose how BudgetNest looks on this device.</Typography></Box></Stack>
             <Stack spacing={1.5}>
               <Box>
                 <Typography fontWeight={700}>
@@ -287,7 +287,7 @@ export function SettingsManager() {
                   gap: 0.5,
                   border: 1,
                   borderColor: "divider",
-                  borderRadius: 2.5,
+                  borderRadius: 1,
                   bgcolor: "action.hover",
                   "& .MuiToggleButtonGroup-grouped": {
                     flex: 1,
@@ -327,8 +327,8 @@ export function SettingsManager() {
               </ToggleButtonGroup>
             </Stack>
           </Paper>
-          <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>
-            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 2 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><BackupOutlined /></Avatar><Box><Typography variant="h6" fontWeight={800}>Data backup & transfer</Typography><Typography variant="body2" color="text.secondary">Download a copy of your data or import transactions from a spreadsheet.</Typography></Box></Stack>
+          <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5 }}>
+            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 2 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><BackupOutlined /></Avatar><Box><Typography variant="h6" fontWeight={700}>Data backup & transfer</Typography><Typography variant="body2" color="text.secondary">Download a copy of your data or import transactions from a spreadsheet.</Typography></Box></Stack>
             <Stack spacing={2}>
               <Alert severity="info">The backup is a JSON file containing your profile and financial records. The accompanying transaction CSV can be opened and edited in Microsoft Excel or Google Sheets. It includes income and expense rows; transfers are preserved in the JSON backup and should be recreated in the app to preserve both sides.</Alert>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} flexWrap="wrap">
@@ -340,8 +340,8 @@ export function SettingsManager() {
               <Typography variant="caption" color="text.secondary">Import requirements: account_name, currency, transaction_type, amount, category, description, transaction_date. Duplicate income/expense rows are skipped. Maximum file size: 5 MB / 5,000 rows.</Typography>
             </Stack>
           </Paper>
-          <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3 }}>
-            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 2 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><SecurityOutlined /></Avatar><Box><Typography variant="h6" fontWeight={800}>Privacy & security</Typography><Typography variant="body2" color="text.secondary">Understand how your data is protected and manage your account safely.</Typography></Box></Stack>
+          <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5 }}>
+            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 2 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><SecurityOutlined /></Avatar><Box><Typography variant="h6" fontWeight={700}>Privacy & security</Typography><Typography variant="body2" color="text.secondary">Understand how your data is protected and manage your account safely.</Typography></Box></Stack>
             <Stack spacing={1.5}>
               <Stack direction="row" spacing={1.2} alignItems="flex-start"><LockOutlined color="action" /><Box><Typography fontWeight={700}>Private financial records</Typography><Typography variant="body2" color="text.secondary">Your records are protected by Supabase Row Level Security and are scoped to your signed-in account.</Typography></Box></Stack>
               <Divider />
@@ -353,8 +353,8 @@ export function SettingsManager() {
           </Paper>
         </>
       )}
-      <Dialog open={importErrorOpen} onClose={() => setImportErrorOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ fontWeight: 800 }}>Import couldn&apos;t be completed</DialogTitle>
+      <Dialog scroll="paper" open={importErrorOpen} onClose={() => setImportErrorOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 700 }}>Import couldn&apos;t be completed</DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
             {error || "Please correct the following CSV entries and try again."}
