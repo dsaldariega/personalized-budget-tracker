@@ -6,6 +6,7 @@ import {
   AccountBalanceWalletRounded,
   AutoAwesomeRounded,
   InsightsRounded,
+  ShieldRounded,
 } from "@mui/icons-material";
 import { Box, Chip, Slide, Stack, Typography } from "@mui/material";
 
@@ -40,7 +41,7 @@ export function AuthPage({
           color: "#fff",
           background: "linear-gradient(145deg, #263238 0%, #37474F 48%, #B71C1C 100%)",
           "&::before": {
-            content: '""',
+            content: '\"\"',
             position: "absolute",
             width: 520,
             height: 520,
@@ -51,7 +52,7 @@ export function AuthPage({
             boxShadow: "0 0 0 48px rgba(255,255,255,0.035), 0 0 0 100px rgba(255,255,255,0.025)",
           },
           "&::after": {
-            content: '""',
+            content: '\"\"',
             position: "absolute",
             width: 320,
             height: 320,
@@ -135,7 +136,7 @@ export function AuthPage({
           overflow: "hidden",
           bgcolor: "background.default",
           "&::before": {
-            content: '""',
+            content: '\"\"',
             position: "absolute",
             width: 360,
             height: 360,
@@ -145,7 +146,7 @@ export function AuthPage({
             bgcolor: "action.hover",
           },
           "&::after": {
-            content: '""',
+            content: '\"\"',
             position: "absolute",
             width: 280,
             height: 280,
