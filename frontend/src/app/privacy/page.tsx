@@ -12,24 +12,24 @@ const sections = [
     icon: <PersonOutlineRounded />,
     title: "Information you provide",
     paragraphs: [
-      "BudgetNest stores the profile details you provide, including your name and default currency. Your email address is handled by the sign-in service.",
-      "The app also stores the financial information you enter: account names and balances, income and expense transactions, budgets, savings goals, loan details and repayments, subscriptions and payment history, and related activity records.",
-      "If you use the feedback form, the feedback category and message are stored with your signed-in account."
+      "BudgetNest stores the profile details you provide, such as your name and default currency. Your email address is used for your account and sign-in.",
+      "The app also stores the financial information you enter, including accounts and balances, income and expenses, budgets, savings goals, loans and repayments, subscriptions and payment history, and related activity.",
+      "If you use the feedback form, the details you enter are placed into a new email addressed to the BudgetNest feedback address. BudgetNest does not send that email for you."
     ],
   },
   {
     icon: <CloudOutlined />,
     title: "How information is used",
     paragraphs: [
-      "Your information is used to provide BudgetNest features: calculate account balances and summaries, display budgets and progress, track loans and recurring commitments, maintain activity history, and support data export and transaction import.",
-      "Feedback is collected so the app maintainer can understand reported issues and suggestions and improve the product."
+      "We use your information to make BudgetNest work: show your balances and summaries, track budgets and goals, manage loans and recurring commitments, keep an activity history, and let you export or import supported data.",
+      "Feedback helps the app maintainer understand reported issues and suggestions and improve the product."
     ],
   },
   {
     icon: <StorageRounded />,
     title: "Where information is stored",
     paragraphs: [
-      "BudgetNest uses Supabase for authentication and its PostgreSQL database, and Vercel to host the web application and API. The BudgetNest Supabase project is configured in the Singapore region.",
+      "BudgetNest uses trusted online services to provide sign-in, store your information, and run the app. Your BudgetNest data is stored in a hosted database.",
       "Database access is protected with authenticated requests and Row Level Security policies that scope financial records to the signed-in account. Feedback submissions are accepted only from authenticated users and are not readable or editable through the normal user-facing database permissions."
     ],
   },
@@ -38,7 +38,7 @@ const sections = [
     title: "Sharing and financial connections",
     paragraphs: [
       "BudgetNest does not connect directly to your bank or e-wallet, fetch balances from financial institutions, initiate payments, or store bank login credentials. You enter and maintain the information yourself.",
-      "The app relies on its hosting and database providers to operate. Do not place passwords, card numbers, PINs, or other banking secrets in transaction descriptions, notes, or feedback messages."
+      "BudgetNest relies on service providers to keep the app and its data running. We do not need your bank password, card PIN, or other banking secrets. Do not put those details in transaction notes or feedback."
     ],
   },
   {
@@ -54,7 +54,7 @@ const sections = [
     title: "Retention and account deletion",
     paragraphs: [
       "Your records are retained while your BudgetNest account remains active, subject to the operation of the app and its infrastructure providers. Feedback submissions are retained in the app database for review and product improvement.",
-      "Permanent account deletion is not currently available as a self-service feature. You can use the feedback form to record a deletion request, but submitting feedback does not delete the account automatically. Export your data first. Deleting individual records in the app does not delete your authentication account."
+      "You cannot permanently delete your BudgetNest account from the app yet. You can use the feedback form to request deletion, but the request is not an automatic deletion. Export your data first. Deleting individual records in the app does not remove the account itself."
     ],
   },
 ];

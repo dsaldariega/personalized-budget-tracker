@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogTitle, DialogContent, IconButton, Typography } from "@mui/material";
+import { Dialog, DialogContent, DialogTitle, Fade, IconButton, Typography } from "@mui/material";
 import { CloseRounded } from "@mui/icons-material";
 import { AuthForm } from "@/components/auth-form";
 
@@ -12,13 +12,17 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
       fullWidth
       maxWidth="sm"
       aria-labelledby="budgetnest-login-title"
-      PaperProps={{
-        sx: {
-          width: "100%",
-          maxWidth: 480,
-          mx: { xs: 1.5, sm: 2 },
-          borderRadius: { xs: 3, sm: 4 },
-          overflow: "hidden",
+      slots={{ transition: Fade }}
+      slotProps={{
+        transition: { timeout: { enter: 220, exit: 180 } },
+        paper: {
+          sx: {
+            width: "100%",
+            maxWidth: 480,
+            mx: { xs: 1.5, sm: 2 },
+            borderRadius: { xs: 3, sm: 4 },
+            overflow: "hidden",
+          },
         },
       }}
     >
@@ -27,14 +31,14 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
           minHeight: 56,
           p: { xs: 1, sm: 1.25 },
           pb: 0,
         }}
       >
-        <Typography variant="overline" color="text.secondary" fontWeight={750} letterSpacing={1.1}>
-          SECURE SIGN IN
+        <Typography variant="body2" color="text.secondary" sx={{ mr: "auto", pl: { xs: 1, sm: 1.5 }, fontWeight: 700 }}>
+          Sign in to BudgetNest
         </Typography>
         <IconButton
           onClick={onClose}
