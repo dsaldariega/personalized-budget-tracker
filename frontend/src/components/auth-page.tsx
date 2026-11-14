@@ -6,7 +6,6 @@ import {
   AccountBalanceWalletRounded,
   AutoAwesomeRounded,
   InsightsRounded,
-  ShieldRounded,
 } from "@mui/icons-material";
 import { Box, Chip, Slide, Stack, Typography } from "@mui/material";
 
