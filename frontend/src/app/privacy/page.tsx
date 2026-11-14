@@ -21,7 +21,7 @@ const sections = [
     icon: <CloudOutlined />,
     title: "How information is used",
     paragraphs: [
-      "Your information is used to provide BudgetNest features: calculate account balances and summaries, display budgets and progress, track loans and recurring commitments, maintain activity history, and support data export and transaction import.",
+      "We use your information to make BudgetNest work: show your balances and summaries, track budgets and goals, manage loans and recurring commitments, keep an activity history, and let you export or import supported data.",
       "Feedback helps the app maintainer understand reported issues and suggestions and improve the product."
     ],
   },
@@ -29,7 +29,7 @@ const sections = [
     icon: <StorageRounded />,
     title: "Where information is stored",
     paragraphs: [
-      "BudgetNest uses Supabase for authentication and its PostgreSQL database, and Vercel to host the web application and API. The BudgetNest Supabase project is configured in the Singapore region.",
+      "BudgetNest uses trusted online services to provide sign-in, store your information, and run the app. Your BudgetNest data is stored in a hosted database.",
       "Database access is protected with authenticated requests and Row Level Security policies that scope financial records to the signed-in account. Feedback submissions are accepted only from authenticated users and are not readable or editable through the normal user-facing database permissions."
     ],
   },
@@ -38,7 +38,7 @@ const sections = [
     title: "Sharing and financial connections",
     paragraphs: [
       "BudgetNest does not connect directly to your bank or e-wallet, fetch balances from financial institutions, initiate payments, or store bank login credentials. You enter and maintain the information yourself.",
-      "The app relies on its hosting and database providers to operate. Do not place passwords, card numbers, PINs, or other banking secrets in transaction descriptions, notes, or feedback messages."
+      "BudgetNest relies on service providers to keep the app and its data running. We do not need your bank password, card PIN, or other banking secrets. Do not put those details in transaction notes or feedback."
     ],
   },
   {
