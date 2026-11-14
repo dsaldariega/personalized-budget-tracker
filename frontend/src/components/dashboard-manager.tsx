@@ -372,20 +372,19 @@ export function DashboardManager() {
 
   const loadData = useCallback(async () => {
     const requestId = ++loadRequestId.current;
-    if (!supabase) {
-      setError(
-        "Supabase is not configured. Check your frontend environment variables.",
-      );
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     setError("");
-    // Read the local session without requiring a network user verification for guests.
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const user = session?.user ?? null;
+
+    // Supabase is only needed for authenticated/cloud data. Guests use the
+    // local guest store through apiRequest and should never be blocked by
+    // missing authentication configuration.
+    let user: { id: string } | null = null;
+    if (supabase) {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      user = session?.user ?? null;
+    }
     if (!user) {
       try {
         const [
