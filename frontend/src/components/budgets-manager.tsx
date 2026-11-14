@@ -271,10 +271,10 @@ export function BudgetsManager() {
       </Box>
       <Stack direction={{ xs: "column", md: "row" }} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between" spacing={1.5}>
         <Box><Typography variant="h6" fontWeight={700}>Your budgets</Typography><Typography variant="body2" color="text.secondary">{filtered.length} {filtered.length === 1 ? "budget" : "budgets"}</Typography></Box>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", md: "auto" }, "& > *": { minWidth: { xs: "100%", sm: 135 } } }}>
-          <TextField size="small" placeholder="Search budgets" value={search} onChange={e => setSearch(e.target.value)} InputProps={{ startAdornment: <SearchRounded fontSize="small" sx={{ mr: 1, color: "text.secondary" }} /> }} />
-          <TextField select size="small" label="Account" value={accountFilter} onChange={e => setAccountFilter(e.target.value)} sx={{ minWidth: { xs: "100%", sm: 150 } }}><MenuItem value="all">All accounts</MenuItem>{accounts.map(a => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}</TextField>
-          <TextField select size="small" label="Period" value={periodFilter} onChange={e => setPeriodFilter(e.target.value)} sx={{ minWidth: { xs: "100%", sm: 135 } }}><MenuItem value="all">All periods</MenuItem>{(["weekly","monthly","yearly","custom"] as Period[]).map(p => <MenuItem key={p} value={p}>{periodLabel(p)}</MenuItem>)}</TextField>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ xs: "stretch", sm: "center" }} sx={{ width: { xs: "100%", md: "auto" }, "& > .MuiFormControl-root, & > .MuiTextField-root": { width: { xs: "100%", sm: "auto" }, minWidth: { sm: 135 } } }}>
+          <TextField size="small" placeholder="Search budgets" sx={{ minWidth: { sm: 220 } }} value={search} onChange={e => setSearch(e.target.value)} InputProps={{ startAdornment: <SearchRounded fontSize="small" sx={{ mr: 1, color: "text.secondary" }} /> }} />
+          <TextField select size="small" label="Account" value={accountFilter} onChange={e => setAccountFilter(e.target.value)} sx={{ minWidth: { sm: 150 } }}><MenuItem value="all">All accounts</MenuItem>{accounts.map(a => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}</TextField>
+          <TextField select size="small" label="Period" value={periodFilter} onChange={e => setPeriodFilter(e.target.value)} sx={{ minWidth: { sm: 135 } }}><MenuItem value="all">All periods</MenuItem>{(["weekly","monthly","yearly","custom"] as Period[]).map(p => <MenuItem key={p} value={p}>{periodLabel(p)}</MenuItem>)}</TextField>
           <Tooltip title="Refresh"><IconButton onClick={() => void loadData()} disabled={loading}><RefreshRounded /></IconButton></Tooltip>
         </Stack>
       </Stack>

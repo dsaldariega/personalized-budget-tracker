@@ -260,13 +260,15 @@ export function TransactionsManager() {
       </Box>}
       <Stack direction={{ xs: "column", md: "row" }} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between" spacing={1.5}>
         <Box><Typography variant="h6" fontWeight={700}>Transaction history</Typography><Typography variant="body2" color="text.secondary">{filtered.length} records</Typography></Box>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="center">
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ xs: "stretch", sm: "center" }} sx={{ width: { xs: "100%", md: "auto" }, "& > .MuiFormControl-root, & > .MuiTextField-root": { width: { xs: "100%", sm: "auto" }, minWidth: { sm: 135 } } }}>
           <TextField size="small" placeholder="Search transactions" value={search} onChange={(e) => setSearch(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> }} sx={{ minWidth: { sm: 220 } }} />
-          <TextField select size="small" label="Type" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} sx={{ minWidth: 125 }}><MenuItem value="all">All types</MenuItem><MenuItem value="income">Income</MenuItem><MenuItem value="expense">Expense</MenuItem><MenuItem value="transfer">Transfer</MenuItem></TextField>
-          <TextField select size="small" label="Account" value={accountFilter} onChange={(e) => setAccountFilter(e.target.value)} sx={{ minWidth: 150 }}><MenuItem value="all">All accounts</MenuItem>{accounts.map((a) => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}</TextField>
-          <TextField select size="small" label="Month" value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)} sx={{ minWidth: 145 }}><MenuItem value="all">All time</MenuItem>{months.map((m) => <MenuItem key={m} value={m}>{monthsLabel(m)}</MenuItem>)}</TextField>
-          <Tooltip title="Clear filters"><IconButton onClick={() => { setSearch(""); setTypeFilter("all"); setAccountFilter("all"); setMonthFilter("all"); }}><FilterAltOffRounded /></IconButton></Tooltip>
-          <Tooltip title="Refresh"><IconButton onClick={() => void loadData()} disabled={loading}><RefreshRounded /></IconButton></Tooltip>
+          <TextField select size="small" label="Type" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} sx={{ minWidth: { sm: 125 } }}><MenuItem value="all">All types</MenuItem><MenuItem value="income">Income</MenuItem><MenuItem value="expense">Expense</MenuItem><MenuItem value="transfer">Transfer</MenuItem></TextField>
+          <TextField select size="small" label="Account" value={accountFilter} onChange={(e) => setAccountFilter(e.target.value)} sx={{ minWidth: { sm: 150 } }}><MenuItem value="all">All accounts</MenuItem>{accounts.map((a) => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}</TextField>
+          <TextField select size="small" label="Month" value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)} sx={{ minWidth: { sm: 145 } }}><MenuItem value="all">All time</MenuItem>{months.map((m) => <MenuItem key={m} value={m}>{monthsLabel(m)}</MenuItem>)}</TextField>
+          <Stack direction="row" spacing={0.5} justifyContent={{ xs: "flex-end", sm: "flex-start" }} sx={{ alignSelf: { xs: "flex-end", sm: "center" } }}>
+            <Tooltip title="Clear filters"><IconButton onClick={() => { setSearch(""); setTypeFilter("all"); setAccountFilter("all"); setMonthFilter("all"); }}><FilterAltOffRounded /></IconButton></Tooltip>
+            <Tooltip title="Refresh"><IconButton onClick={() => void loadData()} disabled={loading}><RefreshRounded /></IconButton></Tooltip>
+          </Stack>
         </Stack>
       </Stack>
       {loading ? <Paper sx={{ minHeight: 220, display: "grid", placeItems: "center", borderRadius: 1.5 }}><CircularProgress size={28} /></Paper> : filtered.length === 0 ? (
