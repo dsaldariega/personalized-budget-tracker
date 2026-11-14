@@ -6,14 +6,28 @@ The goal is deliberately simple: **give users a clear picture of where their mon
 
 ## Current status
 
-🚧 **Early development**
+🚧 **Active development**
 
-The repository is being developed on the `dev` branch. `main` is kept as the stable branch.
+BudgetNest is under active development. Feature work and verification happen on the `dev` branch; `main` is reserved for reviewed, production-ready releases. Some integrations and production-hardening tasks remain in progress.
+
+## Recent UI/UX improvements
+
+The current development branch includes a system-wide interface refinement guided by Material UI patterns and a customized red/rose primary theme.
+
+- Consistent typography, spacing, surfaces, borders, and component styling across application sections.
+- Refined authentication and registration dialogs, including responsive layouts and clearer navigation between the app and authentication screens.
+- Improved application shell proportions, including sidebar/header alignment and workspace width.
+- More consistent page layouts and filter toolbars across Transactions, Budgets, and Loans.
+- Improved mobile layouts for dashboard transaction rows, budget cards/details, and filter controls.
+- Updated wallet branding and app icon.
+- Refined About and Privacy content, plus visual consistency across Accounts, Activity, Goals, Settings, and Subscriptions.
+
+Responsive layout work is being checked against a 393 × 852 CSS-pixel viewport (iPhone 16 reference size). This describes the intended layout target; it does not replace device/browser acceptance testing.
 
 ## Product scope
 
 - 🔐 Email/password authentication
-- 🔵 Google sign-in
+- 🔵 Google sign-in (OAuth; provider credentials and redirect configuration required)
 - 📊 Personal finance dashboard
 - 🏦 Financial accounts
 - 💸 Transactions and spending history
@@ -258,13 +272,12 @@ The About page now includes a product overview, feature guide, four-step getting
 - [ ] Secure server-side account deletion workflow
 
 ### Phase 10 — Production hardening
-- [ ] Validation
-- [ ] Error handling
-- [ ] Loading/empty states
-- [ ] Accessibility
-- [ ] Mobile polish
-- [ ] Security review
-- [ ] Production deployment
+- [x] Baseline responsive layouts for desktop and mobile
+- [x] Consistent loading, empty, and feedback patterns across implemented screens
+- [ ] Complete accessibility review
+- [ ] Cross-browser and real-device acceptance testing
+- [ ] Final security review
+- [ ] Production deployment and post-deployment verification
 
 ## Local development
 
@@ -325,7 +338,7 @@ Loans are linked to one account and store the original principal, monthly intere
 
 Subscriptions are linked to one account and store the service name, recurring amount, billing frequency (weekly, monthly, quarterly, or yearly), next billing date, category, notes, and active/inactive status. The page estimates monthly recurring costs, highlights due-soon and overdue services, and lets users record payments with a billing date, paid date, amount, and optional notes. Recording a payment advances the next billing date by one frequency interval. Payment history is stored separately in the owner-scoped `subscription_payments` table; it does not create a transaction or change the linked account balance. Deleting a subscription also deletes its payment history.
 
-The Activity Log reads the owner-scoped `activity_logs` table and provides a searchable timeline with activity-type and date filters. Settings allow users to update their profile name and default currency, and store the selected light/dark theme in browser-local storage. The data export downloads a complete JSON backup of the user's BudgetNest tables plus an Excel-compatible CSV of transactions. CSV import currently supports income and expense transactions; the importer validates account name/currency, dates, amounts, and categories, skips exact duplicates, and intentionally excludes transfers so paired transfer records cannot become unbalanced. Account deletion is not offered as a client-side action; it requires a trusted server-side workflow to remove the Supabase Auth identity and related data safely.
+The Activity Log reads the owner-scoped `activity_logs` table and provides a searchable timeline with activity-type and date filters. Settings allow users to update their profile name and default currency. The selected light/dark theme is persisted in a server-readable cookie. The data export downloads a complete JSON backup of the user's BudgetNest tables plus an Excel-compatible CSV of transactions. CSV import currently supports income and expense transactions; the importer validates account name/currency, dates, amounts, and categories, skips exact duplicates, and intentionally excludes transfers so paired transfer records cannot become unbalanced. Account deletion is not offered as a client-side action; it requires a trusted server-side workflow to remove the Supabase Auth identity and related data safely.
 
 Savings goals are linked to one account and track a target amount, current saved amount, optional target date, and active/paused/completed status. Progress is maintained as a goal value and does not automatically create transactions or change the linked account balance. The existing `savings_goals` table and owner-scoped RLS policy are used; no additional database migration is required.
 
@@ -459,7 +472,7 @@ The UI should prioritize:
 - consistent terminology
 - fast everyday workflows
 
-The application opens in light mode by default, offers a vibrant multi-accent palette (violet, teal, coral, amber, and blue), and retains an optional dark mode. The selected appearance is stored in browser-local storage and shared by the root-level theme provider so it remains consistent while navigating between pages.
+The application uses a customized red/rose primary palette with supporting semantic colors and retains an optional dark mode. The selected appearance is persisted in the server-readable `budgetnest-theme` cookie so the root layout can apply the preference on the initial page render and keep it consistent during navigation and refreshes.
 
 ## Security principles
 
@@ -481,4 +494,4 @@ The implementation is AI-assisted, but the product decisions, UX, architecture, 
 
 **Project:** BudgetNest  
 **Repository:** dsaldariega/personalized-budget-tracker  
-**Status:** Early development
+**Status:** Active development
