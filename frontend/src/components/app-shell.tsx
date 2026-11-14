@@ -160,8 +160,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const sidebar = (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "background.paper" }}>
-      <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 1.5 }} sx={{ px: { xs: 1.5, sm: 2.5 }, height: 68, minWidth: 0 }}>
-        <Box sx={{ width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 }, flexShrink: 0, borderRadius: 2.7, display: "grid", placeItems: "center", background: "linear-gradient(145deg, #EF5350 0%, #D32F2F 58%, #B71C1C 100%)", color: "primary.contrastText", fontWeight: 800, fontSize: { xs: 18, sm: 20 }, boxShadow: "0 3px 10px rgba(211,47,47,0.16)" }}><AccountBalanceWalletRounded sx={{ fontSize: { xs: 21, sm: 23 } }} /></Box>
+      <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 1.5 }} sx={{ px: { xs: 1.5, sm: 2.5 }, height: 68, minHeight: 68, boxSizing: "border-box", minWidth: 0, borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 }, flexShrink: 0, borderRadius: 1.5, display: "grid", placeItems: "center", background: "linear-gradient(145deg, #EF5350 0%, #D32F2F 58%, #B71C1C 100%)", color: "primary.contrastText", fontWeight: 700, fontSize: { xs: 18, sm: 20 }, boxShadow: "0 3px 10px rgba(211,47,47,0.16)" }}><AccountBalanceWalletRounded sx={{ fontSize: { xs: 21, sm: 23 } }} /></Box>
         <Box sx={{ minWidth: 0, flexShrink: 0 }}>
           <Typography sx={{ fontSize: { xs: 16.5, sm: 18 }, fontWeight: 700, letterSpacing: "-0.035em", lineHeight: 1.15, whiteSpace: "nowrap" }}>BudgetNest</Typography>
           <Typography sx={{ display: "block", mt: 0.2, fontSize: { xs: 9, sm: 9.5 }, fontWeight: 550, letterSpacing: "0.105em", lineHeight: 1.3, color: "text.secondary", whiteSpace: "nowrap" }}>PERSONAL FINANCE</Typography>
@@ -169,11 +169,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {!isDesktop && <Box sx={{ flexGrow: 1, minWidth: 0 }} />}
         {!isDesktop && <IconButton size="small" onClick={() => setMobileOpen(false)} aria-label="Close navigation" sx={{ flexShrink: 0, width: 34, height: 34, "& .MuiSvgIcon-root": { fontSize: 20 } }}><CloseRounded /></IconButton>}
       </Stack>
-      <Divider />
       <Box sx={{ px: 1.5, py: 2, flexGrow: 1, overflowY: "auto" }}>
         {navGroups.map((group) => (
           <Box key={group.label} sx={{ mb: 2.2 }}>
-            <Typography sx={{ px: 1.5, mb: 0.8, fontSize: 11, fontWeight: 650, letterSpacing: 1.1, color: "text.secondary" }}>{group.label}</Typography>
+            <Typography sx={{ px: 1.5, mb: 0.8, fontSize: 11, fontWeight: 600, letterSpacing: 1.1, color: "text.secondary" }}>{group.label}</Typography>
             <List disablePadding>
               {group.items.map((item) => {
                 const selected = pathname === item.href;
@@ -185,9 +184,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     selected={selected}
                     onClick={() => setMobileOpen(false)}
                     sx={{
-                      minHeight: 46, px: 1.5, mb: 0.45, borderRadius: 2.5, position: "relative", overflow: "hidden",
+                      minHeight: 46, px: 1.5, mb: 0.45, borderRadius: 1, position: "relative", overflow: "hidden",
                       color: selected ? "primary.main" : "text.secondary",
-                      "&.Mui-selected": { bgcolor: "action.selected", color: "primary.main", "&::before": { content: '""', position: "absolute", left: 0, top: 8, bottom: 8, width: 3, borderRadius: 4, bgcolor: "primary.main" } },
+                      "&.Mui-selected": { bgcolor: "action.selected", color: "primary.main", "&::before": { content: '""', position: "absolute", left: 0, top: 8, bottom: 8, width: 3, borderRadius: 1.5, bgcolor: "primary.main" } },
                       "&.Mui-selected:hover": { bgcolor: "action.selected" },
                       "&:hover": { bgcolor: "action.hover" }
                     }}
@@ -203,8 +202,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ))}
       </Box>
       <Box sx={{ p: 2 }}>
-        <Box sx={{ p: 1.7, borderRadius: 3, bgcolor: "action.hover" }}>
-          <Typography variant="caption" fontWeight={750}>A little progress adds up.</Typography>
+        <Box sx={{ p: 1.7, borderRadius: 1.5, bgcolor: "action.hover" }}>
+          <Typography variant="caption" fontWeight={600}>A little progress adds up.</Typography>
           <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5, lineHeight: 1.5 }}>
             Build a clearer picture of your money, one entry at a time.
           </Typography>
@@ -232,7 +231,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Toolbar sx={{ minHeight: { xs: "60px !important", sm: "68px !important" }, px: { xs: 1.25, sm: 2, md: 3 }, gap: { xs: 0.25, sm: 0.75 } }}>
             <IconButton onClick={() => setMobileOpen(true)} sx={{ display: { lg: "none" }, mr: 1 }} aria-label="Open navigation"><MenuRounded /></IconButton>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography fontWeight={750} sx={{ fontSize: { xs: 14, sm: 16 }, lineHeight: 1.25 }}>{pageTitle}</Typography>
+              <Typography fontWeight={600} sx={{ fontSize: { xs: 14, sm: 16 }, lineHeight: 1.25 }}>{pageTitle}</Typography>
             </Box>
             <ToggleButtonGroup
               exclusive
@@ -248,7 +247,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 gap: 0.25,
                 border: 1,
                 borderColor: "divider",
-                borderRadius: 2.5,
+                borderRadius: 1,
                 bgcolor: "action.hover",
                 "& .MuiToggleButtonGroup-grouped": { border: 0, borderRadius: "8px !important", mx: 0, px: { xs: 0.65, sm: 0.9 }, py: 0.55, color: "text.secondary" },
                 "& .Mui-selected": { bgcolor: "background.paper !important", color: "primary.main", boxShadow: 1 },
@@ -265,7 +264,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </Badge>
               </IconButton>
             </Tooltip>
-            <Button onClick={(event) => setAccountMenu(event.currentTarget)} color="inherit" sx={{ minWidth: 0, px: { xs: 0.75, sm: 1 }, py: 0.5, textTransform: "none", borderRadius: 2.5, "&:hover": { bgcolor: "action.hover" } }}>
+            <Button onClick={(event) => setAccountMenu(event.currentTarget)} color="inherit" sx={{ minWidth: 0, px: { xs: 0.75, sm: 1 }, py: 0.5, textTransform: "none", borderRadius: 1, "&:hover": { bgcolor: "action.hover" } }}>
               <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main", fontSize: 13, mr: 1 }}>{user?.email?.[0]?.toUpperCase() ?? "G"}</Avatar>
               <Box sx={{ display: { xs: "none", sm: "block" }, textAlign: "left", mr: 0.5 }}>
                 <Typography variant="body2" fontWeight={700} lineHeight={1.2}>{user?.user_metadata?.full_name ?? (user?.email ? user.email.split("@")[0] : "Guest")}</Typography>
@@ -282,11 +281,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   sx: {
                     mt: 0.75,
                     minWidth: 210,
-                    borderRadius: 2.5,
+                    borderRadius: 1,
                     border: 1,
                     borderColor: "divider",
-                    boxShadow: 4,
-                    p: 0.5,
+                    boxShadow: 3,
+                    p: 0.25,
                   },
                 },
               }}
@@ -294,7 +293,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {user ? (
                 <MenuItem
                   onClick={handleSignOut}
-                  sx={{ gap: 1, borderRadius: 1.5, py: 1, fontSize: 13.5, fontWeight: 600 }}
+                  sx={{ gap: 1, borderRadius: 0.75, py: 0.75, px: 1, fontWeight: 500 }}
                 >
                   <LogoutRounded fontSize="small" sx={{ color: "text.secondary" }} />
                   Sign out
@@ -302,7 +301,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               ) : (
                 <MenuItem
                   onClick={() => { setAccountMenu(null); setLoginOpen(true); }}
-                  sx={{ gap: 1, borderRadius: 1.5, py: 1, fontSize: 13.5, fontWeight: 600 }}
+                  sx={{ gap: 1, borderRadius: 0.75, py: 0.75, px: 1, fontWeight: 500 }}
                 >
                   <AccountCircleOutlined fontSize="small" sx={{ color: "text.secondary" }} />
                   Sign in / Create account
@@ -312,19 +311,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           </Toolbar>
         </AppBar>
-        <Dialog
+        <Dialog scroll="paper"
           open={isSigningOut}
           disableEscapeKeyDown
           onClose={() => undefined}
           maxWidth="xs"
           fullWidth
-          PaperProps={{ sx: { borderRadius: 4, mx: 2 } }}
+          PaperProps={{ sx: { borderRadius: 1.5, mx: 2 } }}
         >
           <DialogContent sx={{ py: 4, px: 3 }}>
             <Stack alignItems="center" spacing={2}>
               <CircularProgress size={30} />
               <Box sx={{ textAlign: "center" }}>
-                <Typography fontWeight={800}>Signing you out</Typography>
+                <Typography fontWeight={700}>Signing you out</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                   Just a moment while we safely end your session…
                 </Typography>
@@ -332,7 +331,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Stack>
           </DialogContent>
         </Dialog>
-        <Dialog
+        <Dialog scroll="paper"
           open={welcomeOpen}
           onClose={() => {
             window.sessionStorage.setItem("budgetnest-welcome-dismissed", "1");
@@ -340,15 +339,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           }}
           fullWidth
           maxWidth="sm"
-          PaperProps={{ sx: { borderRadius: 4, overflow: "hidden", mx: { xs: 1.5, sm: 2 } } }}
+          PaperProps={{ sx: { borderRadius: 1.5, overflow: "hidden", mx: { xs: 1.5, sm: 2 } } }}
         >
           <DialogContent sx={{ p: { xs: 3.5, sm: 5 } }}>
             <Stack spacing={2.2}>
               <Box>
-                <Typography sx={{ color: "primary.main", fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase" }}>
+                <Typography sx={{ color: "primary.main", fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>
                   {welcomeMode === "signed-out" ? "You’re signed out" : "Welcome to BudgetNest"}
                 </Typography>
-                <Typography variant="h4" fontWeight={800} letterSpacing={-0.8} sx={{ mt: 0.8, fontSize: { xs: "1.75rem", sm: "2.125rem" } }}>
+                <Typography variant="h4" fontWeight={700} letterSpacing={-0.8} sx={{ mt: 0.8, fontSize: { xs: "1.75rem", sm: "2.125rem" } }}>
                   {welcomeMode === "signed-out" ? "Thanks for stopping by." : "A calmer place for your money."}
                 </Typography>
                 <Typography color="text.secondary" sx={{ mt: 1, lineHeight: 1.7 }}>
@@ -365,7 +364,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     setWelcomeOpen(false);
                     setLoginOpen(true);
                   }}
-                  sx={{ borderRadius: 2.5, py: 1.15, textTransform: "none", fontWeight: 750 }}
+                  sx={{ borderRadius: 1, py: 1.15, textTransform: "none", fontWeight: 600 }}
                 >
                   {welcomeMode === "signed-out" ? "Sign in again" : "Sign in / Create account"}
                 </Button>
@@ -376,7 +375,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     window.sessionStorage.setItem("budgetnest-welcome-dismissed", "1");
                     setWelcomeOpen(false);
                   }}
-                  sx={{ borderRadius: 2.5, py: 1.15, textTransform: "none", fontWeight: 700 }}
+                  sx={{ borderRadius: 1, py: 1.15, textTransform: "none", fontWeight: 700 }}
                 >
                   Continue as guest
                 </Button>
@@ -394,11 +393,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           onClose={() => setNotificationAnchor(null)}
           anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
           transformOrigin={{ vertical: "top", horizontal: "right" }}
-          slotProps={{ paper: { sx: { mt: 1, width: { xs: "calc(100vw - 32px)", sm: 390 }, maxWidth: 390, borderRadius: 3, overflow: "hidden" } } }}
+          slotProps={{ paper: { sx: { mt: 1, width: { xs: "calc(100vw - 32px)", sm: 390 }, maxWidth: 390, borderRadius: 1.5, overflow: "hidden" } } }}
         >
           <Box sx={{ px: 2, py: 1.7, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <Box>
-              <Typography fontWeight={800}>Notifications</Typography>
+              <Typography fontWeight={700}>Notifications</Typography>
               <Typography variant="caption" color="text.secondary">
                 {visibleNotifications.length ? `${visibleNotifications.length} active alert${visibleNotifications.length === 1 ? "" : "s"}` : "You're all caught up"}
               </Typography>
@@ -428,7 +427,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   <Stack direction="row" alignItems="center" spacing={0.8} sx={{ mb: 0.45 }}>
                     <Box sx={{ width: 7, height: 7, flexShrink: 0, borderRadius: "50%", bgcolor: item.severity === "error" ? "error.main" : item.severity === "warning" ? "warning.main" : item.severity === "success" ? "success.main" : "info.main" }} />
-                    <Typography variant="body2" fontWeight={750}>{item.title}</Typography>
+                    <Typography variant="body2" fontWeight={600}>{item.title}</Typography>
                   </Stack>
                   <Typography variant="caption" color="text.secondary" sx={{ display: "block", lineHeight: 1.5, pl: 1.7 }}>{item.message}</Typography>
                   <Typography variant="caption" color="primary.main" fontWeight={700} sx={{ display: "block", pl: 1.7, mt: 0.7 }}>View details</Typography>

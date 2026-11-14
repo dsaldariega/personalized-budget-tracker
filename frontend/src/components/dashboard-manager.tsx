@@ -203,7 +203,7 @@ function SectionTitle({
       justifyContent="space-between"
       sx={{ mb: 2 }}
     >
-      <Typography fontWeight={800} fontSize={16}>
+      <Typography fontWeight={700} fontSize={16}>
         {title}
       </Typography>
       <Button
@@ -372,20 +372,19 @@ export function DashboardManager() {
 
   const loadData = useCallback(async () => {
     const requestId = ++loadRequestId.current;
-    if (!supabase) {
-      setError(
-        "Supabase is not configured. Check your frontend environment variables.",
-      );
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     setError("");
-    // Read the local session without requiring a network user verification for guests.
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const user = session?.user ?? null;
+
+    // Supabase is only needed for authenticated/cloud data. Guests use the
+    // local guest store through apiRequest and should never be blocked by
+    // missing authentication configuration.
+    let user: { id: string } | null = null;
+    if (supabase) {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      user = session?.user ?? null;
+    }
     if (!user) {
       try {
         const [
@@ -737,7 +736,7 @@ export function DashboardManager() {
           position: "relative",
           overflow: "hidden",
           p: { xs: 2.2, sm: 2.8, md: 3.2 },
-          borderRadius: 4,
+          borderRadius: 1.5,
           border: 1,
           borderColor: "divider",
           background: (theme) =>
@@ -770,7 +769,7 @@ export function DashboardManager() {
               sx={{
                 color: "primary.main",
                 fontSize: 10.5,
-                fontWeight: 850,
+                fontWeight: 700,
                 letterSpacing: 1.5,
                 textTransform: "uppercase",
                 mb: 0.8,
@@ -778,7 +777,7 @@ export function DashboardManager() {
             >
               Your financial overview
             </Typography>
-            <Typography variant="h4" fontWeight={850} letterSpacing={-1}>
+            <Typography variant="h4" fontWeight={700} letterSpacing={-1}>
               Your money at a glance.
             </Typography>
             <Typography color="text.secondary" sx={{ mt: 0.7, maxWidth: 560 }}>
@@ -863,7 +862,7 @@ export function DashboardManager() {
             minHeight: 360,
             display: "grid",
             placeItems: "center",
-            borderRadius: 3,
+            borderRadius: 1.5,
           }}
         >
           <CircularProgress />
@@ -882,7 +881,7 @@ export function DashboardManager() {
                     <Typography
                       variant="body2"
                       color="text.secondary"
-                      fontWeight={650}
+                      fontWeight={600}
                     >
                       Current balance
                     </Typography>
@@ -901,14 +900,14 @@ export function DashboardManager() {
                       <Typography
                         key={item.currency}
                         variant="h5"
-                        fontWeight={850}
+                        fontWeight={700}
                         sx={{ mt: 1.7 }}
                       >
                         {money(item.total, item.currency)}
                       </Typography>
                     ))
                   ) : (
-                    <Typography variant="h5" fontWeight={850} sx={{ mt: 1.7 }}>
+                    <Typography variant="h5" fontWeight={700} sx={{ mt: 1.7 }}>
                       {money(0, defaultCurrency)}
                     </Typography>
                   )}
@@ -931,7 +930,7 @@ export function DashboardManager() {
                     <Typography
                       variant="body2"
                       color="text.secondary"
-                      fontWeight={650}
+                      fontWeight={600}
                     >
                       Income
                     </Typography>
@@ -948,7 +947,7 @@ export function DashboardManager() {
                         <Typography
                           key={item.currency}
                           variant="h6"
-                          fontWeight={850}
+                          fontWeight={700}
                           sx={{ mt: 1 }}
                         >
                           {money(item.amount, item.currency)}
@@ -957,14 +956,14 @@ export function DashboardManager() {
                     ) : (
                       <Typography
                         variant="h5"
-                        fontWeight={850}
+                        fontWeight={700}
                         sx={{ mt: 1.7 }}
                       >
                         —
                       </Typography>
                     )
                   ) : (
-                    <Typography variant="h5" fontWeight={850} sx={{ mt: 1.7 }}>
+                    <Typography variant="h5" fontWeight={700} sx={{ mt: 1.7 }}>
                       {money(
                         income,
                         selectedCurrency === "all"
@@ -996,7 +995,7 @@ export function DashboardManager() {
                     <Typography
                       variant="body2"
                       color="text.secondary"
-                      fontWeight={650}
+                      fontWeight={600}
                     >
                       Expenses
                     </Typography>
@@ -1016,7 +1015,7 @@ export function DashboardManager() {
                         <Typography
                           key={item.currency}
                           variant="h6"
-                          fontWeight={850}
+                          fontWeight={700}
                           sx={{ mt: 1 }}
                         >
                           {money(item.amount, item.currency)}
@@ -1025,14 +1024,14 @@ export function DashboardManager() {
                     ) : (
                       <Typography
                         variant="h5"
-                        fontWeight={850}
+                        fontWeight={700}
                         sx={{ mt: 1.7 }}
                       >
                         —
                       </Typography>
                     )
                   ) : (
-                    <Typography variant="h5" fontWeight={850} sx={{ mt: 1.7 }}>
+                    <Typography variant="h5" fontWeight={700} sx={{ mt: 1.7 }}>
                       {money(
                         expenses,
                         selectedCurrency === "all"
@@ -1064,7 +1063,7 @@ export function DashboardManager() {
                     <Typography
                       variant="body2"
                       color="text.secondary"
-                      fontWeight={650}
+                      fontWeight={600}
                     >
                       Active savings goals
                     </Typography>
@@ -1075,7 +1074,7 @@ export function DashboardManager() {
                       <SavingsOutlined />
                     </Avatar>
                   </Stack>
-                  <Typography variant="h5" fontWeight={850} sx={{ mt: 1.7 }}>
+                  <Typography variant="h5" fontWeight={700} sx={{ mt: 1.7 }}>
                     {activeGoals.length}
                   </Typography>
                   {selectedCurrency === "all" && currencies.length > 1 ? (
@@ -1123,7 +1122,7 @@ export function DashboardManager() {
             <Grid size={{ xs: 12, lg: 8 }}>
               <Paper
                 variant="outlined"
-                sx={{ p: { xs: 2, md: 2.8 }, height: "100%", borderRadius: 3 }}
+                sx={{ p: { xs: 2, md: 2.8 }, height: "100%", borderRadius: 1.5 }}
               >
                 <Stack
                   direction="row"
@@ -1133,7 +1132,7 @@ export function DashboardManager() {
                   sx={{ mb: 1 }}
                 >
                   <Box>
-                    <Typography fontWeight={800} fontSize={16}>
+                    <Typography fontWeight={700} fontSize={16}>
                       Cash flow
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -1169,7 +1168,7 @@ export function DashboardManager() {
             <Grid size={{ xs: 12, lg: 4 }}>
               <Paper
                 variant="outlined"
-                sx={{ p: { xs: 2, md: 2.8 }, height: "100%", borderRadius: 3 }}
+                sx={{ p: { xs: 2, md: 2.8 }, height: "100%", borderRadius: 1.5 }}
               >
                 <SectionTitle
                   title="Spending by category"
@@ -1186,10 +1185,10 @@ export function DashboardManager() {
                           spacing={1}
                           sx={{ mb: 0.6 }}
                         >
-                          <Typography variant="body2" fontWeight={650} noWrap>
+                          <Typography variant="body2" fontWeight={600} noWrap>
                             {row.name}
                           </Typography>
-                          <Typography variant="body2" fontWeight={750}>
+                          <Typography variant="body2" fontWeight={600}>
                             {money(row.amount, row.currency)}
                           </Typography>
                         </Stack>
@@ -1226,7 +1225,7 @@ export function DashboardManager() {
             <Grid size={{ xs: 12, lg: 7 }}>
               <Paper
                 variant="outlined"
-                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 3 }}
+                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
               >
                 <SectionTitle title="Budget progress" href="/budgets" />
                 {budgetRows.length ? (
@@ -1245,7 +1244,7 @@ export function DashboardManager() {
                             spacing={1}
                           >
                             <Box sx={{ minWidth: 0 }}>
-                              <Typography fontWeight={750} noWrap>
+                              <Typography fontWeight={600} noWrap>
                                 {budget.name}
                               </Typography>
                               <Typography
@@ -1327,7 +1326,7 @@ export function DashboardManager() {
             <Grid size={{ xs: 12, lg: 5 }}>
               <Paper
                 variant="outlined"
-                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 3 }}
+                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
               >
                 <SectionTitle
                   title="Upcoming subscriptions"
@@ -1384,7 +1383,7 @@ export function DashboardManager() {
                                   : `Due ${shortDate(subscription.next_billing_date)}`}
                             </Typography>
                           </Box>
-                          <Typography fontWeight={750} variant="body2">
+                          <Typography fontWeight={600} variant="body2">
                             {money(
                               Number(subscription.amount),
                               accountMap.get(subscription.account_id)
@@ -1415,7 +1414,7 @@ export function DashboardManager() {
             <Grid size={{ xs: 12, lg: 5 }}>
               <Paper
                 variant="outlined"
-                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 3 }}
+                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
               >
                 <SectionTitle title="Savings goals" href="/goals" />
                 {activeGoals.length ? (
@@ -1442,7 +1441,7 @@ export function DashboardManager() {
                             <Typography fontWeight={700} noWrap>
                               {goal.name}
                             </Typography>
-                            <Typography variant="caption" fontWeight={750}>
+                            <Typography variant="caption" fontWeight={600}>
                               {percent.toFixed(0)}%
                             </Typography>
                           </Stack>
@@ -1478,7 +1477,7 @@ export function DashboardManager() {
             <Grid size={{ xs: 12, lg: 7 }}>
               <Paper
                 variant="outlined"
-                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 3 }}
+                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
               >
                 <SectionTitle
                   title="Recent transactions"
@@ -1539,7 +1538,7 @@ export function DashboardManager() {
                             </Typography>
                           </Box>
                           <Typography
-                            fontWeight={800}
+                            fontWeight={700}
                             color={
                               isIncome
                                 ? "success.main"

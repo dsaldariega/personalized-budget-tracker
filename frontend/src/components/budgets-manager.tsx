@@ -107,9 +107,9 @@ function BudgetDialog({
     onSave({ ...form, name: form.name.trim(), amount: String(amount) });
   }
   return (
-    <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
-      <Box component="form" onSubmit={submit}>
-        <DialogTitle sx={{ fontWeight: 800 }}>{initial.name ? "Edit budget" : "Create a budget"}</DialogTitle>
+    <Dialog scroll="paper" open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
+      <Box component="form" onSubmit={submit} sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+        <DialogTitle sx={{ fontWeight: 700 }}>{initial.name ? "Edit budget" : "Create a budget"}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Set a spending limit for a category and track expenses from the selected account.</Typography>
           <Stack spacing={2}>
@@ -259,18 +259,18 @@ export function BudgetsManager() {
   return (
     <Stack spacing={3}>
       <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between" spacing={2}>
-        <Box><Typography variant="h4" fontWeight={800} letterSpacing={-0.8}>Budgets</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>Give every spending category a limit, and keep an eye on your progress.</Typography></Box>
+        <Box><Typography variant="h4" fontWeight={700} letterSpacing={-0.8}>Budgets</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>Give every spending category a limit, and keep an eye on your progress.</Typography></Box>
         <Button variant="contained" startIcon={<AddRounded />} onClick={openCreate} disabled={accounts.every(a => a.is_archived)}>Create budget</Button>
       </Stack>
       {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
       <SuccessToast message={notice} onClose={() => setNotice("")} />
       {accounts.every(a => a.is_archived) && !loading && <Alert severity="info" action={<Button color="inherit" size="small" onClick={() => window.location.assign("/accounts")}>Go to accounts</Button>}>Add an active account before creating a budget.</Alert>}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2,minmax(0,1fr))" }, gap: 2 }}>
-        <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><SavingsRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Active budget limits</Typography><Typography variant="h6" fontWeight={800}>{activeRows.length}</Typography></Box></Stack></Paper>
-        <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 3 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "success.main" }}><CalendarMonthRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Spent / budget limits this period</Typography><Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: 18, sm: 21 } }}>{totalLabels}</Typography></Box></Stack></Paper>
+        <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 1.5 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><SavingsRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Active budget limits</Typography><Typography variant="h6" fontWeight={700}>{activeRows.length}</Typography></Box></Stack></Paper>
+        <Paper variant="outlined" sx={{ p: 2.3, borderRadius: 1.5 }}><Stack direction="row" alignItems="center" spacing={1.3}><Avatar sx={{ bgcolor: "action.hover", color: "success.main" }}><CalendarMonthRounded /></Avatar><Box><Typography variant="caption" color="text.secondary">Spent / budget limits this period</Typography><Typography variant="h6" fontWeight={700} sx={{ fontSize: { xs: 18, sm: 21 } }}>{totalLabels}</Typography></Box></Stack></Paper>
       </Box>
       <Stack direction={{ xs: "column", md: "row" }} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between" spacing={1.5}>
-        <Box><Typography variant="h6" fontWeight={800}>Your budgets</Typography><Typography variant="body2" color="text.secondary">{filtered.length} {filtered.length === 1 ? "budget" : "budgets"}</Typography></Box>
+        <Box><Typography variant="h6" fontWeight={700}>Your budgets</Typography><Typography variant="body2" color="text.secondary">{filtered.length} {filtered.length === 1 ? "budget" : "budgets"}</Typography></Box>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
           <TextField size="small" placeholder="Search budgets" value={search} onChange={e => setSearch(e.target.value)} InputProps={{ startAdornment: <SearchRounded fontSize="small" sx={{ mr: 1, color: "text.secondary" }} /> }} />
           <TextField select size="small" label="Account" value={accountFilter} onChange={e => setAccountFilter(e.target.value)} sx={{ minWidth: 150 }}><MenuItem value="all">All accounts</MenuItem>{accounts.map(a => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}</TextField>
@@ -278,28 +278,28 @@ export function BudgetsManager() {
           <Tooltip title="Refresh"><IconButton onClick={() => void loadData()} disabled={loading}><RefreshRounded /></IconButton></Tooltip>
         </Stack>
       </Stack>
-      {loading ? <Paper sx={{ minHeight: 220, display: "grid", placeItems: "center", borderRadius: 3 }}><CircularProgress size={28} /></Paper> : filtered.length === 0 ? (
-        <Paper variant="outlined" sx={{ p: { xs: 3, md: 5 }, minHeight: 250, display: "grid", placeItems: "center", textAlign: "center", borderRadius: 3 }}>
-          <Stack alignItems="center" spacing={1.2} sx={{ maxWidth: 400 }}><Avatar variant="rounded" sx={{ width: 58, height: 58, bgcolor: "action.hover", color: "text.secondary" }}><SavingsRounded fontSize="large" /></Avatar><Typography fontWeight={750} fontSize={18}>{budgets.length ? "No matching budgets" : "Start with a spending plan"}</Typography><Typography color="text.secondary" variant="body2">{budgets.length ? "Try adjusting your filters." : "Create a budget for a category, choose an account, and BudgetNest will track matching expenses automatically."}</Typography>{budgets.length === 0 && !accounts.every(a => a.is_archived) && <Button variant="contained" startIcon={<AddRounded />} onClick={openCreate} sx={{ mt: 1 }}>Create your first budget</Button>}</Stack>
+      {loading ? <Paper sx={{ minHeight: 220, display: "grid", placeItems: "center", borderRadius: 1.5 }}><CircularProgress size={28} /></Paper> : filtered.length === 0 ? (
+        <Paper variant="outlined" sx={{ p: { xs: 3, md: 5 }, minHeight: 250, display: "grid", placeItems: "center", textAlign: "center", borderRadius: 1.5 }}>
+          <Stack alignItems="center" spacing={1.2} sx={{ maxWidth: 400 }}><Avatar variant="rounded" sx={{ width: 58, height: 58, bgcolor: "action.hover", color: "text.secondary" }}><SavingsRounded fontSize="large" /></Avatar><Typography variant="h6">{budgets.length ? "No matching budgets" : "Start with a spending plan"}</Typography><Typography color="text.secondary" variant="body2">{budgets.length ? "Try adjusting your filters." : "Create a budget for a category, choose an account, and BudgetNest will track matching expenses automatically."}</Typography>{budgets.length === 0 && !accounts.every(a => a.is_archived) && <Button variant="contained" startIcon={<AddRounded />} onClick={openCreate} sx={{ mt: 1 }}>Create your first budget</Button>}</Stack>
         </Paper>
       ) : (
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "repeat(2,minmax(0,1fr))" }, gap: 2 }}>
           {filtered.map(({ budget, window, spent, account, remaining, progress }) => (
-            <Paper key={budget.id} variant="outlined" sx={{ p: 2.4, borderRadius: 3 }}>
+            <Paper key={budget.id} variant="outlined" sx={{ p: 2.4, borderRadius: 1.5 }}>
               <Stack direction="row" spacing={1.2} alignItems="flex-start">
                 <Avatar variant="rounded" sx={{ bgcolor: "action.hover", color: "primary.main" }}><SavingsRounded /></Avatar>
-                <Box sx={{ flex: 1, minWidth: 0 }}><Typography fontWeight={800}>{budget.name}</Typography><Typography variant="body2" color="text.secondary">{budget.category} · {account?.name ?? "Unknown account"}</Typography></Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}><Typography fontWeight={700}>{budget.name}</Typography><Typography variant="body2" color="text.secondary">{budget.category} · {account?.name ?? "Unknown account"}</Typography></Box>
                 <IconButton size="small" aria-label="Budget actions" onClick={e => setMenu({ element: e.currentTarget, budget })}><MoreHorizRounded /></IconButton>
               </Stack>
               <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 2.2, mb: 0.8 }}>
                 <Typography variant="body2" color="text.secondary">{window.state === "upcoming" ? "Starts" : window.state === "ended" ? "Ended" : "Spent this period"}</Typography>
                 <Chip size="small" variant="outlined" label={periodLabel(budget.period)} />
               </Stack>
-              <Typography variant="h5" fontWeight={850} letterSpacing={-0.5}>{money(spent, account?.currency ?? "PHP")} <Typography component="span" color="text.secondary" variant="body2" fontWeight={500}>of {money(Number(budget.amount), account?.currency ?? "PHP")}</Typography></Typography>
+              <Typography variant="h5" fontWeight={700} letterSpacing={-0.5}>{money(spent, account?.currency ?? "PHP")} <Typography component="span" color="text.secondary" variant="body2" fontWeight={500}>of {money(Number(budget.amount), account?.currency ?? "PHP")}</Typography></Typography>
               <LinearProgress variant="determinate" value={window.state === "upcoming" ? 0 : progress} color={spent > Number(budget.amount) ? "error" : progress >= 80 ? "warning" : "primary"} sx={{ height: 9, borderRadius: 99, mt: 1.6, bgcolor: "action.hover" }} />
               <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1.2 }}>
                 <Typography variant="caption" color="text.secondary">{window.state === "upcoming" ? `Begins ${dateLabel(window.start)}` : window.state === "ended" ? `Ended ${dateLabel(window.end)}` : `${dateLabel(window.start)} – ${dateLabel(window.end)}`}</Typography>
-                <Typography variant="body2" fontWeight={750} color={remaining < 0 ? "error.main" : "text.primary"}>{window.state === "active" ? remaining >= 0 ? `${money(remaining, account?.currency ?? "PHP")} left` : `${money(Math.abs(remaining), account?.currency ?? "PHP")} over` : window.state === "upcoming" ? "Not started" : "Completed period"}</Typography>
+                <Typography variant="body2" fontWeight={600} color={remaining < 0 ? "error.main" : "text.primary"}>{window.state === "active" ? remaining >= 0 ? `${money(remaining, account?.currency ?? "PHP")} left` : `${money(Math.abs(remaining), account?.currency ?? "PHP")} over` : window.state === "upcoming" ? "Not started" : "Completed period"}</Typography>
               </Stack>
             </Paper>
           ))}
@@ -310,8 +310,8 @@ export function BudgetsManager() {
         <MenuItem sx={{ color: "error.main" }} onClick={() => { setDeleteTarget(menu?.budget ?? null); setMenu(null); }}><DeleteOutlineRounded fontSize="small" sx={{ mr: 1 }} /> Delete budget</MenuItem>
       </Menu>
       <BudgetDialog open={dialogOpen} accounts={accounts.filter(a => !a.is_archived || a.id === editing?.account_id)} initial={form} saving={saving} onClose={() => setDialogOpen(false)} onSave={saveBudget} />
-      <Dialog open={Boolean(deleteTarget)} onClose={() => !saving && setDeleteTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 800 }}>Delete this budget?</DialogTitle>
+      <Dialog scroll="paper" open={Boolean(deleteTarget)} onClose={() => !saving && setDeleteTarget(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Delete this budget?</DialogTitle>
         <DialogContent><Typography variant="body2" color="text.secondary">This removes the budget limit. Your transactions will not be affected.</Typography></DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}><Button color="inherit" onClick={() => setDeleteTarget(null)} disabled={saving}>Cancel</Button><Button color="error" variant="contained" onClick={() => void deleteBudget()} disabled={saving}>{saving ? <CircularProgress size={18} color="inherit" /> : "Delete"}</Button></DialogActions>
       </Dialog>

@@ -118,7 +118,7 @@ export function ThemeProvider({
           : {}),
         divider: dark ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.10)",
       },
-      shape: { borderRadius: 12 },
+      shape: { borderRadius: 8 },
       motion: {
         reducedMotion: "system",
       },
@@ -130,8 +130,8 @@ export function ThemeProvider({
         h2: { fontSize: "1.875rem", lineHeight: 1.25, fontWeight: 700, letterSpacing: "-0.03em" },
         h3: { fontSize: "1.5rem", lineHeight: 1.3, fontWeight: 700, letterSpacing: "-0.025em" },
         h4: { fontSize: "1.25rem", lineHeight: 1.35, fontWeight: 700, letterSpacing: "-0.02em" },
-        h5: { fontSize: "1.125rem", lineHeight: 1.4, fontWeight: 650 },
-        h6: { fontSize: "1rem", lineHeight: 1.45, fontWeight: 650 },
+        h5: { fontSize: "1.125rem", lineHeight: 1.4, fontWeight: 600 },
+        h6: { fontSize: "1rem", lineHeight: 1.45, fontWeight: 600 },
         subtitle1: { fontSize: "1rem", lineHeight: 1.5, fontWeight: 600 },
         subtitle2: { fontSize: "0.875rem", lineHeight: 1.45, fontWeight: 600 },
         body1: { fontSize: "0.9375rem", lineHeight: 1.6, fontWeight: 400 },
@@ -151,7 +151,7 @@ export function ThemeProvider({
             root: {
               border: "1px solid",
               borderColor: dark ? "rgba(255,255,255,0.10)" : "rgba(15,23,42,0.08)",
-              borderRadius: 16,
+              borderRadius: 12,
               boxShadow: dark ? "0 2px 10px rgba(0,0,0,0.18)" : "0 2px 10px rgba(15,23,42,0.035)",
               backgroundImage: "none",
             },
@@ -160,7 +160,7 @@ export function ThemeProvider({
         MuiPaper: {
           styleOverrides: {
             root: { backgroundImage: "none" },
-            rounded: { borderRadius: 14 },
+            rounded: { borderRadius: 12 },
           },
         },
         MuiAppBar: {
@@ -171,12 +171,12 @@ export function ThemeProvider({
         MuiButton: {
           defaultProps: { disableRipple: true },
           styleOverrides: {
-            root: { borderRadius: 9, minHeight: 38, fontWeight: 600, paddingInline: 16 },
+            root: { borderRadius: 8, minHeight: 38, fontWeight: 600, paddingInline: 16 },
             contained: { boxShadow: "none", "&:hover": { boxShadow: "none" } },
             outlined: { borderColor: dark ? "rgba(255,255,255,0.23)" : "rgba(15,23,42,0.20)" },
           },
         },
-        MuiIconButton: { styleOverrides: { root: { borderRadius: 9 } } },
+        MuiIconButton: { styleOverrides: { root: { borderRadius: 8 } } },
         MuiChip: {
           styleOverrides: {
             root: { borderRadius: 8, fontWeight: 600 },
@@ -185,7 +185,7 @@ export function ThemeProvider({
         },
         MuiMenuItem: {
           styleOverrides: {
-            root: { minHeight: 40, fontFamily: "inherit", fontSize: "0.875rem", fontWeight: 500 },
+            root: { minHeight: 40, fontFamily: "inherit", fontSize: "0.875rem", fontWeight: 500, borderRadius: 8 },
           },
         },
         MuiSelect: {
@@ -200,7 +200,7 @@ export function ThemeProvider({
           styleOverrides: {
             root: {
               minHeight: 46,
-              borderRadius: 9,
+              borderRadius: 8,
               "&.MuiInputBase-sizeSmall": { minHeight: 38 },
               "&.MuiInputBase-multiline": { minHeight: "unset" },
               "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: dark ? "rgba(255,255,255,0.38)" : "rgba(15,23,42,0.32)" },
@@ -225,9 +225,13 @@ export function ThemeProvider({
         },
         MuiDialog: {
           styleOverrides: {
-            paper: { borderRadius: 16, border: "1px solid", borderColor: dark ? "rgba(255,255,255,0.10)" : "rgba(15,23,42,0.08)" },
+            paper: { display: "flex", flexDirection: "column", maxHeight: "calc(100dvh - 32px)", overflow: "hidden", boxSizing: "border-box", borderRadius: 12, border: "1px solid", borderColor: dark ? "rgba(255,255,255,0.10)" : "rgba(15,23,42,0.08)" },
           },
         },
+        MuiDialogTitle: { styleOverrides: { root: { flexShrink: 0, padding: "20px 24px 12px", fontWeight: 700, "@media (max-width:600px)": { padding: "16px 20px 10px" } } } },
+        MuiDialogContent: { styleOverrides: { root: { flex: "1 1 auto", minHeight: 0, overflowY: "auto", scrollbarGutter: "stable", padding: "8px 24px 20px", "@media (max-width:600px)": { padding: "8px 20px 16px" } } } },
+        MuiDialogActions: { styleOverrides: { root: { flexShrink: 0, padding: "12px 24px 20px", gap: 8, borderTop: "1px solid", borderColor: dark ? "rgba(255,255,255,0.10)" : "rgba(15,23,42,0.08)", "@media (max-width:600px)": { padding: "12px 20px 16px" } } } },
+        MuiMenu: { styleOverrides: { paper: { borderRadius: 8 } } },
         MuiAlert: { styleOverrides: { root: { borderRadius: 10, alignItems: "center" } } },
         MuiTabs: { styleOverrides: { indicator: { height: 3, borderRadius: "3px 3px 0 0" } } },
         MuiTab: { styleOverrides: { root: { minHeight: 44, textTransform: "none", fontWeight: 600 } } },
