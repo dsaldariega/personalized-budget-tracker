@@ -434,7 +434,7 @@ export function DashboardManager() {
       const rows: Transaction[] = [];
       const pageSize = 1000;
       for (let offset = 0; ; offset += pageSize) {
-        const result = await supabase
+        const result = await authenticatedSupabase
           .from("transactions")
           .select(
             "id,account_id,transaction_type,amount,category,description,transaction_date,transfer_direction",
@@ -459,21 +459,21 @@ export function DashboardManager() {
       ] = await Promise.all([
         apiRequest<{ accounts: Account[] }>("/accounts"),
         fetchAllTransactions(),
-        supabase
+        authenticatedSupabase
           .from("budgets")
           .select(
             "id,account_id,name,category,amount,period,start_date,end_date",
           )
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
-        supabase
+        authenticatedSupabase
           .from("savings_goals")
           .select(
             "id,account_id,name,target_amount,current_amount,target_date,status",
           )
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
-        supabase
+        authenticatedSupabase
           .from("subscriptions")
           .select(
             "id,account_id,name,amount,billing_frequency,next_billing_date,is_active",
