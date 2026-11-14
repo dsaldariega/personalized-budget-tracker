@@ -119,6 +119,9 @@ export function ThemeProvider({
         divider: dark ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.10)",
       },
       shape: { borderRadius: 12 },
+      motion: {
+        reducedMotion: "system",
+      },
       typography: {
         htmlFontSize: 16,
         fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
