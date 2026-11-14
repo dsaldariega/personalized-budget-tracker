@@ -160,7 +160,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const sidebar = (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "background.paper" }}>
-      <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 1.5 }} sx={{ px: { xs: 1.5, sm: 2.5 }, height: 68, minWidth: 0 }}>
+      <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 1.5 }} sx={{ px: { xs: 1.5, sm: 2.5 }, height: 68, minHeight: 68, boxSizing: "border-box", minWidth: 0, borderBottom: 1, borderColor: "divider" }}>
         <Box sx={{ width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 }, flexShrink: 0, borderRadius: 2.7, display: "grid", placeItems: "center", background: "linear-gradient(145deg, #EF5350 0%, #D32F2F 58%, #B71C1C 100%)", color: "primary.contrastText", fontWeight: 800, fontSize: { xs: 18, sm: 20 }, boxShadow: "0 3px 10px rgba(211,47,47,0.16)" }}><AccountBalanceWalletRounded sx={{ fontSize: { xs: 21, sm: 23 } }} /></Box>
         <Box sx={{ minWidth: 0, flexShrink: 0 }}>
           <Typography sx={{ fontSize: { xs: 16.5, sm: 18 }, fontWeight: 700, letterSpacing: "-0.035em", lineHeight: 1.15, whiteSpace: "nowrap" }}>BudgetNest</Typography>
@@ -169,7 +169,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {!isDesktop && <Box sx={{ flexGrow: 1, minWidth: 0 }} />}
         {!isDesktop && <IconButton size="small" onClick={() => setMobileOpen(false)} aria-label="Close navigation" sx={{ flexShrink: 0, width: 34, height: 34, "& .MuiSvgIcon-root": { fontSize: 20 } }}><CloseRounded /></IconButton>}
       </Stack>
-      <Divider />
       <Box sx={{ px: 1.5, py: 2, flexGrow: 1, overflowY: "auto" }}>
         {navGroups.map((group) => (
           <Box key={group.label} sx={{ mb: 2.2 }}>
@@ -282,11 +281,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   sx: {
                     mt: 0.75,
                     minWidth: 210,
-                    borderRadius: 2.5,
+                    borderRadius: 1,
                     border: 1,
                     borderColor: "divider",
-                    boxShadow: 4,
-                    p: 0.5,
+                    boxShadow: 3,
+                    p: 0.25,
                   },
                 },
               }}
@@ -294,7 +293,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {user ? (
                 <MenuItem
                   onClick={handleSignOut}
-                  sx={{ gap: 1, borderRadius: 1.5, py: 1, fontSize: 13.5, fontWeight: 600 }}
+                  sx={{ gap: 1, borderRadius: 0.75, py: 0.75, px: 1, fontWeight: 500 }}
                 >
                   <LogoutRounded fontSize="small" sx={{ color: "text.secondary" }} />
                   Sign out
@@ -302,7 +301,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               ) : (
                 <MenuItem
                   onClick={() => { setAccountMenu(null); setLoginOpen(true); }}
-                  sx={{ gap: 1, borderRadius: 1.5, py: 1, fontSize: 13.5, fontWeight: 600 }}
+                  sx={{ gap: 1, borderRadius: 0.75, py: 0.75, px: 1, fontWeight: 500 }}
                 >
                   <AccountCircleOutlined fontSize="small" sx={{ color: "text.secondary" }} />
                   Sign in / Create account

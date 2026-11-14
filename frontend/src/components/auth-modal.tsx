@@ -19,8 +19,8 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
           sx: {
             width: "100%",
             maxWidth: 480,
-            mx: { xs: 1.5, sm: 2 },
-            borderRadius: { xs: 3, sm: 4 },
+            mx: { xs: 1, sm: 1.5 },
+            borderRadius: { xs: 1.25, sm: 1.5 },
             overflow: "hidden",
           },
         },
@@ -33,11 +33,11 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
           alignItems: "center",
           justifyContent: "flex-end",
           minHeight: 56,
-          p: { xs: 1, sm: 1.25 },
+          p: { xs: 0.75, sm: 1 },
           pb: 0,
         }}
       >
-        <Typography variant="body2" color="text.secondary" sx={{ mr: "auto", pl: { xs: 1, sm: 1.5 }, fontWeight: 700 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mr: "auto", pl: { xs: 0.75, sm: 1 }, fontWeight: 700 }}>
           Sign in to BudgetNest
         </Typography>
         <IconButton
@@ -49,7 +49,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
           <CloseRounded />
         </IconButton>
       </DialogTitle>
-      <DialogContent sx={{ px: { xs: 2.5, sm: 4 }, pt: 1, pb: { xs: 3, sm: 4 } }}>
+      <DialogContent sx={{ px: { xs: 2, sm: 3 }, pt: 0.75, pb: { xs: 2.5, sm: 3 } }}>
         <AuthForm mode="login" modal onAuthenticated={onClose} />
       </DialogContent>
     </Dialog>

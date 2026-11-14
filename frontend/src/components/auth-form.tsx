@@ -47,16 +47,16 @@ export function AuthForm({ mode, modal = false, onAuthenticated }: { mode: AuthM
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!supabase) {
-      setMessage({ type: "info", text: "Supabase is not configured yet. Add the project URL and publishable key first." });
-      return;
-    }
-
     setLoading(true);
     setMessage(null);
 
     try {
       if (isRegister) {
+        if (!supabase) {
+          setMessage({ type: "error", text: "Account registration is temporarily unavailable because the authentication service is not configured." });
+          return;
+        }
+
         const normalizedUsername = username.trim().toLowerCase();
         const normalizedEmail = email.trim().toLowerCase();
         const authEmail = normalizedEmail;
@@ -89,6 +89,11 @@ export function AuthForm({ mode, modal = false, onAuthenticated }: { mode: AuthM
           text: "Account created, but Supabase did not return a sign-in session. To enable instant sign-in after registration, turn off Confirm email in Supabase Authentication settings, then try again.",
         });
       } else if (identifier.includes("@")) {
+        if (!supabase) {
+          setMessage({ type: "error", text: "Email sign-in is temporarily unavailable because the authentication service is not configured. You can still try signing in with your username." });
+          return;
+        }
+
         const { error } = await supabase.auth.signInWithPassword({
           email: identifier.trim(),
           password,
@@ -143,7 +148,7 @@ export function AuthForm({ mode, modal = false, onAuthenticated }: { mode: AuthM
             width: "100%",
             maxWidth: modal ? "none" : 430,
             p: modal ? 0 : { xs: 2.5, sm: 3.25 },
-            borderRadius: modal ? 0 : 4,
+            borderRadius: modal ? 0 : 3,
             border: modal ? 0 : 1,
             borderColor: "divider",
             bgcolor: "background.paper",
@@ -230,7 +235,7 @@ export function AuthForm({ mode, modal = false, onAuthenticated }: { mode: AuthM
                   type="submit"
                   variant="contained"
                   disableElevation
-                  disabled={loading || switchingAuthMode || !supabase}
+                  disabled={loading || switchingAuthMode}
                   sx={{
                     py: 1.3,
                     borderRadius: 2.5,
@@ -258,6 +263,7 @@ export function AuthForm({ mode, modal = false, onAuthenticated }: { mode: AuthM
                   minHeight: 32,
                   px: 0.5,
                   fontWeight: 800,
+                  bgcolor: "transparent",
                   "&:hover": { bgcolor: "action.hover", textDecoration: "underline" },
                 }}
               >
