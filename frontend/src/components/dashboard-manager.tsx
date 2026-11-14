@@ -330,7 +330,12 @@ function CashFlowChart({
       >
         <Stack direction="row" alignItems="center" spacing={0.7}>
           <Box
-            sx={{ width: 9, height: 9, borderRadius: 1, bgcolor: "success.main" }}
+            sx={{
+              width: 9,
+              height: 9,
+              borderRadius: 1,
+              bgcolor: "success.main",
+            }}
           />
           <Typography variant="caption" color="text.secondary">
             Income
@@ -338,7 +343,12 @@ function CashFlowChart({
         </Stack>
         <Stack direction="row" alignItems="center" spacing={0.7}>
           <Box
-            sx={{ width: 9, height: 9, borderRadius: 1, bgcolor: "warning.main" }}
+            sx={{
+              width: 9,
+              height: 9,
+              borderRadius: 1,
+              bgcolor: "warning.main",
+            }}
           />
           <Typography variant="caption" color="text.secondary">
             Expenses
@@ -830,15 +840,27 @@ export function DashboardManager() {
               component={Link}
               href="/transactions"
               sx={{
-                bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(239,83,80,0.16)" : "rgba(211,47,47,0.09)",
-                color: (theme) => theme.palette.mode === "dark" ? "primary.light" : "primary.dark",
+                bgcolor: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "rgba(239,83,80,0.16)"
+                    : "rgba(211,47,47,0.09)",
+                color: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "primary.light"
+                    : "primary.dark",
                 border: "1px solid",
-                borderColor: (theme) => theme.palette.mode === "dark" ? "rgba(239,83,80,0.24)" : "rgba(211,47,47,0.16)",
+                borderColor: (theme) =>
+                  theme.palette.mode === "dark"
+                    ? "rgba(239,83,80,0.24)"
+                    : "rgba(211,47,47,0.16)",
                 fontWeight: 550,
                 textTransform: "none",
                 boxShadow: "none",
                 "&:hover": {
-                  bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(239,83,80,0.23)" : "rgba(211,47,47,0.14)",
+                  bgcolor: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "rgba(239,83,80,0.23)"
+                      : "rgba(211,47,47,0.14)",
                   borderColor: "primary.main",
                   boxShadow: "none",
                 },
@@ -946,7 +968,10 @@ export function DashboardManager() {
                     </Typography>
                     <Avatar
                       variant="rounded"
-                      sx={{ bgcolor: "rgba(46,125,50,.12)", color: "success.main" }}
+                      sx={{
+                        bgcolor: "rgba(46,125,50,.12)",
+                        color: "success.main",
+                      }}
                     >
                       <ArrowDownwardRounded />
                     </Avatar>
@@ -1079,7 +1104,10 @@ export function DashboardManager() {
                     </Typography>
                     <Avatar
                       variant="rounded"
-                      sx={{ bgcolor: "rgba(2,136,209,.13)", color: "info.main" }}
+                      sx={{
+                        bgcolor: "rgba(2,136,209,.13)",
+                        color: "info.main",
+                      }}
                     >
                       <SavingsOutlined />
                     </Avatar>
@@ -1132,7 +1160,11 @@ export function DashboardManager() {
             <Grid size={{ xs: 12, lg: 8 }}>
               <Paper
                 variant="outlined"
-                sx={{ p: { xs: 2, md: 2.8 }, height: "100%", borderRadius: 1.5 }}
+                sx={{
+                  p: { xs: 2, md: 2.8 },
+                  height: "100%",
+                  borderRadius: 1.5,
+                }}
               >
                 <Stack
                   direction="row"
@@ -1178,7 +1210,11 @@ export function DashboardManager() {
             <Grid size={{ xs: 12, lg: 4 }}>
               <Paper
                 variant="outlined"
-                sx={{ p: { xs: 2, md: 2.8 }, height: "100%", borderRadius: 1.5 }}
+                sx={{
+                  p: { xs: 2, md: 2.8 },
+                  height: "100%",
+                  borderRadius: 1.5,
+                }}
               >
                 <SectionTitle
                   title="Spending by category"
@@ -1376,7 +1412,14 @@ export function DashboardManager() {
                             <EventRepeatRounded />
                           </Avatar>
                           <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography fontWeight={700} sx={{ whiteSpace: { xs: "normal", sm: "nowrap" }, overflowWrap: "anywhere", lineHeight: 1.35 }}>
+                            <Typography
+                              fontWeight={700}
+                              sx={{
+                                whiteSpace: { xs: "normal", sm: "nowrap" },
+                                overflowWrap: "anywhere",
+                                lineHeight: 1.35,
+                              }}
+                            >
                               {subscription.name}
                             </Typography>
                             <Typography
@@ -1510,7 +1553,11 @@ export function DashboardManager() {
                           direction="row"
                           alignItems="center"
                           spacing={1.2}
-                          sx={{ py: 1.35, flexWrap: { xs: "wrap", sm: "nowrap" }, rowGap: { xs: 0.75, sm: 0 } }}
+                          sx={{
+                            py: 1.35,
+                            flexWrap: { xs: "wrap", sm: "nowrap" },
+                            rowGap: { xs: 0.75, sm: 0 },
+                          }}
                         >
                           <Avatar
                             variant="rounded"
@@ -1556,7 +1603,14 @@ export function DashboardManager() {
                                   ? "text.primary"
                                   : "error.main"
                             }
-                            sx={{ whiteSpace: "nowrap", flexShrink: 0, ml: { xs: "auto", sm: 0 }, width: { xs: "100%", sm: "auto" }, textAlign: { xs: "right", sm: "left" }, fontSize: { xs: "0.875rem", sm: "1rem" } }}
+                            sx={{
+                              whiteSpace: "nowrap",
+                              flexShrink: 0,
+                              ml: { xs: "auto", sm: 0 },
+                              width: { xs: "100%", sm: "auto" },
+                              textAlign: { xs: "right", sm: "left" },
+                              fontSize: { xs: "0.875rem", sm: "1rem" },
+                            }}
                           >
                             {isIncome
                               ? "+"

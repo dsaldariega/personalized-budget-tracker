@@ -3,14 +3,32 @@
 import { useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Alert, Box, Button, Divider, Paper, Slide, Stack, TextField, Typography
+  Alert,
+  Box,
+  Button,
+  Divider,
+  Paper,
+  Slide,
+  Stack,
+  TextField,
+  Typography,
 } from "@mui/material";
 import { createClient } from "@/lib/supabase/client";
 import { publicApiRequest } from "@/lib/api";
 
 type AuthMode = "login" | "register";
 
-export function AuthForm({ mode, modal = false, onAuthenticated, onSwitchAuthMode }: { mode: AuthMode; modal?: boolean; onAuthenticated?: () => void; onSwitchAuthMode?: () => void }) {
+export function AuthForm({
+  mode,
+  modal = false,
+  onAuthenticated,
+  onSwitchAuthMode,
+}: {
+  mode: AuthMode;
+  modal?: boolean;
+  onAuthenticated?: () => void;
+  onSwitchAuthMode?: () => void;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -21,17 +39,27 @@ export function AuthForm({ mode, modal = false, onAuthenticated, onSwitchAuthMod
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [switchingAuthMode, setSwitchingAuthMode] = useState(false);
-  const [message, setMessage] = useState<{ type: "error" | "success" | "info"; text: string } | null>(
+  const [message, setMessage] = useState<{
+    type: "error" | "success" | "info";
+    text: string;
+  } | null>(
     searchParams.get("error") === "configuration"
-      ? { type: "info", text: "Supabase is not configured yet. Add your BudgetNest project URL and publishable key to frontend/.env.local." }
+      ? {
+          type: "info",
+          text: "Supabase is not configured yet. Add your BudgetNest project URL and publishable key to frontend/.env.local.",
+        }
       : searchParams.get("error") === "callback"
-        ? { type: "error", text: "We couldn't complete sign-in. Please try again." }
-        : null
+        ? {
+            type: "error",
+            text: "We couldn't complete sign-in. Please try again.",
+          }
+        : null,
   );
 
   const isRegister = mode === "register";
   const next = searchParams.get("next");
-  const destination = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  const destination =
+    next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
 
   function switchAuthMode() {
     if (switchingAuthMode || loading) return;
@@ -54,7 +82,10 @@ export function AuthForm({ mode, modal = false, onAuthenticated, onSwitchAuthMod
     try {
       if (isRegister) {
         if (!supabase) {
-          setMessage({ type: "error", text: "Account registration is temporarily unavailable because the authentication service is not configured." });
+          setMessage({
+            type: "error",
+            text: "Account registration is temporarily unavailable because the authentication service is not configured.",
+          });
           return;
         }
 
@@ -91,7 +122,10 @@ export function AuthForm({ mode, modal = false, onAuthenticated, onSwitchAuthMod
         });
       } else if (identifier.includes("@")) {
         if (!supabase) {
-          setMessage({ type: "error", text: "Email sign-in is temporarily unavailable because the authentication service is not configured. You can still try signing in with your username." });
+          setMessage({
+            type: "error",
+            text: "Email sign-in is temporarily unavailable because the authentication service is not configured. You can still try signing in with your username.",
+          });
           return;
         }
 
@@ -110,18 +144,26 @@ export function AuthForm({ mode, modal = false, onAuthenticated, onSwitchAuthMod
         router.refresh();
       } else {
         if (!supabase) {
-          setMessage({ type: "error", text: "Username sign-in is temporarily unavailable because the authentication service is not configured." });
+          setMessage({
+            type: "error",
+            text: "Username sign-in is temporarily unavailable because the authentication service is not configured.",
+          });
           return;
         }
 
-        const data = await publicApiRequest<{ session: { access_token: string; refresh_token: string } }>("/auth/login", {
+        const data = await publicApiRequest<{
+          session: { access_token: string; refresh_token: string };
+        }>("/auth/login", {
           method: "POST",
           body: JSON.stringify({ identifier: identifier.trim(), password }),
         });
 
         const { error } = await supabase.auth.setSession(data.session);
         if (error) {
-          setMessage({ type: "error", text: "We couldn't establish your session. Please try again." });
+          setMessage({
+            type: "error",
+            text: "We couldn't establish your session. Please try again.",
+          });
           return;
         }
 
@@ -132,7 +174,10 @@ export function AuthForm({ mode, modal = false, onAuthenticated, onSwitchAuthMod
     } catch (error) {
       setMessage({
         type: "error",
-        text: error instanceof Error ? error.message : "Unable to complete the request. Please try again.",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Unable to complete the request. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -163,11 +208,18 @@ export function AuthForm({ mode, modal = false, onAuthenticated, onSwitchAuthMod
         >
           <Stack spacing={2.1}>
             <Box>
-              <Typography variant="h4" fontWeight={700} letterSpacing={-1.2} sx={{ fontSize: { xs: 27, sm: 31 } }}>
+              <Typography
+                variant="h4"
+                fontWeight={700}
+                letterSpacing={-1.2}
+                sx={{ fontSize: { xs: 27, sm: 31 } }}
+              >
                 {isRegister ? "Create your account" : "Welcome back"}
               </Typography>
               <Typography color="text.secondary" sx={{ mt: 0.75 }}>
-                {isRegister ? "Set up your personal finance space in a minute." : "Sign in to pick up where you left off."}
+                {isRegister
+                  ? "Set up your personal finance space in a minute."
+                  : "Sign in to pick up where you left off."}
               </Typography>
             </Box>
 
@@ -186,11 +238,19 @@ export function AuthForm({ mode, modal = false, onAuthenticated, onSwitchAuthMod
                     <TextField
                       label="Username"
                       value={username}
-                      onChange={(event) => setUsername(event.target.value.replace(/\s/g, "").toLowerCase())}
+                      onChange={(event) =>
+                        setUsername(
+                          event.target.value.replace(/\s/g, "").toLowerCase(),
+                        )
+                      }
                       autoComplete="username"
                       placeholder="e.g. budget_user"
                       helperText="3–24 characters: letters, numbers, and underscores."
-                      inputProps={{ minLength: 3, maxLength: 24, pattern: "[a-z0-9_]+" }}
+                      inputProps={{
+                        minLength: 3,
+                        maxLength: 24,
+                        pattern: "[a-z0-9_]+",
+                      }}
                       required
                       fullWidth
                     />
@@ -230,9 +290,13 @@ export function AuthForm({ mode, modal = false, onAuthenticated, onSwitchAuthMod
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  autoComplete={isRegister ? "new-password" : "current-password"}
+                  autoComplete={
+                    isRegister ? "new-password" : "current-password"
+                  }
                   inputProps={{ minLength: 8 }}
-                  helperText={isRegister ? "Use at least 8 characters." : undefined}
+                  helperText={
+                    isRegister ? "Use at least 8 characters." : undefined
+                  }
                   required
                   fullWidth
                 />
@@ -250,12 +314,22 @@ export function AuthForm({ mode, modal = false, onAuthenticated, onSwitchAuthMod
                     boxShadow: "none",
                   }}
                 >
-                  {loading ? "Please wait…" : isRegister ? "Create account" : "Sign in"}
+                  {loading
+                    ? "Please wait…"
+                    : isRegister
+                      ? "Create account"
+                      : "Sign in"}
                 </Button>
               </Stack>
             </Box>
 
-            <Stack direction="row" justifyContent="center" alignItems="center" spacing={0.5} sx={{ flexWrap: "wrap" }}>
+            <Stack
+              direction="row"
+              justifyContent="center"
+              alignItems="center"
+              spacing={0.5}
+              sx={{ flexWrap: "wrap" }}
+            >
               <Typography variant="body2" color="text.secondary">
                 {isRegister ? "Already have an account?" : "New to BudgetNest?"}
               </Typography>
@@ -270,7 +344,10 @@ export function AuthForm({ mode, modal = false, onAuthenticated, onSwitchAuthMod
                   px: 0.5,
                   fontWeight: 700,
                   bgcolor: "transparent",
-                  "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
+                  "&:hover": {
+                    bgcolor: "transparent",
+                    textDecoration: "underline",
+                  },
                 }}
               >
                 {isRegister ? "Sign in" : "Create an account"}
