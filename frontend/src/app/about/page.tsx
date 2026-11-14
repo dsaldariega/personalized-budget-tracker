@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FeedbackOutlined } from "@mui/icons-material";
+import FeedbackTriggerButton from "@/components/feedback-trigger-button";
 import {
   AccountBalanceWalletOutlined, AutoAwesomeOutlined, BackupOutlined, CalendarMonthOutlined,
   CategoryOutlined, CompareArrowsRounded, HelpOutlineRounded, LockOutlined, SavingsOutlined,
@@ -162,7 +163,7 @@ export default function AboutPage() {
             <Typography fontWeight={800}>Help us improve BudgetNest</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Have an idea, suggestion, or something we could do better? We’d love to hear from you.</Typography>
           </Box>
-          <Button variant="contained" startIcon={<FeedbackOutlined />} onClick={() => window.dispatchEvent(new Event("budgetnest:open-feedback"))} sx={{ flexShrink: 0 }}>Send feedback</Button>
+          <FeedbackTriggerButton variant="contained" startIcon={<FeedbackOutlined />} sx={{ flexShrink: 0 }}>Send feedback</FeedbackTriggerButton>
         </Stack>
       </Paper>
 
