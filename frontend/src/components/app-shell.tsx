@@ -14,7 +14,7 @@ import {
   AccountBalanceWalletOutlined, AccountBalanceWalletRounded, AssessmentOutlined, AutorenewOutlined,
   DashboardOutlined, DarkModeOutlined, HistoryRounded, InfoOutlined, KeyboardArrowDown, LightModeOutlined, ComputerOutlined,
   MenuRounded, NotificationsNoneOutlined, SavingsOutlined, SettingsOutlined,
-  SwapHorizOutlined, TrendingUpOutlined, AccountCircleOutlined, CloseRounded, PolicyOutlined
+  SwapHorizOutlined, TrendingUpOutlined, AccountCircleOutlined, CloseRounded, LogoutRounded, PolicyOutlined
 } from "@mui/icons-material";
 import {
   AppBar, Avatar, Badge, Box, Button, CircularProgress, Divider, Drawer, IconButton, List,
@@ -160,14 +160,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const sidebar = (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "background.paper" }}>
-      <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 1.5 }} sx={{ px: { xs: 1.5, sm: 2.5 }, height: 76, minWidth: 0 }}>
+      <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 1.5 }} sx={{ px: { xs: 1.5, sm: 2.5 }, height: 68, minWidth: 0 }}>
         <Box sx={{ width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 }, flexShrink: 0, borderRadius: 2.7, display: "grid", placeItems: "center", background: "linear-gradient(145deg, #EF5350 0%, #D32F2F 58%, #B71C1C 100%)", color: "primary.contrastText", fontWeight: 800, fontSize: { xs: 18, sm: 20 }, boxShadow: "0 3px 10px rgba(211,47,47,0.16)" }}><AccountBalanceWalletRounded sx={{ fontSize: { xs: 21, sm: 23 } }} /></Box>
         <Box sx={{ minWidth: 0, flexShrink: 0 }}>
           <Typography sx={{ fontSize: { xs: 16.5, sm: 18 }, fontWeight: 700, letterSpacing: "-0.035em", lineHeight: 1.15, whiteSpace: "nowrap" }}>BudgetNest</Typography>
           <Typography sx={{ display: "block", mt: 0.2, fontSize: { xs: 9, sm: 9.5 }, fontWeight: 550, letterSpacing: "0.105em", lineHeight: 1.3, color: "text.secondary", whiteSpace: "nowrap" }}>PERSONAL FINANCE</Typography>
         </Box>
         {!isDesktop && <Box sx={{ flexGrow: 1, minWidth: 0 }} />}
-        {!isDesktop && <IconButton size="small" onClick={() => setMobileOpen(false)} aria-label="Close navigation" sx={{ flexShrink: 0 }}><CloseRounded /></IconButton>}
+        {!isDesktop && <IconButton size="small" onClick={() => setMobileOpen(false)} aria-label="Close navigation" sx={{ flexShrink: 0, width: 34, height: 34, "& .MuiSvgIcon-root": { fontSize: 20 } }}><CloseRounded /></IconButton>}
       </Stack>
       <Divider />
       <Box sx={{ px: 1.5, py: 2, flexGrow: 1, overflowY: "auto" }}>
@@ -265,7 +265,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </Badge>
               </IconButton>
             </Tooltip>
-            <Button onClick={(event) => setAccountMenu(event.currentTarget)} color="inherit" sx={{ minWidth: 0, px: 1, textTransform: "none", borderRadius: 3 }}>
+            <Button onClick={(event) => setAccountMenu(event.currentTarget)} color="inherit" sx={{ minWidth: 0, px: { xs: 0.75, sm: 1 }, py: 0.5, textTransform: "none", borderRadius: 2.5, "&:hover": { bgcolor: "action.hover" } }}>
               <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main", fontSize: 13, mr: 1 }}>{user?.email?.[0]?.toUpperCase() ?? "G"}</Avatar>
               <Box sx={{ display: { xs: "none", sm: "block" }, textAlign: "left", mr: 0.5 }}>
                 <Typography variant="body2" fontWeight={700} lineHeight={1.2}>{user?.user_metadata?.full_name ?? (user?.email ? user.email.split("@")[0] : "Guest")}</Typography>
@@ -273,11 +273,40 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Box>
               <KeyboardArrowDown fontSize="small" />
             </Button>
-            <Menu anchorEl={accountMenu} open={Boolean(accountMenu)} onClose={() => setAccountMenu(null)}>
+            <Menu
+              anchorEl={accountMenu}
+              open={Boolean(accountMenu)}
+              onClose={() => setAccountMenu(null)}
+              slotProps={{
+                paper: {
+                  sx: {
+                    mt: 0.75,
+                    minWidth: 210,
+                    borderRadius: 2.5,
+                    border: 1,
+                    borderColor: "divider",
+                    boxShadow: 4,
+                    p: 0.5,
+                  },
+                },
+              }}
+            >
               {user ? (
-                <MenuItem onClick={handleSignOut}>Sign out</MenuItem>
+                <MenuItem
+                  onClick={handleSignOut}
+                  sx={{ gap: 1, borderRadius: 1.5, py: 1, fontSize: 13.5, fontWeight: 600 }}
+                >
+                  <LogoutRounded fontSize="small" sx={{ color: "text.secondary" }} />
+                  Sign out
+                </MenuItem>
               ) : (
-                <MenuItem onClick={() => { setAccountMenu(null); setLoginOpen(true); }}><AccountCircleOutlined fontSize="small" sx={{ mr: 1 }} /> Sign in / Create account</MenuItem>
+                <MenuItem
+                  onClick={() => { setAccountMenu(null); setLoginOpen(true); }}
+                  sx={{ gap: 1, borderRadius: 1.5, py: 1, fontSize: 13.5, fontWeight: 600 }}
+                >
+                  <AccountCircleOutlined fontSize="small" sx={{ color: "text.secondary" }} />
+                  Sign in / Create account
+                </MenuItem>
               )}
             </Menu>
 
