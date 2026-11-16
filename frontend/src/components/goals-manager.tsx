@@ -71,8 +71,8 @@ function GoalDialog({
               {accounts.map(a => <MenuItem key={a.id} value={a.id}>{a.name} · {a.currency}</MenuItem>)}
             </TextField>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-              <TextField label="Target amount" type="number" value={form.target_amount} onChange={e => setForm(v => ({ ...v, target_amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "any" }} InputProps={{ startAdornment: <Typography color="text.secondary" sx={{ mr: 1 }}>{accounts.find(a => a.id === form.account_id)?.currency ?? "¤"}</Typography> }} />
-              <TextField label="Already saved" type="number" value={form.current_amount} onChange={e => setForm(v => ({ ...v, current_amount: e.target.value }))} fullWidth inputProps={{ min: "0", step: "any" }} InputProps={{ startAdornment: <Typography color="text.secondary" sx={{ mr: 1 }}>{accounts.find(a => a.id === form.account_id)?.currency ?? "¤"}</Typography> }} />
+              <TextField label="Target amount" type="number" value={form.target_amount} onChange={e => setForm(v => ({ ...v, target_amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "any" }} />
+              <TextField label="Already saved" type="number" value={form.current_amount} onChange={e => setForm(v => ({ ...v, current_amount: e.target.value }))} fullWidth inputProps={{ min: "0", step: "any" }} />
             </Stack>
             <TextField label="Target date (optional)" type="date" value={form.target_date} onChange={e => setForm(v => ({ ...v, target_date: e.target.value }))} fullWidth InputLabelProps={{ shrink: true }} />
             <TextField select label="Status" value={form.status} onChange={e => setForm(v => ({ ...v, status: e.target.value as GoalStatus }))} fullWidth>
