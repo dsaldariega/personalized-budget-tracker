@@ -358,7 +358,7 @@ function BudgetDialog({
               }
               fullWidth
               required
-              inputProps={{ min: "0.01", step: "0.01" }}
+              inputProps={{ min: "0.01", step: "any" }}
               InputProps={{
                 startAdornment: (
                   <Typography color="text.secondary" sx={{ mr: 1 }}>
