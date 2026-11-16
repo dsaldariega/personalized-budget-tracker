@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { positiveMoneySchema } from "../lib/validation.js";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 const router = Router();
@@ -9,7 +10,7 @@ const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const subscriptionSchema = z.object({
   account_id: z.string().uuid(),
   name: z.string().trim().min(1).max(100),
-  amount: z.number().finite().positive().max(999999999999.99),
+  amount: positiveMoneySchema,
   billing_frequency: z.enum(["weekly", "monthly", "quarterly", "yearly"]),
   next_billing_date: dateSchema,
   category: z.string().max(80).nullable(),
@@ -17,7 +18,7 @@ const subscriptionSchema = z.object({
   is_active: z.boolean(),
 });
 const paymentSchema = z.object({
-  amount: z.number().finite().positive().max(999999999999.99),
+  amount: positiveMoneySchema,
   paid_date: dateSchema,
   notes: z.string().max(500).nullable(),
 });
