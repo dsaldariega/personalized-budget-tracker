@@ -4,12 +4,12 @@ import { AuthModal } from "@/components/auth-modal";
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BackupOutlined, CheckCircleOutlineRounded, CloudDownloadOutlined, CloudUploadOutlined,
-  LockOutlined, PaletteOutlined, PersonOutlineRounded, InputAdornment,
+  LockOutlined, PaletteOutlined, PersonOutlineRounded,
   ComputerOutlined, DarkModeOutlined, LightModeOutlined,
 } from "@mui/icons-material";
 import {
   Alert, Avatar, Box, Button, CircularProgress, MenuItem, Paper, Stack,
-  TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText,
+  TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, InputAdornment, ListItemText,
   ToggleButtonGroup, ToggleButton,
 } from "@mui/material";
 import { createClient } from "@/lib/supabase/client";
