@@ -264,21 +264,43 @@ export function ThemeProvider({
           styleOverrides: {
             root: {
               minHeight: 40,
-              fontFamily: "inherit",
+              fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
               fontSize: "0.875rem",
               fontWeight: 500,
               borderRadius: 8,
             },
           },
         },
+        MuiMenu: {
+          styleOverrides: {
+            paper: {
+              fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
+            },
+          },
+        },
         MuiSelect: {
           styleOverrides: {
             select: {
-              fontFamily: "inherit",
+              fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
               fontSize: "0.9375rem",
               fontWeight: 400,
               lineHeight: 1.6,
               color: "text.primary",
+            },
+          },
+        },
+        MuiNativeSelect: {
+          styleOverrides: {
+            select: {
+              fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
+            },
+          },
+        },
+        MuiAutocomplete: {
+          styleOverrides: {
+            option: {
+              fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
+              fontSize: "0.875rem",
             },
           },
         },
