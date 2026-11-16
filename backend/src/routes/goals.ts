@@ -1,13 +1,14 @@
 import { Router } from "express";
 import { z } from "zod";
+import { nonNegativeMoneySchema, positiveMoneySchema } from "../lib/validation.js";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 const router = Router();
 const goalSchema = z.object({
   account_id: z.string().uuid(),
   name: z.string().trim().min(1).max(100),
-  target_amount: z.number().finite().positive().max(999999999999.99),
-  current_amount: z.number().finite().min(0).max(999999999999.99),
+  target_amount: positiveMoneySchema,
+  current_amount: nonNegativeMoneySchema,
   target_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
   status: z.enum(["active", "completed", "paused"]),
 }).refine(v => v.current_amount <= v.target_amount, {
