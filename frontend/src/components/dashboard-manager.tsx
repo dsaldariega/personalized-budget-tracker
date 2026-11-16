@@ -1702,11 +1702,13 @@ export function DashboardManager() {
                     <Typography fontWeight={700}>User feedback</Typography>
                     <Typography variant="caption" color="text.secondary">Feedback submitted by BudgetNest users</Typography>
                   </Box>
-                  <Chip size="small" label={feedbackRows.length} />
                 </Stack>
-                <Button variant="outlined" size="small" startIcon={<FileDownloadOutlined />} onClick={() => exportFeedbackCsv(feedbackRows)} disabled={feedbackLoading || feedbackRows.length === 0} sx={{ textTransform: "none", alignSelf: { xs: "flex-start", sm: "center" } }}>
-                  Export CSV
-                </Button>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}>
+                  <Chip size="small" label={`${feedbackRows.length} submissions`} />
+                  <Button variant="outlined" size="small" startIcon={<FileDownloadOutlined />} onClick={() => exportFeedbackCsv(feedbackRows)} disabled={feedbackLoading || feedbackRows.length === 0} sx={{ textTransform: "none" }}>
+                    Export CSV
+                  </Button>
+                </Stack>
               </Stack>
               {feedbackError && <Alert severity="error" sx={{ mb: 2 }}>{feedbackError}</Alert>}
               {feedbackLoading ? (
