@@ -43,6 +43,7 @@ import {
   Button,
   CircularProgress,
   Divider,
+  Fade,
   Drawer,
   Fab,
   IconButton,
@@ -127,7 +128,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const dismissed = window.sessionStorage.getItem(
       "budgetnest-welcome-dismissed",
     );
-    if (!dismissed) setWelcomeOpen(true);
+    if (!dismissed) {
+      setWelcomeSlide(0);
+      setWelcomeOpen(true);
+    }
   }, [authReady, user]);
 
   useEffect(() => {
@@ -165,6 +169,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     setWelcomeMode("signed-out");
+    setWelcomeSlide(0);
     setWelcomeOpen(true);
     router.replace("/");
     router.refresh();
@@ -246,10 +251,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [welcomeMode, setWelcomeMode] = useState<"first-visit" | "signed-out">(
     "first-visit",
   );
+  const [welcomeSlide, setWelcomeSlide] = useState(0);
 
   useEffect(() => {
     if (!user) return;
     setLoginOpen(false);
+    setWelcomeSlide(0);
     setWelcomeOpen(false);
   }, [user?.id]);
   useEffect(() => {
@@ -843,96 +850,357 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           }}
           fullWidth
           maxWidth="sm"
+          slotProps={{
+            backdrop: {
+              sx: { bgcolor: "rgba(0, 0, 0, 0.68)" },
+            },
+          }}
           PaperProps={{
             sx: {
-              borderRadius: 1.5,
+              borderRadius: { xs: 1.5, sm: 2 },
               overflow: "hidden",
               mx: { xs: 1.5, sm: 2 },
+              maxHeight: "min(720px, calc(100vh - 32px))",
             },
           }}
         >
-          <DialogContent sx={{ p: { xs: 3.5, sm: 5 } }}>
-            <Stack spacing={2.2}>
-              <Box>
-                <Typography
-                  sx={{
-                    color: "primary.main",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: 1.5,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {welcomeMode === "signed-out"
-                    ? "You’re signed out"
-                    : "Welcome to BudgetNest"}
-                </Typography>
-                <Typography
-                  variant="h4"
-                  fontWeight={700}
-                  letterSpacing={-0.8}
-                  sx={{ mt: 0.8, fontSize: { xs: "1.75rem", sm: "2.125rem" } }}
-                >
-                  {welcomeMode === "signed-out"
-                    ? "Thanks for stopping by."
-                    : "A calmer place for your money."}
-                </Typography>
-                <Typography
-                  color="text.secondary"
-                  sx={{ mt: 1, lineHeight: 1.7 }}
-                >
-                  {welcomeMode === "signed-out"
-                    ? "You’ve safely signed out. You can keep exploring BudgetNest as a guest or sign in again whenever you’re ready."
-                    : "Explore the app, get a feel for the dashboard, and sign in whenever you’re ready to save your own data."}
-                </Typography>
-              </Box>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2}>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  onClick={() => {
-                    setWelcomeOpen(false);
-                    setLoginOpen(true);
-                  }}
-                  sx={{
-                    borderRadius: 1,
-                    py: 1.15,
-                    textTransform: "none",
-                    fontWeight: 600,
-                  }}
-                >
-                  {welcomeMode === "signed-out"
-                    ? "Sign in again"
-                    : "Sign in / Create account"}
-                </Button>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  onClick={() => {
-                    window.sessionStorage.setItem(
-                      "budgetnest-welcome-dismissed",
-                      "1",
-                    );
-                    setWelcomeOpen(false);
-                  }}
-                  sx={{
-                    borderRadius: 1,
-                    py: 1.15,
-                    textTransform: "none",
-                    fontWeight: 700,
-                  }}
-                >
-                  Continue as guest
-                </Button>
-              </Stack>
-              <Typography
-                variant="caption"
-                color="text.disabled"
-                textAlign="center"
-              >
-                You can close this welcome anytime and continue exploring.
-              </Typography>
-            </Stack>
+          <DialogContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
+            {(() => {
+              const slides =
+                welcomeMode === "signed-out"
+                  ? [
+                      {
+                        eyebrow: "You’re signed out",
+                        title: "Thanks for stopping by.",
+                        description:
+                          "You’ve safely signed out. You can keep exploring BudgetNest as a guest or sign in again whenever you’re ready to save your own data.",
+                        icon: <AccountBalanceWalletRounded />,
+                      },
+                    ]
+                  : [
+                      {
+                        eyebrow: "Welcome to BudgetNest",
+                        title: "A calmer place for your money.",
+                        description:
+                          "BudgetNest helps you keep your spending, budgets, and financial goals in one simple place.",
+                        icon: <AccountBalanceWalletRounded />,
+                      },
+                      {
+                        eyebrow: "Take control of your finances",
+                        title: "See where your money is going.",
+                        description:
+                          "Track everyday spending, set budgets, and keep an eye on your progress without making money management feel complicated.",
+                        icon: <AssessmentOutlined />,
+                      },
+                      {
+                        eyebrow: "Get started",
+                        title: "Choose how you’d like to begin.",
+                        description:
+                          "Create an account to keep your data, sign in to continue where you left off, or explore BudgetNest as a guest.",
+                        icon: <TrendingUpOutlined />,
+                      },
+                    ];
+
+              const slide = slides[Math.min(welcomeSlide, slides.length - 1)];
+              const isFinalSlide = welcomeSlide === slides.length - 1;
+
+              return (
+                <Stack sx={{ minHeight: { xs: 500, sm: 540 } }}>
+                  <Box
+                    sx={{
+                      px: { xs: 3, sm: 5 },
+                      pt: { xs: 2, sm: 3 },
+                      pb: { xs: 1, sm: 2 },
+                    }}
+                  >
+                    <Stack direction="row" justifyContent="flex-end">
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          window.sessionStorage.setItem(
+                            "budgetnest-welcome-dismissed",
+                            "1",
+                          );
+                          setWelcomeOpen(false);
+                        }}
+                        aria-label="Close welcome"
+                        sx={{ color: "text.secondary" }}
+                      >
+                        <CloseRounded />
+                      </IconButton>
+                    </Stack>
+                  </Box>
+
+                  <Box
+                    sx={{
+                      px: { xs: 3, sm: 5 },
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Fade key={welcomeSlide} in timeout={260}>
+                      <Box sx={{ width: "100%" }}>
+                        <Stack
+                          alignItems="center"
+                          textAlign="center"
+                          spacing={2.2}
+                        >
+                          <Box
+                            sx={{
+                              width: { xs: 68, sm: 78 },
+                              height: { xs: 68, sm: 78 },
+                              borderRadius: "22px",
+                              display: "grid",
+                              placeItems: "center",
+                              bgcolor: "action.selected",
+                              color: "primary.main",
+                              "& .MuiSvgIcon-root": {
+                                fontSize: { xs: 34, sm: 38 },
+                              },
+                            }}
+                          >
+                            {slide.icon}
+                          </Box>
+
+                          <Box sx={{ maxWidth: 470 }}>
+                            <Typography
+                              sx={{
+                                color: "primary.main",
+                                fontSize: 11,
+                                fontWeight: 700,
+                                letterSpacing: 1.5,
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              {slide.eyebrow}
+                            </Typography>
+                            <Typography
+                              variant="h4"
+                              fontWeight={700}
+                              letterSpacing={-0.8}
+                              sx={{
+                                mt: 0.8,
+                                fontSize: {
+                                  xs: "1.75rem",
+                                  sm: "2.125rem",
+                                },
+                              }}
+                            >
+                              {slide.title}
+                            </Typography>
+                            <Typography
+                              color="text.secondary"
+                              sx={{
+                                mt: 1.2,
+                                lineHeight: 1.75,
+                                fontSize: { xs: 14, sm: 15 },
+                              }}
+                            >
+                              {slide.description}
+                            </Typography>
+                          </Box>
+
+                          {welcomeMode !== "signed-out" && welcomeSlide === 1 && (
+                            <Stack
+                              direction={{ xs: "column", sm: "row" }}
+                              spacing={1}
+                              sx={{ width: "100%", maxWidth: 460, pt: 0.5 }}
+                            >
+                              {[
+                                {
+                                  icon: <SwapHorizOutlined />,
+                                  label: "Track spending",
+                                },
+                                {
+                                  icon: <AssessmentOutlined />,
+                                  label: "Set budgets",
+                                },
+                                {
+                                  icon: <SavingsOutlined />,
+                                  label: "Build goals",
+                                },
+                              ].map((item) => (
+                                <Box
+                                  key={item.label}
+                                  sx={{
+                                    flex: 1,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 0.8,
+                                    px: 1.25,
+                                    py: 1,
+                                    border: 1,
+                                    borderColor: "divider",
+                                    borderRadius: 1.25,
+                                    bgcolor: "background.paper",
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      display: "grid",
+                                      placeItems: "center",
+                                      color: "primary.main",
+                                      "& .MuiSvgIcon-root": { fontSize: 19 },
+                                    }}
+                                  >
+                                    {item.icon}
+                                  </Box>
+                                  <Typography
+                                    variant="caption"
+                                    fontWeight={650}
+                                    sx={{ textAlign: "left" }}
+                                  >
+                                    {item.label}
+                                  </Typography>
+                                </Box>
+                              ))}
+                            </Stack>
+                          )}
+                        </Stack>
+                      </Box>
+                    </Fade>
+                  </Box>
+
+                  <Box
+                    sx={{
+                      px: { xs: 3, sm: 5 },
+                      pt: 3,
+                      pb: { xs: 3, sm: 4 },
+                    }}
+                  >
+                    <Stack spacing={2}>
+                      {welcomeMode !== "signed-out" && (
+                        <Stack
+                          direction="row"
+                          justifyContent="center"
+                          spacing={0.8}
+                          aria-label={`Onboarding slide ${welcomeSlide + 1} of ${slides.length}`}
+                        >
+                          {slides.map((_, index) => (
+                            <Box
+                              key={index}
+                              sx={{
+                                width: index === welcomeSlide ? 22 : 7,
+                                height: 7,
+                                borderRadius: 999,
+                                bgcolor:
+                                  index === welcomeSlide
+                                    ? "primary.main"
+                                    : "action.disabledBackground",
+                                transition: "all 180ms ease",
+                              }}
+                            />
+                          ))}
+                        </Stack>
+                      )}
+
+                      {isFinalSlide ? (
+                        <Stack
+                          direction={{ xs: "column", sm: "row" }}
+                          spacing={1.2}
+                        >
+                          <Button
+                            variant="contained"
+                            fullWidth
+                            onClick={() => {
+                              setWelcomeOpen(false);
+                              setLoginOpen(true);
+                            }}
+                            sx={{
+                              borderRadius: 1.25,
+                              py: 1.15,
+                              textTransform: "none",
+                              fontWeight: 650,
+                            }}
+                          >
+                            Sign In
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            fullWidth
+                            onClick={() => {
+                              setWelcomeOpen(false);
+                              router.push("/register");
+                            }}
+                            sx={{
+                              borderRadius: 1.25,
+                              py: 1.15,
+                              textTransform: "none",
+                              fontWeight: 650,
+                            }}
+                          >
+                            Create Account
+                          </Button>
+                          <Button
+                            variant="text"
+                            fullWidth
+                            onClick={() => {
+                              window.sessionStorage.setItem(
+                                "budgetnest-welcome-dismissed",
+                                "1",
+                              );
+                              setWelcomeOpen(false);
+                            }}
+                            sx={{
+                              borderRadius: 1.25,
+                              py: 1.15,
+                              textTransform: "none",
+                              fontWeight: 650,
+                            }}
+                          >
+                            Continue as Guest
+                          </Button>
+                        </Stack>
+                      ) : (
+                        <Stack
+                          direction="row"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          spacing={1}
+                        >
+                          <Button
+                            variant="text"
+                            disabled={welcomeSlide === 0}
+                            onClick={() =>
+                              setWelcomeSlide((current) =>
+                                Math.max(0, current - 1),
+                              )
+                            }
+                            sx={{
+                              minWidth: 88,
+                              borderRadius: 1.25,
+                              textTransform: "none",
+                              fontWeight: 650,
+                            }}
+                          >
+                            Back
+                          </Button>
+                          <Button
+                            variant="contained"
+                            onClick={() =>
+                              setWelcomeSlide((current) =>
+                                Math.min(slides.length - 1, current + 1),
+                              )
+                            }
+                            sx={{
+                              minWidth: 100,
+                              borderRadius: 1.25,
+                              py: 1,
+                              textTransform: "none",
+                              fontWeight: 650,
+                            }}
+                          >
+                            Next
+                          </Button>
+                        </Stack>
+                      )}
+                    </Stack>
+                  </Box>
+                </Stack>
+              );
+            })()}
           </DialogContent>
         </Dialog>
         <AuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />
