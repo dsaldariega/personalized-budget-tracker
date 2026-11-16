@@ -104,7 +104,7 @@ export async function guestApiRequest<T>(path: string, init: RequestInit = {}): 
     }).value as T;
     if (method === "POST") {
       const account = addRecord(state.accounts, {
-        ...payload, opening_balance: Number(payload.opening_balance ?? 0), is_archived: false,
+        ...payload, currency: "PHP", opening_balance: Number(payload.opening_balance ?? 0), is_archived: false,
       });
       log("account.created", "account", account.id, { name: account.name });
       return response({ account }).value as T;
@@ -112,8 +112,10 @@ export async function guestApiRequest<T>(path: string, init: RequestInit = {}): 
     if (parts[1]) {
       const accountId = parts[1];
       if (method === "PUT") {
+        const accountChanges = { ...payload };
+        delete accountChanges.currency;
         const account = updateRecord(state.accounts, accountId, {
-          ...payload, opening_balance: Number(payload.opening_balance ?? 0),
+          ...accountChanges, opening_balance: Number(payload.opening_balance ?? 0),
         });
         if (!account) throw new Error("Account not found.");
         log("account.updated", "account", account.id, { name: account.name });
