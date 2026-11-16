@@ -294,15 +294,8 @@ function TransactionDialog({
               }
               fullWidth
               required
-              inputProps={{ min: "0.01", step: "0.01" }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    {accounts.find((a) => a.id === form.account_id)?.currency ??
-                      "¤"}
-                  </InputAdornment>
-                ),
-              }}
+              inputProps={{ min: "0.01", step: "any" }}
+              
             />
             {form.transaction_type !== "transfer" && (
               <TextField
