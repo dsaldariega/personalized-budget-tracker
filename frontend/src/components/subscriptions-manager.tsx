@@ -101,7 +101,7 @@ function SubscriptionDialog({
               {accounts.map(a => <MenuItem key={a.id} value={a.id}>{a.name} · {a.currency}{a.is_archived ? " (Archived)" : ""}</MenuItem>)}
             </TextField>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-              <TextField label="Billing amount" type="number" value={form.amount} onChange={e => setForm(v => ({ ...v, amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "any" }} InputProps={{ startAdornment: <Typography color="text.secondary" sx={{ mr: 1 }}>{accounts.find(a => a.id === form.account_id)?.currency ?? "¤"}</Typography> }} />
+              <TextField label="Billing amount" type="number" value={form.amount} onChange={e => setForm(v => ({ ...v, amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "any" }} />
               <TextField select label="Billing frequency" value={form.billing_frequency} onChange={e => setForm(v => ({ ...v, billing_frequency: e.target.value as Frequency }))} fullWidth>
                 <MenuItem value="weekly">Weekly</MenuItem><MenuItem value="monthly">Monthly</MenuItem><MenuItem value="quarterly">Quarterly</MenuItem><MenuItem value="yearly">Yearly</MenuItem>
               </TextField>
