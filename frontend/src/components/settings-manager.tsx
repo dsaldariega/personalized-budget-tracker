@@ -123,6 +123,7 @@ export function SettingsManager() {
   const supabase = useMemo(() => createClient(), []);
   const { mode, preference, setPreference } = useThemeMode();
   const fileRef = useRef<HTMLInputElement>(null);
+  const profileController = useRef<AbortController | null>(null);
   const [email, setEmail] = useState("");
   const [profile, setProfile] = useState<Profile>({ full_name: "", default_currency: "PHP" });
   const [initialProfile, setInitialProfile] = useState<Profile>({ full_name: "", default_currency: "PHP" });
@@ -148,21 +149,30 @@ export function SettingsManager() {
   const [loginOpen, setLoginOpen] = useState(false);
 
   const loadProfile = useCallback(async () => {
+    profileController.current?.abort();
+    const controller = new AbortController();
+    profileController.current = controller;
+    const { signal } = controller;
     if (!supabase) { setRequiresLogin(true); setLoading(false); return; }
     setLoading(true); setError("");
     const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (signal.aborted) return;
     if (authError || !user) { setRequiresLogin(true); setLoading(false); return; }
     setRequiresLogin(false);
     setUserId(user.id); setEmail(user.email ?? "");
     try {
-      const result = await apiRequest<{ profile: ProfileResponse }>("/settings/profile");
+      const result = await apiRequest<{ profile: ProfileResponse }>("/settings/profile", { signal });
+      if (signal.aborted) return;
       const value = { full_name: result.profile.full_name ?? user.user_metadata?.full_name ?? "", default_currency: result.profile.default_currency ?? "PHP" };
       setProfile(value); setInitialProfile(value);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to load profile settings.");
-    } finally { setLoading(false); }
+      if (!signal.aborted) setError(cause instanceof Error ? cause.message : "Unable to load profile settings.");
+    } finally { if (!signal.aborted) setLoading(false); }
   }, [supabase]);
-  useEffect(() => { void loadProfile(); }, [loadProfile]);
+  useEffect(() => {
+    void loadProfile();
+    return () => profileController.current?.abort();
+  }, [loadProfile]);
 
   async function saveProfile() {
     if (!supabase || !userId) return;
