@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   AddRounded, DeleteOutlineRounded, EditOutlined, MoreHorizRounded,
   PaymentsRounded, RefreshRounded, SearchRounded, TrendingDownRounded,
@@ -250,16 +250,26 @@ export function LoansManager() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+  const loadController = useRef<AbortController | null>(null);
+
   const loadData = useCallback(async () => {
+    loadController.current?.abort();
+    const controller = new AbortController();
+    loadController.current = controller;
+    const { signal } = controller;
     setLoading(true); setError("");
     try {
-      const data = await apiRequest<{ accounts: Account[]; loans: Loan[]; payments: Payment[] }>("/loans");
+      const data = await apiRequest<{ accounts: Account[]; loans: Loan[]; payments: Payment[] }>("/loans"), { signal });
+      if (signal.aborted) return;
       setAccounts(data.accounts); setLoans(data.loans); setPayments(data.payments);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to load loans.");
-    } finally { setLoading(false); }
+      if (!signal.aborted) setError(cause instanceof Error ? cause.message : "Unable to load loans.");
+    } finally { if (!signal.aborted) setLoading(false); }
   }, []);
-  useEffect(() => { void loadData(); }, [loadData]);
+  useEffect(() => {
+    void loadData();
+    return () => loadController.current?.abort();
+  }, [loadData]);
 
   function openCreate() { setEditing(null); setLoanForm({ ...emptyLoan(), account_id: accounts.find(a => !a.is_archived)?.id ?? "" }); setLoanDialog(true); }
   function openEdit(loan: Loan) {
