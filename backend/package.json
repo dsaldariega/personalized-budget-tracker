@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "tsx watch src/dev.ts",
     "build": "tsc",
-    "start": "node dist/dev.js"
+    "start": "node dist/dev.js",
+    "test": "node --import tsx --test"
   },
   "dependencies": {
     "cors": "^2.8.5",
