@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import {
   AccountBalanceOutlined,
   AddRounded,
@@ -249,29 +249,37 @@ export function AccountsManager() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+  const loadController = useRef<AbortController | null>(null);
+
   const loadAccounts = useCallback(async () => {
+    loadController.current?.abort();
+    const controller = new AbortController();
+    loadController.current = controller;
+    const { signal } = controller;
     setLoading(true);
     setError("");
     try {
       const result = await apiRequest<{
         accounts: Account[];
         transactions: BalanceTransaction[];
-      }>("/accounts");
+      }>("/accounts", { signal });
+      if (signal.aborted) return;
       setAccounts(result.accounts);
       setTransactions(result.transactions);
     } catch (loadError) {
-      setError(
+      if (!signal.aborted) setError(
         loadError instanceof Error
           ? loadError.message
           : "Unable to load accounts.",
       );
     } finally {
-      setLoading(false);
+      if (!signal.aborted) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     void loadAccounts();
+    return () => loadController.current?.abort();
   }, [loadAccounts]);
 
   function openCreate() {
