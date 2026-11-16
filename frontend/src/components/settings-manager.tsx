@@ -372,7 +372,6 @@ export function SettingsManager() {
               <Typography variant="caption" color="text.secondary">Import requirements: account_name, currency, transaction_type, amount, category, description, transaction_date. Duplicate income/expense rows are skipped. Maximum file size: 5 MB / 5,000 rows.</Typography>
             </Stack>
           </Paper>
- </Paper>
         </>
       )}
       <Dialog open={exportDialogOpen} onClose={() => !exporting && setExportDialogOpen(false)} fullWidth maxWidth="sm">
