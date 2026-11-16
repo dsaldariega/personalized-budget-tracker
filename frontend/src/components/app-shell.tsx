@@ -1215,7 +1215,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           open={feedbackOpen}
           isAuthenticated={Boolean(user)}
           onClose={() => setFeedbackOpen(false)}
-          onRequireAuth={() => setLoginOpen(true)}
+          onRequireAuth={() => {
+            setAuthMode("login");
+            setLoginOpen(true);
+          }}
         />
         <Popover
           open={Boolean(notificationAnchor)}

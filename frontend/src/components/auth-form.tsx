@@ -66,6 +66,14 @@ export function AuthForm({
 
     setSwitchingAuthMode(true);
     onSwitchAuthMode?.();
+
+    if (modal) {
+      window.setTimeout(() => {
+        setSwitchingAuthMode(false);
+      }, 240);
+      return;
+    }
+
     window.setTimeout(() => {
       const target = isRegister ? "/login" : "/register";
       const query = searchParams.toString();
