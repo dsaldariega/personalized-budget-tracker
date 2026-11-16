@@ -568,7 +568,12 @@ export function DashboardManager() {
 
   useEffect(() => {
     void loadData();
-    if (!supabase) return;
+    if (!supabase) {
+      return () => {
+        loadRequestId.current += 1;
+        loadController.current?.abort();
+      };
+    }
 
     const {
       data: { subscription },
