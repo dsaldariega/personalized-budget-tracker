@@ -888,9 +888,9 @@ export function DashboardManager() {
               </Select>
             </FormControl>
             {currencies.length > 1 && (
-              <FormControl size="small" sx={{ minWidth: 115 }}>
+              <FormControl size="small" sx={{ minWidth: 210 }}>
                 <Select
-                  value={selectedCurrency}
+                  value={currencyFilter}
                   onChange={(event) => setCurrencyFilter(event.target.value)}
                   aria-label="Currency filter"
                 >
