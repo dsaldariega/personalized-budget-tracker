@@ -64,7 +64,7 @@ export function AuthModal({
           color="text.secondary"
           sx={{ mr: "auto", pl: { xs: 0.75, sm: 1 }, fontWeight: 700, color: "text.secondary" }}
         >
-          isRegister ? "Create your BudgetNest account" : "Sign in to BudgetNest"
+          {mode === "register" ? "Create your BudgetNest account" : "Sign in to BudgetNest"}
         </Typography>
         <IconButton
           onClick={onClose}
