@@ -300,7 +300,7 @@ export function SettingsManager() {
               <TextField size="small" label="Email address" value={email} fullWidth disabled helperText="Email changes are managed through your authentication provider." />
               <Stack direction="row" spacing={1} alignItems="center">
                 <PublicOutlined fontSize="small" color="action" />
-                <TextField size="small" select label="Default currency" value={profile.default_currency} onChange={e => setProfile(v => ({ ...v, default_currency: e.target.value }))} fullWidth>
+                <TextField size="small" select label="Default currency" value={profile.default_currency} onChange={e => setProfile(v => ({ ...v, default_currency: e.target.value }))} helperText="Used for new accounts. Existing accounts keep their saved currency." fullWidth>
                   {currencies.map(currency => <MenuItem key={currency.code} value={currency.code}>{currency.name} ({currency.code})</MenuItem>)}
                 </TextField>
               </Stack>
