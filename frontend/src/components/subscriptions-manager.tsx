@@ -160,7 +160,7 @@ export function SubscriptionsManager() {
     const { signal } = controller;
     setLoading(true); setError("");
     try {
-      const data = await apiRequest<{ accounts: Account[]; subscriptions: Subscription[]; payments: Payment[] }>("/subscriptions"), { signal });
+      const data = await apiRequest<{ accounts: Account[]; subscriptions: Subscription[]; payments: Payment[] }>("/subscriptions", { signal });
       if (signal.aborted) return;
       setAccounts(data.accounts ?? []);
       setSubscriptions(data.subscriptions ?? []);
