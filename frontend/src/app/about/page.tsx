@@ -3,7 +3,7 @@ import { FeedbackOutlined } from "@mui/icons-material";
 import FeedbackTriggerButton from "@/components/feedback-trigger-button";
 import {
   AccountBalanceWalletOutlined, AutoAwesomeOutlined, BackupOutlined, CalendarMonthOutlined,
-  CategoryOutlined, CompareArrowsRounded, HelpOutlineRounded, LockOutlined, SavingsOutlined,
+  CategoryOutlined, CompareArrowsRounded, HelpOutlineRounded, SavingsOutlined,
   ShowChartRounded, SubscriptionsOutlined, TrendingUpRounded, WalletOutlined,
 } from "@mui/icons-material";
 import {
@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import ExpandMoreRounded from "@mui/icons-material/ExpandMoreRounded";
 
-export const metadata: Metadata = { title: "About BudgetNest" };
+export const metadata: Metadata = { title: "About & Help" };
 
 const features = [
   { icon: <AccountBalanceWalletOutlined />, title: "Accounts in one place", detail: "Keep track of cash, bank accounts, e-wallets, credit accounts, and investments. Each account has its own currency and running balance." },
@@ -21,7 +21,7 @@ const features = [
   { icon: <TrendingUpRounded />, title: "Loan tracking", detail: "Keep loan details, estimated installments, outstanding principal, and repayment history together." },
   { icon: <SubscriptionsOutlined />, title: "Recurring commitments", detail: "Track subscriptions, billing dates, payment history, and upcoming or overdue renewals." },
   { icon: <ShowChartRounded />, title: "A useful overview", detail: "See balances, cash flow, category spending, budget progress, savings, and recent activity from your dashboard." },
-  { icon: <BackupOutlined />, title: "Your data, your copy", detail: "Export a full JSON backup or an Excel-friendly CSV of income and expense transactions. Import supported transaction CSV files too." },
+  { icon: <BackupOutlined />, title: "Your data, your copy", detail: "Export filtered income and expense transactions to CSV, or import supported transaction CSV files." },
 ];
 
 const faqs = [
@@ -51,7 +51,7 @@ const faqs = [
   },
   {
     question: "How do I back up my information?",
-    answer: "Open Settings and choose Export my data. BudgetNest downloads a full JSON backup of your profile and financial records. It can also provide an Excel-compatible transaction CSV for income and expense entries.",
+    answer: "Open Settings and choose Export Transactions. Select a date range and optional filters, then download an Excel-compatible CSV of matching income and expense transactions.",
   },
   {
     question: "Who can see my financial records?",
@@ -118,63 +118,18 @@ export default function AboutPage() {
           <CalendarMonthOutlined color="primary" />
           <Typography variant="h5" fontWeight={800} letterSpacing={-0.5}>Getting started</Typography>
         </Stack>
-        <Stack spacing={1}>
+        <Stack spacing={1.5}>
           {[
-            ["01", "Create your accounts", "Add the cash, bank, or e-wallet accounts you want to track. Enter each opening balance and currency."],
-            ["02", "Record what happens", "Add income and expenses as they happen. Use transfers when moving money between your own accounts."],
-            ["03", "Set your plans", "Create budgets for spending categories and savings goals for the things that matter to you."],
-            ["04", "Review and adjust", "Visit your dashboard regularly, check upcoming commitments, and refine your plans as life changes."],
+            ["01", "Create your accounts", "Add the cash, bank, or e-wallet accounts you want to track."],
+            ["02", "Record what happens", "Add income and expenses, and use transfers when moving money between your accounts."],
+            ["03", "Set your plans", "Create budgets for spending categories and savings goals for what matters to you."],
+            ["04", "Review and adjust", "Check your dashboard and upcoming commitments, then refine your plans as life changes."],
           ].map(([number, title, detail]) => (
-            <Accordion
-              key={number}
-              disableGutters
-              variant="outlined"
-              sx={{
-                borderRadius: "12px !important",
-                "&:before": { display: "none" },
-                overflow: "hidden",
-              }}
-            >
-              <AccordionSummary
-                expandIcon={<ExpandMoreRounded />}
-                sx={{
-                  px: 2,
-                  minHeight: 58,
-                  "& .MuiAccordionSummary-content": {
-                    my: 1.4,
-                    alignItems: "center",
-                    gap: 1.4,
-                  },
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 34,
-                    height: 34,
-                    flexShrink: 0,
-                    borderRadius: 2,
-                    display: "grid",
-                    placeItems: "center",
-                    bgcolor: "action.hover",
-                    color: "primary.main",
-                    fontWeight: 850,
-                    fontSize: 12,
-                  }}
-                >
-                  {number}
-                </Box>
-                <Typography fontWeight={750}>{title}</Typography>
-              </AccordionSummary>
-              <AccordionDetails sx={{ px: 2, pt: 0, pb: 2 }}>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ lineHeight: 1.75, pl: { xs: 0, sm: 5.8 } }}
-                >
-                  {detail}
-                </Typography>
-              </AccordionDetails>
-            </Accordion>
+            <Stack key={number} direction="row" spacing={1.5} alignItems="flex-start" sx={{ py: 0.7 }}>
+              <Box sx={{ width: 32, height: 32, flexShrink: 0, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "action.hover", color: "primary.main", fontWeight: 800, fontSize: 12 }}>{number}</Box>
+              <Box sx={{ minWidth: 0, pt: 0.25 }}><Typography fontWeight={750}>{title}</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, lineHeight: 1.65 }}>{detail}</Typography></Box>
+            </Stack>
           ))}
         </Stack>
       </Paper>
@@ -215,18 +170,6 @@ export default function AboutPage() {
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Read the full BudgetNest privacy policy, including the data we store and the controls available to you.</Typography>
           </Box>
           <Button href="/privacy" variant="outlined" sx={{ flexShrink: 0 }}>Read privacy policy</Button>
-        </Stack>
-      </Paper>
-
-      <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 3, bgcolor: "action.hover" }}>
-        <Stack direction="row" spacing={1.5} alignItems="flex-start">
-          <LockOutlined color="primary" sx={{ mt: 0.2 }} />
-          <Box>
-            <Typography fontWeight={800}>A note about your privacy</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, lineHeight: 1.8 }}>
-              Your financial records are protected by authenticated access and database-level Row Level Security. BudgetNest is a tracking and planning tool, not a bank, financial adviser, or payment processor. Always review your entries and keep your account credentials secure.
-            </Typography>
-          </Box>
         </Stack>
       </Paper>
 

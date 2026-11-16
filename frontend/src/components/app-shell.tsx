@@ -106,7 +106,7 @@ const navGroups = [
     items: [
       { label: "Activity Log", href: "/activity", icon: <HistoryRounded /> },
       { label: "Settings", href: "/settings", icon: <SettingsOutlined /> },
-      { label: "About", href: "/about", icon: <InfoOutlined /> },
+      { label: "About & Help", href: "/about", icon: <InfoOutlined /> },
       { label: "Privacy", href: "/privacy", icon: <PolicyOutlined /> },
     ],
   },

@@ -4,11 +4,11 @@ import { AuthModal } from "@/components/auth-modal";
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BackupOutlined, CheckCircleOutlineRounded, CloudDownloadOutlined, CloudUploadOutlined,
-  DeleteOutlineRounded, LockOutlined, PaletteOutlined, PersonOutlineRounded, SecurityOutlined,
+  LockOutlined, PaletteOutlined, PersonOutlineRounded,
   ComputerOutlined, DarkModeOutlined, LightModeOutlined,
 } from "@mui/icons-material";
 import {
-  Alert, Avatar, Box, Button, CircularProgress, Divider, MenuItem, Paper, Stack,
+  Alert, Avatar, Box, Button, CircularProgress, MenuItem, Paper, Stack,
   TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText,
   ToggleButtonGroup, ToggleButton,
 } from "@mui/material";
@@ -58,6 +58,7 @@ function parseCsv(text: string) {
   return rows.filter(values => values.some(value => value.trim() !== ""));
 }
 type ImportIssue = { row?: number; field?: string; message: string };
+type ExportPeriod = "all" | "today" | "week" | "month" | "year" | "custom";
 function normalizeImportDate(value: string): { value?: string; error?: string } {
   const input = value.trim();
   const valid = (year: number, month: number, day: number) => {
@@ -103,6 +104,14 @@ export function SettingsManager() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportTransactions, setExportTransactions] = useState<Transaction[]>([]);
+  const [exportAccounts, setExportAccounts] = useState<Account[]>([]);
+  const [exportPeriod, setExportPeriod] = useState<ExportPeriod>("all");
+  const [exportStartDate, setExportStartDate] = useState(() => new Date().toLocaleDateString("en-CA"));
+  const [exportEndDate, setExportEndDate] = useState(() => new Date().toLocaleDateString("en-CA"));
+  const [exportType, setExportType] = useState<"both" | "income" | "expense">("both");
+  const [exportCategory, setExportCategory] = useState("all");
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -146,38 +155,35 @@ export function SettingsManager() {
     } finally { setSaving(false); }
   }
 
-  async function exportBackup() {
+  async function openExportDialog() {
     if (!supabase || !userId) return;
     setExporting(true); setError(""); setNotice("");
-    let backup: Record<string, unknown>;
-    let data: Record<string, unknown>;
     try {
-      const response = await apiRequest<{ backup: Record<string, unknown> & { data: Record<string, unknown> } }>("/settings/backup");
-      backup = response.backup;
-      data = response.backup.data;
+      const response = await apiRequest<{ backup: { data: Record<string, unknown> } }>("/settings/backup");
+      const data = response.backup.data;
+      setExportTransactions((data.transactions ?? []) as Transaction[]);
+      setExportAccounts((data.accounts ?? []) as Account[]);
+      setExportDialogOpen(true);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to export your data.");
-      setExporting(false);
-      return;
-    }
-    downloadFile("budgetnest-backup-" + localDateStamp() + ".json", JSON.stringify(backup, null, 2), "application/json;charset=utf-8");
-    const tx = (data.transactions ?? []) as Transaction[];
-    const accountRows = (data.accounts ?? []) as Account[];
-    const names = new Map(accountRows.map(a => [a.id, a.name]));
-    const csvRows = tx.filter(item => item.transaction_type === "income" || item.transaction_type === "expense").map(item => ({
-      account_name: names.get(item.account_id) ?? "",
-      currency: accountRows.find(a => a.id === item.account_id)?.currency ?? "",
+      setError(cause instanceof Error ? cause.message : "Unable to prepare your transaction export.");
+    } finally { setExporting(false); }
+  }
+
+  function exportCsv() {
+    const accountById = new Map(exportAccounts.map(account => [account.id, account]));
+    const rows = filteredExportTransactions.map(item => ({
+      account_name: accountById.get(item.account_id)?.name ?? "",
+      currency: accountById.get(item.account_id)?.currency ?? "",
       transaction_type: item.transaction_type,
       amount: Number(item.amount).toFixed(2),
       category: item.category ?? "",
       description: item.description ?? "",
       transaction_date: item.transaction_date.slice(0, 10),
     }));
-    // Always include the import-compatible header, even when there are no income/expense rows.
-    downloadFile("budgetnest-transactions-" + localDateStamp() + ".csv", makeCsv(csvRows), "text/csv;charset=utf-8");
-    setNotice("Your full JSON backup and import-ready transaction CSV have been downloaded. Transfers are preserved in the JSON backup."); setExporting(false);
+    downloadFile("budgetnest-transactions-" + localDateStamp() + ".csv", makeCsv(rows), "text/csv;charset=utf-8");
+    setExportDialogOpen(false);
+    setNotice("Your filtered transaction CSV has been downloaded.");
   }
-
   async function importTransactions(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -229,6 +235,30 @@ export function SettingsManager() {
   }
 
   const dirty = profile.full_name !== initialProfile.full_name || profile.default_currency !== initialProfile.default_currency;
+  const exportDateRange = useMemo(() => {
+    const now = new Date();
+    const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-");
+    if (exportPeriod === "today") return { start: today, end: today };
+    if (exportPeriod === "week") {
+      const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+      const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+      const stamp = (date: Date) => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+      return { start: stamp(monday), end: stamp(sunday) };
+    }
+    if (exportPeriod === "month") return { start: today.slice(0, 7) + "-01", end: today };
+    if (exportPeriod === "year") return { start: today.slice(0, 4) + "-01-01", end: today };
+    if (exportPeriod === "custom") return { start: exportStartDate, end: exportEndDate };
+    return { start: "", end: "" };
+  }, [exportPeriod, exportStartDate, exportEndDate]);
+  const filteredExportTransactions = useMemo(() => exportTransactions.filter(item => {
+    const date = item.transaction_date.slice(0, 10);
+    return (item.transaction_type === "income" || item.transaction_type === "expense")
+      && (exportType === "both" || item.transaction_type === exportType)
+      && (exportCategory === "all" || (item.category ?? "Uncategorised") === exportCategory)
+      && (!exportDateRange.start || date >= exportDateRange.start)
+      && (!exportDateRange.end || date <= exportDateRange.end);
+  }), [exportTransactions, exportType, exportCategory, exportDateRange]);
+  const exportDateInvalid = exportPeriod === "custom" && (!exportStartDate || !exportEndDate || exportEndDate < exportStartDate);
   if (requiresLogin) return (
     <Stack spacing={3}>
       <Box><Typography variant="h4" fontWeight={700} letterSpacing={-0.8}>Settings</Typography><Typography color="text.secondary" sx={{ mt: 0.7 }}>Manage your profile, preferences, and personal data.</Typography></Box>
@@ -250,19 +280,20 @@ export function SettingsManager() {
       <SuccessToast message={notice} onClose={() => setNotice("")} />
       {loading ? <Paper variant="outlined" sx={{ minHeight: 180, display: "grid", placeItems: "center", borderRadius: 1.5 }}><CircularProgress /></Paper> : (
         <>
-          <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5 }}>
-            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 2.5 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><PersonOutlineRounded /></Avatar><Box><Typography variant="h6" fontWeight={700}>Profile</Typography><Typography variant="body2" color="text.secondary">Your personal details used across BudgetNest.</Typography></Box></Stack>
-            <Stack spacing={2} maxWidth={620}>
-              <TextField label="Full name" value={profile.full_name ?? ""} onChange={e => setProfile(v => ({ ...v, full_name: e.target.value }))} fullWidth inputProps={{ maxLength: 100 }} />
-              <TextField label="Email address" value={email} fullWidth disabled helperText="Email changes are managed through your authentication provider." />
-              <TextField select label="Default currency" value={profile.default_currency} onChange={e => setProfile(v => ({ ...v, default_currency: e.target.value }))} fullWidth>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" }, gap: 2, alignItems: "stretch" }}>
+          <Paper variant="outlined" sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 1.5, height: "100%" }}>
+            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 1.8 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><PersonOutlineRounded /></Avatar><Box><Typography variant="h6" fontWeight={700}>Profile</Typography><Typography variant="body2" color="text.secondary">Your personal details used across BudgetNest.</Typography></Box></Stack>
+            <Stack spacing={1.25}>
+              <TextField size="small" label="Full name" value={profile.full_name ?? ""} onChange={e => setProfile(v => ({ ...v, full_name: e.target.value }))} fullWidth inputProps={{ maxLength: 100 }} />
+              <TextField size="small" label="Email address" value={email} fullWidth disabled helperText="Email changes are managed through your authentication provider." />
+              <TextField size="small" select label="Default currency" value={profile.default_currency} onChange={e => setProfile(v => ({ ...v, default_currency: e.target.value }))} fullWidth>
                 {currencies.map(currency => <MenuItem key={currency} value={currency}>{currency}</MenuItem>)}
               </TextField>
               <Box><Button variant="contained" onClick={() => void saveProfile()} disabled={!dirty || saving}>{saving ? <CircularProgress size={18} color="inherit" /> : "Save profile"}</Button></Box>
             </Stack>
           </Paper>
-          <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5 }}>
-            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 2 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><PaletteOutlined /></Avatar><Box><Typography variant="h6" fontWeight={700}>Appearance</Typography><Typography variant="body2" color="text.secondary">Choose how BudgetNest looks on this device.</Typography></Box></Stack>
+          <Paper variant="outlined" sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 1.5, height: "100%" }}>
+            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 1.8 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><PaletteOutlined /></Avatar><Box><Typography variant="h6" fontWeight={700}>Appearance</Typography><Typography variant="body2" color="text.secondary">Choose how BudgetNest looks on this device.</Typography></Box></Stack>
             <Stack spacing={1.5}>
               <Box>
                 <Typography fontWeight={700}>
@@ -327,32 +358,48 @@ export function SettingsManager() {
               </ToggleButtonGroup>
             </Stack>
           </Paper>
+          </Box>
           <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5 }}>
-            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 2 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><BackupOutlined /></Avatar><Box><Typography variant="h6" fontWeight={700}>Data backup & transfer</Typography><Typography variant="body2" color="text.secondary">Download a copy of your data or import transactions from a spreadsheet.</Typography></Box></Stack>
+            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 2 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><BackupOutlined /></Avatar><Box><Typography variant="h6" fontWeight={700}>Data backup & transfer</Typography><Typography variant="body2" color="text.secondary">Export selected transactions to CSV or import transactions from a spreadsheet.</Typography></Box></Stack>
             <Stack spacing={2}>
-              <Alert severity="info">The backup is a JSON file containing your profile and financial records. The accompanying transaction CSV can be opened and edited in Microsoft Excel or Google Sheets. It includes income and expense rows; transfers are preserved in the JSON backup and should be recreated in the app to preserve both sides.</Alert>
+              <Alert severity="info">Export income and expense transactions to a CSV file that opens in Excel or Google Sheets. Transfers are not included; use the import template to prepare compatible transaction files.</Alert>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} flexWrap="wrap">
-                <Button variant="contained" startIcon={exporting ? <CircularProgress size={17} color="inherit" /> : <CloudDownloadOutlined />} onClick={() => void exportBackup()} disabled={exporting || importing}>{exporting ? "Preparing backup…" : "Export my data"}</Button>
-                <Button variant="outlined" component="label" startIcon={importing ? <CircularProgress size={17} /> : <CloudUploadOutlined />} disabled={importing || exporting}>{importing ? "Importing…" : "Import transactions CSV"}<input ref={fileRef} hidden type="file" accept=".csv,text/csv" onChange={importTransactions} /></Button>
+                <Button variant="contained" startIcon={exporting ? <CircularProgress size={17} color="inherit" /> : <CloudDownloadOutlined />} onClick={() => void openExportDialog()} disabled={exporting || importing}>{exporting ? "Preparing export…" : "Export Transactions"}</Button>
+                <Button variant="outlined" component="label" startIcon={importing ? <CircularProgress size={17} /> : <CloudUploadOutlined />} disabled={importing || exporting}>{importing ? "Importing…" : "Import Transactions"}<input ref={fileRef} hidden type="file" accept=".csv,text/csv" onChange={importTransactions} /></Button>
                 <Button color="inherit" onClick={() => downloadFile("budgetnest-transaction-import-template.csv", "\uFEFFaccount_name,currency,transaction_type,amount,category,description,transaction_date\r\n", "text/csv;charset=utf-8")} disabled={importing || exporting}>Download CSV template</Button>
               </Stack>
               {importSummary && <Alert severity="success" icon={<CheckCircleOutlineRounded />}>{importSummary}</Alert>}
               <Typography variant="caption" color="text.secondary">Import requirements: account_name, currency, transaction_type, amount, category, description, transaction_date. Duplicate income/expense rows are skipped. Maximum file size: 5 MB / 5,000 rows.</Typography>
             </Stack>
           </Paper>
-          <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5 }}>
-            <Stack direction="row" alignItems="center" spacing={1.2} sx={{ mb: 2 }}><Avatar sx={{ bgcolor: "action.hover", color: "primary.main" }}><SecurityOutlined /></Avatar><Box><Typography variant="h6" fontWeight={700}>Privacy & security</Typography><Typography variant="body2" color="text.secondary">Understand how your data is protected and manage your account safely.</Typography></Box></Stack>
-            <Stack spacing={1.5}>
-              <Stack direction="row" spacing={1.2} alignItems="flex-start"><LockOutlined color="action" /><Box><Typography fontWeight={700}>Private financial records</Typography><Typography variant="body2" color="text.secondary">Your records are protected by Supabase Row Level Security and are scoped to your signed-in account.</Typography></Box></Stack>
-              <Divider />
-              <Stack direction="row" spacing={1.2} alignItems="flex-start"><CloudDownloadOutlined color="action" /><Box><Typography fontWeight={700}>Your data belongs to you</Typography><Typography variant="body2" color="text.secondary">Use Export my data to download a copy of your profile, accounts, transactions, budgets, goals, loans, subscriptions, payments, and activity history.</Typography></Box></Stack>
-              <Divider />
-              <Stack direction="row" spacing={1.2} alignItems="flex-start"><DeleteOutlineRounded color="action" /><Box><Typography fontWeight={700}>Account deletion</Typography><Typography variant="body2" color="text.secondary">Permanent account deletion requires a trusted server-side operation so authentication and all related records can be removed together. It is not exposed as a browser-only action in this release. Export your data before requesting deletion.</Typography></Box></Stack>
-              <Typography variant="caption" color="text.secondary">Signed-in account: {email || "—"}</Typography>
-            </Stack>
-          </Paper>
+ </Paper>
         </>
       )}
+      <Dialog open={exportDialogOpen} onClose={() => !exporting && setExportDialogOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 700 }}>Export Transactions</DialogTitle><DialogContent dividers>
+          <Stack spacing={2}>
+            <Typography variant="body2" color="text.secondary">Choose which income and expense transactions to include in your CSV file.</Typography>
+            <TextField select size="small" label="Date range" value={exportPeriod} onChange={event => setExportPeriod(event.target.value as ExportPeriod)} fullWidth>
+              <MenuItem value="all">All Time</MenuItem><MenuItem value="today">Today</MenuItem><MenuItem value="week">This Week</MenuItem><MenuItem value="month">This Month</MenuItem><MenuItem value="year">This Year</MenuItem><MenuItem value="custom">Custom Date Range</MenuItem>
+            </TextField>
+            {exportPeriod === "custom" && <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+              <TextField size="small" type="date" label="Start date" value={exportStartDate} onChange={event => setExportStartDate(event.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
+              <TextField size="small" type="date" label="End date" value={exportEndDate} onChange={event => setExportEndDate(event.target.value)} InputLabelProps={{ shrink: true }} inputProps={{ min: exportStartDate }} fullWidth />
+            </Stack>}
+            <TextField select size="small" label="Transaction type" value={exportType} onChange={event => setExportType(event.target.value as "both" | "income" | "expense")} fullWidth><MenuItem value="both">Income & Expenses</MenuItem><MenuItem value="income">Income only</MenuItem><MenuItem value="expense">Expenses only</MenuItem></TextField>
+            <TextField select size="small" label="Category" value={exportCategory} onChange={event => setExportCategory(event.target.value)} fullWidth>
+              <MenuItem value="all">All categories</MenuItem>
+              {Array.from(new Set(exportTransactions.filter(item => item.transaction_type === "income" || item.transaction_type === "expense").map(item => item.category ?? "Uncategorised"))).sort().map(category => <MenuItem key={category} value={category}>{category}</MenuItem>)}
+            </TextField>
+            {exportDateInvalid && <Alert severity="warning">Choose a valid date range. The end date must be on or after the start date.</Alert>}
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 1.5, bgcolor: "action.hover" }}><Typography variant="caption" color="text.secondary">Matching transactions</Typography><Typography variant="h4" fontWeight={750}>{filteredExportTransactions.length}</Typography><Typography variant="caption" color="text.secondary">Descriptions and notes are included when available.</Typography></Paper>
+            <Typography variant="caption" color="text.secondary">Only matching income and expense transactions will be exported. Transfers and other account data are not included.</Typography>
+          </Stack>
+        </DialogContent><DialogActions sx={{ px: 3, py: 2 }}>
+          <Button color="inherit" onClick={() => setExportDialogOpen(false)} disabled={exporting}>Cancel</Button>
+          <Button variant="contained" onClick={exportCsv} disabled={exporting || exportDateInvalid || filteredExportTransactions.length === 0}><CloudDownloadOutlined sx={{ mr: 0.8 }} /> Download CSV</Button>
+        </DialogActions>
+      </Dialog>
       <Dialog scroll="paper" open={importErrorOpen} onClose={() => setImportErrorOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle sx={{ fontWeight: 700 }}>Import couldn&apos;t be completed</DialogTitle>
         <DialogContent dividers>
