@@ -40,6 +40,9 @@ jobs:
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
           NEXT_PUBLIC_API_URL: https://budgetnest-api.example.com/api
 
+      - name: Test backend
+        run: npm --prefix backend test
+
       - name: Build backend
         run: npm --prefix backend run build
         env:
