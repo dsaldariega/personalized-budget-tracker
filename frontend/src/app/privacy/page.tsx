@@ -3,7 +3,7 @@ import {
   ArrowBackRounded, BackupOutlined, CloudOutlined, LockOutlined, PersonOutlineRounded,
   SecurityOutlined, StorageRounded,
 } from "@mui/icons-material";
-import { Box, Button, Paper, Stack, Typography } from "@mui/material";
+import { Box, Button, Grid, Paper, Stack, Typography } from "@mui/material";
 
 export const metadata: Metadata = { title: "Privacy Policy" };
 
@@ -84,21 +84,52 @@ export default function PrivacyPage() {
         </Typography>
       </Paper>
 
-      {sections.map(section => (
-        <Paper key={section.title} variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5 }}>
-          <Stack direction="row" spacing={1.2} alignItems="center" sx={{ mb: 1.5 }}>
-            <Box sx={{ width: 40, height: 40, borderRadius: 1.25, display: "grid", placeItems: "center", bgcolor: "action.hover", color: "primary.main" }}>
-              {section.icon}
-            </Box>
-            <Typography variant="h6" fontWeight={700}>{section.title}</Typography>
-          </Stack>
-          <Stack spacing={1.4}>
-            {section.paragraphs.map(paragraph => (
-              <Typography key={paragraph} variant="body2" color="text.secondary" lineHeight={1.85}>{paragraph}</Typography>
-            ))}
-          </Stack>
-        </Paper>
-      ))}
+      <Grid container spacing={2}>
+        {sections.map(section => (
+          <Grid key={section.title} size={{ xs: 12, md: 6 }}>
+            <Paper
+              variant="outlined"
+              sx={{
+                height: "100%",
+                p: { xs: 2.5, md: 3 },
+                borderRadius: 2,
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <Stack direction="row" spacing={1.2} alignItems="center" sx={{ mb: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 1.25,
+                    display: "grid",
+                    placeItems: "center",
+                    bgcolor: "action.hover",
+                    color: "primary.main",
+                    flexShrink: 0,
+                  }}
+                >
+                  {section.icon}
+                </Box>
+                <Typography variant="h6" fontWeight={700}>{section.title}</Typography>
+              </Stack>
+              <Stack spacing={1.4} sx={{ flexGrow: 1 }}>
+                {section.paragraphs.map(paragraph => (
+                  <Typography
+                    key={paragraph}
+                    variant="body2"
+                    color="text.secondary"
+                    lineHeight={1.8}
+                  >
+                    {paragraph}
+                  </Typography>
+                ))}
+              </Stack>
+            </Paper>
+          </Grid>
+        ))}
+      </Grid>
 
       <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5, bgcolor: "action.hover" }}>
         <Typography fontWeight={700}>Questions about privacy?</Typography>

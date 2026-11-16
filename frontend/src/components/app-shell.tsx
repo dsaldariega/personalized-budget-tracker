@@ -245,6 +245,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountMenu, setAccountMenu] = useState<HTMLElement | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
@@ -796,6 +797,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <MenuItem
                   onClick={() => {
                     setAccountMenu(null);
+                    setAuthMode("login");
                     setLoginOpen(true);
                   }}
                   sx={{
@@ -860,7 +862,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               borderRadius: { xs: 1.5, sm: 2 },
               overflow: "hidden",
               mx: { xs: 1.5, sm: 2 },
-              maxHeight: "min(720px, calc(100vh - 32px))",
+              maxHeight: "min(680px, calc(100vh - 32px))",
             },
           }}
         >
@@ -1122,7 +1124,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             fullWidth
                             onClick={() => {
                               setWelcomeOpen(false);
-                              router.push("/register");
+                              setAuthMode("register");
+                              setLoginOpen(true);
                             }}
                             sx={{
                               borderRadius: 1.25,
@@ -1203,7 +1206,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             })()}
           </DialogContent>
         </Dialog>
-        <AuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+        <AuthModal
+          open={loginOpen}
+          initialMode={authMode}
+          onClose={() => setLoginOpen(false)}
+        />
         <FeedbackForm
           open={feedbackOpen}
           isAuthenticated={Boolean(user)}
@@ -1256,7 +1263,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )}
           </Box>
           <Divider />
-          <Box sx={{ maxHeight: 430, overflowY: "auto" }}>
+          <Box sx={{ maxHeight: 440,
+              overflowY: "auto",
+              scrollbarWidth: "thin",
+              "&::-webkit-scrollbar": { width: 7 },
+              "&::-webkit-scrollbar-thumb": {
+                bgcolor: "divider",
+                borderRadius: 999,
+              } }}>
             {notificationsLoading ? (
               <Box sx={{ p: 3, textAlign: "center" }}>
                 <Typography variant="body2" color="text.secondary">

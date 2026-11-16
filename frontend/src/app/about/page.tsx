@@ -118,24 +118,65 @@ export default function AboutPage() {
           <CalendarMonthOutlined color="primary" />
           <Typography variant="h5" fontWeight={800} letterSpacing={-0.5}>Getting started</Typography>
         </Stack>
-        <Grid container spacing={2}>
+        <Stack spacing={1}>
           {[
             ["01", "Create your accounts", "Add the cash, bank, or e-wallet accounts you want to track. Enter each opening balance and currency."],
             ["02", "Record what happens", "Add income and expenses as they happen. Use transfers when moving money between your own accounts."],
             ["03", "Set your plans", "Create budgets for spending categories and savings goals for the things that matter to you."],
             ["04", "Review and adjust", "Visit your dashboard regularly, check upcoming commitments, and refine your plans as life changes."],
           ].map(([number, title, detail]) => (
-            <Grid key={number} size={{ xs: 12, sm: 6 }}>
-              <Stack direction="row" spacing={1.6} alignItems="flex-start">
-                <Box sx={{ width: 38, height: 38, flexShrink: 0, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "action.hover", color: "primary.main", fontWeight: 850, fontSize: 13 }}>{number}</Box>
-                <Box>
-                  <Typography fontWeight={750}>{title}</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.4, lineHeight: 1.7 }}>{detail}</Typography>
+            <Accordion
+              key={number}
+              disableGutters
+              variant="outlined"
+              sx={{
+                borderRadius: "12px !important",
+                "&:before": { display: "none" },
+                overflow: "hidden",
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreRounded />}
+                sx={{
+                  px: 2,
+                  minHeight: 58,
+                  "& .MuiAccordionSummary-content": {
+                    my: 1.4,
+                    alignItems: "center",
+                    gap: 1.4,
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 34,
+                    height: 34,
+                    flexShrink: 0,
+                    borderRadius: 2,
+                    display: "grid",
+                    placeItems: "center",
+                    bgcolor: "action.hover",
+                    color: "primary.main",
+                    fontWeight: 850,
+                    fontSize: 12,
+                  }}
+                >
+                  {number}
                 </Box>
-              </Stack>
-            </Grid>
+                <Typography fontWeight={750}>{title}</Typography>
+              </AccordionSummary>
+              <AccordionDetails sx={{ px: 2, pt: 0, pb: 2 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ lineHeight: 1.75, pl: { xs: 0, sm: 5.8 } }}
+                >
+                  {detail}
+                </Typography>
+              </AccordionDetails>
+            </Accordion>
           ))}
-        </Grid>
+        </Stack>
       </Paper>
 
       <Box>
