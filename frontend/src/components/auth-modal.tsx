@@ -6,7 +6,6 @@ import {
   DialogTitle,
   Fade,
   IconButton,
-  Typography,
 } from "@mui/material";
 import { CloseRounded } from "@mui/icons-material";
 import { useEffect, useState } from "react";
@@ -59,13 +58,6 @@ export function AuthModal({
           pb: 0,
         }}
       >
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ mr: "auto", pl: { xs: 0.75, sm: 1 }, fontWeight: 700, color: "text.secondary" }}
-        >
-          {mode === "register" ? "Create your BudgetNest account" : "Sign in to BudgetNest"}
-        </Typography>
         <IconButton
           onClick={onClose}
           aria-label="Close sign in"
