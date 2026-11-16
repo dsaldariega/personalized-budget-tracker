@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   AddRounded, DeleteOutlineRounded, EditOutlined, MoreHorizRounded,
   RefreshRounded, SavingsRounded, SearchRounded, TrendingUpRounded,
@@ -107,16 +107,26 @@ export function GoalsManager() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+  const loadController = useRef<AbortController | null>(null);
+
   const loadData = useCallback(async () => {
+    loadController.current?.abort();
+    const controller = new AbortController();
+    loadController.current = controller;
+    const { signal } = controller;
     setLoading(true); setError("");
     try {
-      const data = await apiRequest<{ accounts: Account[]; goals: Goal[] }>("/goals");
+      const data = await apiRequest<{ accounts: Account[]; goals: Goal[] }>("/goals"), { signal });
+      if (signal.aborted) return;
       setAccounts(data.accounts); setGoals(data.goals);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to load savings goals.");
-    } finally { setLoading(false); }
+      if (!signal.aborted) setError(cause instanceof Error ? cause.message : "Unable to load savings goals.");
+    } finally { if (!signal.aborted) setLoading(false); }
   }, []);
-  useEffect(() => { void loadData(); }, [loadData]);
+  useEffect(() => {
+    void loadData();
+    return () => loadController.current?.abort();
+  }, [loadData]);
 
   function openCreate() {
     setEditing(null);
