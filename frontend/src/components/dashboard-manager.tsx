@@ -508,7 +508,7 @@ export function DashboardManager() {
         goalResult,
         subscriptionResult,
       ] = await Promise.all([
-        apiRequest<{ accounts: Account[]; defaultCurrency?: string }>("/accounts"),
+        apiRequest<{ accounts: Account[]; defaultCurrency?: string }>("/accounts", { signal }),
         fetchAllTransactions(),
         authenticatedSupabase
           .from("budgets")
@@ -524,7 +524,8 @@ export function DashboardManager() {
             "id,account_id,name,target_amount,current_amount,target_date,status",
           )
           .eq("user_id", user.id)
-          .order("created_at", { ascending: false }),
+          .order("created_at", { ascending: false })
+          .abortSignal(signal),
         authenticatedSupabase
           .from("subscriptions")
           .select(
@@ -536,7 +537,7 @@ export function DashboardManager() {
           .abortSignal(signal),
       ]);
 
-      if (requestId !== loadRequestId.current) return;
+      if (requestId !== loadRequestId.current || signal.aborted) return;
       const failed = [
         transactionResult,
         budgetResult,
