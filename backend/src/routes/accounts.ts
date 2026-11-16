@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { signedMoneySchema } from "../lib/validation.js";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 const router = Router();
@@ -7,7 +8,7 @@ const router = Router();
 const accountSchema = z.object({
   name: z.string().trim().min(1).max(80),
   account_type: z.enum(["cash", "bank", "e_wallet", "credit", "investment", "other"]),
-  opening_balance: z.number().finite(),
+  opening_balance: signedMoneySchema,
 });
 
 function context(res: import("express").Response) {
