@@ -139,7 +139,7 @@ function LoanDialog({ open, accounts, initial, saving, onClose, onSave }: {
         <Stack spacing={2}>
           <TextField label="Loan name" placeholder="e.g. Personal loan, Car loan" value={form.name} onChange={e => setForm(v => ({ ...v, name: e.target.value }))} fullWidth required inputProps={{ maxLength: 100 }} />
           <TextField select label="Linked account" value={form.account_id} onChange={e => setForm(v => ({ ...v, account_id: e.target.value }))} fullWidth>{accounts.map(a => <MenuItem key={a.id} value={a.id}>{a.name} · {a.currency}</MenuItem>)}</TextField>
-          <TextField label="Principal amount" type="number" value={form.principal_amount} onChange={e => setForm(v => ({ ...v, principal_amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "any" }} InputProps={{ startAdornment: <Typography color="text.secondary" sx={{ mr: 1 }}>{currency}</Typography> }} />
+          <TextField label="Principal amount" type="number" value={form.principal_amount} onChange={e => setForm(v => ({ ...v, principal_amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "any" }} />
           <TextField select label="Interest calculation method" value={form.interest_type} onChange={e => setForm(v => ({ ...v, interest_type: e.target.value as InterestType }))} fullWidth>
             <MenuItem value="flat_rate">Flat Rate — fixed interest for the full term</MenuItem>
             <MenuItem value="reducing_balance">Reducing Balance — interest decreases as principal is repaid</MenuItem>
@@ -209,7 +209,7 @@ function PaymentDialog({ open, loan, currency, remainingPrincipal, accruedIntere
       <DialogTitle sx={{ fontWeight: 700 }}>Record a loan payment</DialogTitle>
       <DialogContent><Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{loan?.name} · Outstanding principal {money(remainingPrincipal, currency)}</Typography>
         <Stack spacing={2}>
-          <TextField label="Total amount paid" type="number" value={form.amount} onChange={e => setForm(v => ({ ...v, amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "any" }} InputProps={{ startAdornment: <Typography color="text.secondary" sx={{ mr: 1 }}>{currency}</Typography> }} />
+          <TextField label="Total amount paid" type="number" value={form.amount} onChange={e => setForm(v => ({ ...v, amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "any" }} />
           <Paper variant="outlined" sx={{ p: 1.7, borderRadius: 1.25 }}>
             <Typography variant="caption" color="text.secondary">Estimated payment allocation</Typography>
             <Stack direction="row" justifyContent="space-between" sx={{ mt: 1 }}><Typography variant="body2" color="text.secondary">Interest portion</Typography><Typography fontWeight={600}>{money(interestPaid, currency)}</Typography></Stack>
