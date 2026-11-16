@@ -1425,12 +1425,13 @@ export function DashboardManager() {
               </Paper>
             </Grid>
             <Grid size={{ xs: 12, lg: 5 }}>
-              <Paper
-                variant="outlined"
-                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
-              >
-                <SectionTitle
-                  title="Upcoming subscriptions"
+              <Stack spacing={2}>
+                <Paper
+                  variant="outlined"
+                  sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
+                >
+                  <SectionTitle
+                    title="Upcoming subscriptions"
                   href="/subscriptions"
                 />
                 {upcomingSubscriptions.length ? (
@@ -1517,14 +1518,12 @@ export function DashboardManager() {
                     the next 7 days.
                   </Alert>
                 )}
-              </Paper>
-            </Grid>
-            <Grid size={{ xs: 12, lg: 5 }}>
-              <Paper
-                variant="outlined"
-                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
-              >
-                <SectionTitle title="Savings goals" href="/goals" />
+                </Paper>
+                <Paper
+                  variant="outlined"
+                  sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
+                >
+                  <SectionTitle title="Savings goals" href="/goals" />
                 {activeGoals.length ? (
                   <Stack spacing={1.8}>
                     {activeGoals.slice(0, 4).map((goal) => {
@@ -1580,9 +1579,10 @@ export function DashboardManager() {
                     action="Create a goal"
                   />
                 )}
-              </Paper>
+                </Paper>
+              </Stack>
             </Grid>
-            <Grid size={{ xs: 12, lg: 7 }}>
+            <Grid size={{ xs: 12 }}>
               <Paper
                 variant="outlined"
                 sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
