@@ -400,7 +400,8 @@ export function DashboardManager() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [currencyFilter, setCurrencyFilter] = useState("all");
+  const [defaultCurrency, setDefaultCurrency] = useState("PHP");
+  const [currencyFilter, setCurrencyFilter] = useState("preferred");
   const [isFeedbackAdmin, setIsFeedbackAdmin] = useState(false);
   const [feedbackRows, setFeedbackRows] = useState<FeedbackEntry[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
@@ -434,7 +435,7 @@ export function DashboardManager() {
           goalResult,
           subscriptionResult,
         ] = await Promise.all([
-          apiRequest<{ accounts: Account[] }>("/accounts"),
+          apiRequest<{ accounts: Account[]; defaultCurrency?: string }>("/accounts"),
           apiRequest<{ transactions: Transaction[] }>("/transactions"),
           apiRequest<{ budgets: Budget[] }>("/budgets"),
           apiRequest<{ goals: Goal[] }>("/goals"),
@@ -442,6 +443,7 @@ export function DashboardManager() {
         ]);
         if (requestId !== loadRequestId.current) return;
         setAccounts(accountResult.accounts ?? []);
+        setDefaultCurrency(accountResult.defaultCurrency || "PHP");
         setTransactions(transactionResult.transactions ?? []);
         setBudgets(budgetResult.budgets ?? []);
         setGoals(goalResult.goals ?? []);
@@ -497,7 +499,7 @@ export function DashboardManager() {
         goalResult,
         subscriptionResult,
       ] = await Promise.all([
-        apiRequest<{ accounts: Account[] }>("/accounts"),
+        apiRequest<{ accounts: Account[]; defaultCurrency?: string }>("/accounts"),
         fetchAllTransactions(),
         authenticatedSupabase
           .from("budgets")
@@ -533,6 +535,7 @@ export function DashboardManager() {
       if (failed?.error) setError(failed.error.message);
 
       setAccounts(accountApiResult.accounts ?? []);
+      setDefaultCurrency(accountApiResult.defaultCurrency || "PHP");
       setTransactions((transactionResult.data ?? []) as Transaction[]);
       setBudgets((budgetResult.data ?? []) as Budget[]);
       setGoals((goalResult.data ?? []) as Goal[]);
@@ -573,6 +576,12 @@ export function DashboardManager() {
     return () => subscription.unsubscribe();
   }, [loadData, supabase]);
   useEffect(() => {
+    const handleDataChanged = () => void loadData();
+    window.addEventListener("budgetnest:data-changed", handleDataChanged);
+    return () => window.removeEventListener("budgetnest:data-changed", handleDataChanged);
+  }, [loadData]);
+
+  useEffect(() => {
     if (!isFeedbackAdmin) {
       setFeedbackRows([]);
       setFeedbackError("");
@@ -603,11 +612,15 @@ export function DashboardManager() {
     [accounts],
   );
   const selectedCurrency =
-    currencyFilter === "all" || !currencies.includes(currencyFilter)
-      ? currencies.length === 1
-        ? currencies[0]
-        : "all"
-      : currencyFilter;
+    currencyFilter === "preferred"
+      ? currencies.includes(defaultCurrency)
+        ? defaultCurrency
+        : currencies.length === 1
+          ? currencies[0]
+          : "all"
+      : currencyFilter === "all" || !currencies.includes(currencyFilter)
+        ? "all"
+        : currencyFilter;
   const activeAccounts = accounts.filter(
     (account) =>
       !account.is_archived &&
@@ -881,6 +894,7 @@ export function DashboardManager() {
                   onChange={(event) => setCurrencyFilter(event.target.value)}
                   aria-label="Currency filter"
                 >
+                  <MenuItem value="preferred">Preferred currency ({defaultCurrency})</MenuItem>
                   <MenuItem value="all">All currencies</MenuItem>
                   {currencies.map((currency) => (
                     <MenuItem key={currency} value={currency}>
