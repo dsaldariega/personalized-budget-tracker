@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { positiveMoneySchema } from "../lib/validation.js";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 const router = Router();
@@ -10,7 +11,7 @@ const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const loanSchema = z.object({
   account_id: z.string().uuid(),
   name: z.string().trim().min(1).max(100),
-  principal_amount: z.number().finite().positive().max(999999999999.99),
+  principal_amount: positiveMoneySchema,
   monthly_interest_rate: z.number().finite().min(0).max(100),
   interest_type: z.enum(["flat_rate", "reducing_balance"]).default("reducing_balance"),
   term_months: z.number().int().min(1).max(600),
@@ -20,7 +21,7 @@ const loanSchema = z.object({
   status: z.enum(["active", "paid", "paused"]),
 });
 const paymentSchema = z.object({
-  amount: z.number().finite().positive().max(999999999999.99),
+  amount: positiveMoneySchema,
   payment_date: dateSchema,
   notes: z.string().max(300).nullable(),
 });
