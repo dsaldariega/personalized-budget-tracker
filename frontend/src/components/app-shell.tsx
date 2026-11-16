@@ -178,24 +178,31 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!authReady) return;
     let active = true;
+    let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+    let requestController: AbortController | null = null;
     setDismissedIds([]);
 
     const loadNotifications = () => {
+      requestController?.abort();
+      const controller = new AbortController();
+      requestController = controller;
+      const { signal } = controller;
       setNotificationsLoading(true);
+
       Promise.all([
         apiRequest<{
           accounts: Array<{ id: string; currency?: string }>;
           budgets: Array<any>;
           expenses: Array<any>;
-        }>("/budgets"),
+        }>("/budgets", { signal }),
         apiRequest<{
           accounts: Array<{ id: string; currency?: string }>;
           goals: Array<any>;
-        }>("/goals"),
-        apiRequest<{ subscriptions: Array<any> }>("/subscriptions"),
+        }>("/goals", { signal }),
+        apiRequest<{ subscriptions: Array<any> }>("/subscriptions", { signal }),
       ])
         .then(([budgetData, goalData, subscriptionData]) => {
-          if (!active) return;
+          if (!active || signal.aborted) return;
           setNotifications(
             buildNotifications({
               accounts: budgetData.accounts?.length
@@ -209,19 +216,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           );
         })
         .catch((error) => {
+          if (signal.aborted) return;
           console.error("Unable to load notifications:", error);
           if (active) setNotifications([]);
         })
         .finally(() => {
-          if (active) setNotificationsLoading(false);
+          if (active && !signal.aborted) setNotificationsLoading(false);
         });
     };
 
+    const handleDataChanged = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(loadNotifications, 180);
+    };
+
     loadNotifications();
-    window.addEventListener("budgetnest:data-changed", loadNotifications);
+    window.addEventListener("budgetnest:data-changed", handleDataChanged);
     return () => {
       active = false;
-      window.removeEventListener("budgetnest:data-changed", loadNotifications);
+      if (debounceTimer) clearTimeout(debounceTimer);
+      requestController?.abort();
+      window.removeEventListener("budgetnest:data-changed", handleDataChanged);
     };
   }, [authReady, user?.id]);
 
@@ -1450,9 +1465,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Fab>
         )}
         <Box
-          key={`${pathname}:${user?.id ?? "guest"}`}
           component="main"
-          className="page-transition"
           sx={{
             width: "100%",
             maxWidth: 1840,
