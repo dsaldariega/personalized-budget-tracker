@@ -234,7 +234,6 @@ function AccountDialog({
 
 export function AccountsManager() {
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [defaultCurrency, setDefaultCurrency] = useState("PHP");
   const [transactions, setTransactions] = useState<BalanceTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -257,11 +256,9 @@ export function AccountsManager() {
       const result = await apiRequest<{
         accounts: Account[];
         transactions: BalanceTransaction[];
-        defaultCurrency: string;
       }>("/accounts");
       setAccounts(result.accounts);
       setTransactions(result.transactions);
-      setDefaultCurrency(result.defaultCurrency || "PHP");
     } catch (loadError) {
       setError(
         loadError instanceof Error
@@ -279,7 +276,7 @@ export function AccountsManager() {
 
   function openCreate() {
     setEditingAccount(null);
-    setFormSeed({ ...emptyForm });
+    setFormSeed(emptyForm);
     setDialogOpen(true);
   }
 
