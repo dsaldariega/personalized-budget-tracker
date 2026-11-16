@@ -815,7 +815,6 @@ export function DashboardManager() {
         return days >= 0 && days <= 7;
       }).length
     : 0;
-  const defaultCurrency = currencies.length === 1 ? currencies[0] : "PHP";
 
   return (
     <Stack className="dashboard-page" spacing={3}>
