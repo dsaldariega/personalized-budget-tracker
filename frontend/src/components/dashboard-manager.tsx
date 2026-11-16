@@ -406,6 +406,7 @@ export function DashboardManager() {
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackError, setFeedbackError] = useState("");
   const loadRequestId = useRef(0);
+  const currentUserId = useRef<string | null>(null);
 
   const loadData = useCallback(async () => {
     const requestId = ++loadRequestId.current;
@@ -422,6 +423,7 @@ export function DashboardManager() {
       } = await supabase.auth.getSession();
       user = session?.user ?? null;
     }
+    currentUserId.current = user?.id ?? null;
     setIsFeedbackAdmin(user?.email?.trim().toLowerCase() === "dsaldariega@gmail.com");
     if (!user) {
       try {
@@ -555,11 +557,17 @@ export function DashboardManager() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-        // Defer Supabase reads until after its auth-state callback has completed.
-        queueMicrotask(() => void loadData());
-      }
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT") return;
+
+      const nextUserId = session?.user?.id ?? null;
+      if (nextUserId === currentUserId.current) return;
+
+      currentUserId.current = nextUserId;
+      // Only reload when the active user actually changes. Supabase can emit
+      // SIGNED_IN again when a tab becomes active, even for the same session.
+      // Defer Supabase reads until after its auth-state callback has completed.
+      queueMicrotask(() => void loadData());
     });
 
     return () => subscription.unsubscribe();
