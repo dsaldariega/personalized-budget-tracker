@@ -359,14 +359,7 @@ function BudgetDialog({
               fullWidth
               required
               inputProps={{ min: "0.01", step: "any" }}
-              InputProps={{
-                startAdornment: (
-                  <Typography color="text.secondary" sx={{ mr: 1 }}>
-                    {accounts.find((a) => a.id === form.account_id)?.currency ??
-                      "¤"}
-                  </Typography>
-                ),
-              }}
+
             />
             <TextField
               select
