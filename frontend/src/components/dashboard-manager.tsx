@@ -407,9 +407,14 @@ export function DashboardManager() {
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackError, setFeedbackError] = useState("");
   const loadRequestId = useRef(0);
+  const loadController = useRef<AbortController | null>(null);
   const currentUserId = useRef<string | null>(null);
 
   const loadData = useCallback(async () => {
+    loadController.current?.abort();
+    const controller = new AbortController();
+    loadController.current = controller;
+    const { signal } = controller;
     const requestId = ++loadRequestId.current;
     setLoading(true);
     setError("");
@@ -424,6 +429,7 @@ export function DashboardManager() {
       } = await supabase.auth.getSession();
       user = session?.user ?? null;
     }
+    if (signal.aborted) return;
     currentUserId.current = user?.id ?? null;
     setIsFeedbackAdmin(user?.email?.trim().toLowerCase() === "dsaldariega@gmail.com");
     if (!user) {
@@ -435,13 +441,13 @@ export function DashboardManager() {
           goalResult,
           subscriptionResult,
         ] = await Promise.all([
-          apiRequest<{ accounts: Account[]; defaultCurrency?: string }>("/accounts"),
-          apiRequest<{ transactions: Transaction[] }>("/transactions"),
-          apiRequest<{ budgets: Budget[] }>("/budgets"),
-          apiRequest<{ goals: Goal[] }>("/goals"),
-          apiRequest<{ subscriptions: Subscription[] }>("/subscriptions"),
+          apiRequest<{ accounts: Account[]; defaultCurrency?: string }>("/accounts", { signal }),
+          apiRequest<{ transactions: Transaction[] }>("/transactions", { signal }),
+          apiRequest<{ budgets: Budget[] }>("/budgets", { signal }),
+          apiRequest<{ goals: Goal[] }>("/goals", { signal }),
+          apiRequest<{ subscriptions: Subscription[] }>("/subscriptions", { signal }),
         ]);
-        if (requestId !== loadRequestId.current) return;
+        if (requestId !== loadRequestId.current || signal.aborted) return;
         setAccounts(accountResult.accounts ?? []);
         setDefaultCurrency(accountResult.defaultCurrency || "PHP");
         setTransactions(transactionResult.transactions ?? []);
@@ -450,7 +456,7 @@ export function DashboardManager() {
         setSubscriptions(subscriptionResult.subscriptions ?? []);
         setNow(new Date());
       } catch (loadError) {
-        if (requestId === loadRequestId.current) {
+        if (requestId === loadRequestId.current && !signal.aborted) {
           setError(
             loadError instanceof Error
               ? loadError.message
@@ -458,7 +464,7 @@ export function DashboardManager() {
           );
         }
       } finally {
-        if (requestId === loadRequestId.current) setLoading(false);
+        if (requestId === loadRequestId.current && !signal.aborted) setLoading(false);
       }
       return;
     }
@@ -466,8 +472,10 @@ export function DashboardManager() {
     // A signed-in session requires a configured Supabase client. Keep the
     // narrowed client in a local constant for use by the async query helpers.
     if (!supabase) {
-      setError("Authentication service is not configured.");
-      setLoading(false);
+      if (!signal.aborted) {
+        setError("Authentication service is not configured.");
+        setLoading(false);
+      }
       return;
     }
     const authenticatedSupabase = supabase;
@@ -483,7 +491,8 @@ export function DashboardManager() {
           )
           .eq("user_id", user.id)
           .order("transaction_date", { ascending: false })
-          .range(offset, offset + pageSize - 1);
+          .range(offset, offset + pageSize - 1)
+          .abortSignal(signal);
         if (result.error) return { data: null, error: result.error };
         const page = (result.data ?? []) as Transaction[];
         rows.push(...page);
@@ -507,7 +516,8 @@ export function DashboardManager() {
             "id,account_id,name,category,amount,period,start_date,end_date",
           )
           .eq("user_id", user.id)
-          .order("created_at", { ascending: false }),
+          .order("created_at", { ascending: false })
+          .abortSignal(signal),
         authenticatedSupabase
           .from("savings_goals")
           .select(
@@ -522,7 +532,8 @@ export function DashboardManager() {
           )
           .eq("user_id", user.id)
           .eq("is_active", true)
-          .order("next_billing_date", { ascending: true }),
+          .order("next_billing_date", { ascending: true })
+          .abortSignal(signal),
       ]);
 
       if (requestId !== loadRequestId.current) return;
@@ -542,7 +553,7 @@ export function DashboardManager() {
       setSubscriptions((subscriptionResult.data ?? []) as Subscription[]);
       setNow(new Date());
     } catch (loadError) {
-      if (requestId === loadRequestId.current) {
+      if (requestId === loadRequestId.current && !signal.aborted) {
         setError(
           loadError instanceof Error
             ? loadError.message
@@ -550,7 +561,7 @@ export function DashboardManager() {
         );
       }
     } finally {
-      if (requestId === loadRequestId.current) setLoading(false);
+      if (requestId === loadRequestId.current && !signal.aborted) setLoading(false);
     }
   }, [supabase]);
 
@@ -573,7 +584,11 @@ export function DashboardManager() {
       queueMicrotask(() => void loadData());
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      loadRequestId.current += 1;
+      loadController.current?.abort();
+    };
   }, [loadData, supabase]);
   useEffect(() => {
     const handleDataChanged = () => void loadData();
