@@ -4,7 +4,7 @@ import { AuthModal } from "@/components/auth-modal";
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BackupOutlined, CheckCircleOutlineRounded, CloudDownloadOutlined, CloudUploadOutlined,
-  LockOutlined, PaletteOutlined, PersonOutlineRounded, PublicOutlined,
+  LockOutlined, PaletteOutlined, PersonOutlineRounded, InputAdornment,
   ComputerOutlined, DarkModeOutlined, LightModeOutlined,
 } from "@mui/icons-material";
 import {
@@ -21,6 +21,19 @@ type Profile = { full_name: string; default_currency: string };
 type ProfileResponse = { full_name: string | null; default_currency: string | null };
 type Account = { id: string; name: string; currency: string; account_type: string; opening_balance: number; is_archived: boolean; created_at: string };
 type Transaction = { id: string; account_id: string; transaction_type: string; amount: number; category: string | null; description: string | null; transaction_date: string; transfer_group_id: string | null; transfer_direction: string | null; created_at: string };
+function currencySymbol(code: string) {
+  try {
+    return new Intl.NumberFormat("en", {
+      style: "currency",
+      currency: code,
+      currencyDisplay: "narrowSymbol",
+    })
+      .formatToParts(0)
+      .find((part) => part.type === "currency")?.value ?? code;
+  } catch {
+    return code;
+  }
+}
 const currencies = [
   { code: "PHP", name: "Philippine Peso" },
   { code: "USD", name: "US Dollar" },
@@ -298,12 +311,66 @@ export function SettingsManager() {
             <Stack spacing={1.25}>
               <TextField size="small" label="Full name" value={profile.full_name ?? ""} onChange={e => setProfile(v => ({ ...v, full_name: e.target.value }))} fullWidth inputProps={{ maxLength: 100 }} />
               <TextField size="small" label="Email address" value={email} fullWidth disabled helperText="Email changes are managed through your authentication provider." />
-              <Stack direction="row" spacing={1} alignItems="center">
-                <PublicOutlined fontSize="small" color="action" />
-                <TextField size="small" select label="Default currency" value={profile.default_currency} onChange={e => setProfile(v => ({ ...v, default_currency: e.target.value }))} helperText="Used for new accounts. Existing accounts keep their saved currency." fullWidth>
-                  {currencies.map(currency => <MenuItem key={currency.code} value={currency.code}>{currency.name} ({currency.code})</MenuItem>)}
-                </TextField>
-              </Stack>
+              <TextField
+                size="small"
+                select
+                label="Default currency"
+                value={profile.default_currency}
+                onChange={e => setProfile(v => ({ ...v, default_currency: e.target.value }))}
+                helperText="Used for new accounts. Existing accounts keep their saved currency."
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Typography
+                        component="span"
+                        sx={{ minWidth: 18, fontSize: "0.95rem", fontWeight: 600, color: "text.secondary" }}
+                      >
+                        {currencySymbol(profile.default_currency)}
+                      </Typography>
+                    </InputAdornment>
+                  ),
+                }}
+                SelectProps={{
+                  MenuProps: {
+                    PaperProps: {
+                      sx: {
+                        "& .MuiMenuItem-root": {
+                          fontFamily: "inherit",
+                          fontSize: "0.875rem",
+                          fontWeight: 400,
+                          color: "text.primary",
+                        },
+                      },
+                    },
+                  },
+                }}
+                sx={{
+                  "& .MuiSelect-select": {
+                    fontFamily: "inherit",
+                    fontSize: "0.875rem",
+                    fontWeight: 400,
+                    color: "text.primary",
+                  },
+                }}
+              >
+                {currencies.map(currency => (
+                  <MenuItem
+                    key={currency.code}
+                    value={currency.code}
+                    sx={{ fontFamily: "inherit", fontSize: "0.875rem", fontWeight: 400, color: "text.primary" }}
+                  >
+                    <Stack direction="row" alignItems="center" spacing={1.25}>
+                      <Typography component="span" sx={{ minWidth: 22, fontWeight: 600, color: "text.secondary" }}>
+                        {currencySymbol(currency.code)}
+                      </Typography>
+                      <Typography component="span" sx={{ fontSize: "inherit", fontWeight: "inherit", color: "inherit" }}>
+                        {currency.name} ({currency.code})
+                      </Typography>
+                    </Stack>
+                  </MenuItem>
+                ))}
+              </TextField>
               <Box><Button variant="contained" onClick={() => void saveProfile()} disabled={!dirty || saving}>{saving ? <CircularProgress size={18} color="inherit" /> : "Save profile"}</Button></Box>
             </Stack>
           </Paper>
