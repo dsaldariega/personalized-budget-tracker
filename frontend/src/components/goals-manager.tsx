@@ -116,7 +116,7 @@ export function GoalsManager() {
     const { signal } = controller;
     setLoading(true); setError("");
     try {
-      const data = await apiRequest<{ accounts: Account[]; goals: Goal[] }>("/goals"), { signal });
+      const data = await apiRequest<{ accounts: Account[]; goals: Goal[] }>("/goals", { signal });
       if (signal.aborted) return;
       setAccounts(data.accounts); setGoals(data.goals);
     } catch (cause) {
