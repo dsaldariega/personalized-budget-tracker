@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   AddRounded, AutorenewRounded, CalendarMonthRounded, DeleteOutlineRounded,
   EditOutlined, HistoryRounded, MoreHorizRounded, RefreshRounded, SearchRounded,
@@ -151,20 +151,30 @@ export function SubscriptionsManager() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+  const loadController = useRef<AbortController | null>(null);
+
   const loadData = useCallback(async () => {
+    loadController.current?.abort();
+    const controller = new AbortController();
+    loadController.current = controller;
+    const { signal } = controller;
     setLoading(true); setError("");
     try {
-      const data = await apiRequest<{ accounts: Account[]; subscriptions: Subscription[]; payments: Payment[] }>("/subscriptions");
+      const data = await apiRequest<{ accounts: Account[]; subscriptions: Subscription[]; payments: Payment[] }>("/subscriptions"), { signal });
+      if (signal.aborted) return;
       setAccounts(data.accounts ?? []);
       setSubscriptions(data.subscriptions ?? []);
       setPayments(data.payments ?? []);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to load subscriptions.");
+      if (!signal.aborted) setError(cause instanceof Error ? cause.message : "Unable to load subscriptions.");
     } finally {
-      setLoading(false);
+      if (!signal.aborted) setLoading(false);
     }
   }, []);
-  useEffect(() => { void loadData(); }, [loadData]);
+  useEffect(() => {
+    void loadData();
+    return () => loadController.current?.abort();
+  }, [loadData]);
 
   const accountById = useMemo(() => new Map(accounts.map(a => [a.id, a])), [accounts]);
   function openCreate() {
