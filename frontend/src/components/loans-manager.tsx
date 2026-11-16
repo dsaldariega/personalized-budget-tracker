@@ -259,7 +259,7 @@ export function LoansManager() {
     const { signal } = controller;
     setLoading(true); setError("");
     try {
-      const data = await apiRequest<{ accounts: Account[]; loans: Loan[]; payments: Payment[] }>("/loans"), { signal });
+      const data = await apiRequest<{ accounts: Account[]; loans: Loan[]; payments: Payment[] }>("/loans", { signal });
       if (signal.aborted) return;
       setAccounts(data.accounts); setLoans(data.loans); setPayments(data.payments);
     } catch (cause) {
