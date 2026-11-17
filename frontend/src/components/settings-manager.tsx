@@ -1002,6 +1002,8 @@ export function SettingsManager() {
               rows.
             </Typography>
           </Paper>
+        </>
+      )}
       <Dialog
         open={exportDialogOpen}
         onClose={() => !exporting && setExportDialogOpen(false)}
