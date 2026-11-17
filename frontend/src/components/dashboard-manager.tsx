@@ -1245,8 +1245,7 @@ export function DashboardManager() {
             </Grid>
           </Grid>
 
-          <Grid container spacing={2.5}>
-            <Grid size={{ xs: 12, lg: 8 }}>
+          <Grid container spacing={2} alignItems="stretch"><Grid size={{ xs: 12, lg: 8 }}>
               <Paper
                 variant="outlined"
                 sx={{
@@ -1458,165 +1457,70 @@ export function DashboardManager() {
                 )}
               </Paper>
             </Grid>
-            <Grid size={{ xs: 12, lg: 5 }}>
-              <Stack spacing={2}>
-                <Paper
-                  variant="outlined"
-                  sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
-                >
-                  <SectionTitle
-                    title="Upcoming subscriptions"
-                  href="/subscriptions"
-                />
-                {upcomingSubscriptions.length ? (
-                  <Stack
-                    divider={
-                      <Box sx={{ borderBottom: 1, borderColor: "divider" }} />
-                    }
-                    spacing={1.4}
-                  >
-                    {upcomingSubscriptions.map((subscription) => {
-                      const days = now
-                        ? Math.round(
-                            (new Date(
-                              subscription.next_billing_date + "T00:00:00Z",
-                            ).getTime() -
-                              dateOnly(now).getTime()) /
-                              86400000,
-                          )
-                        : 0;
-                      return (
-                        <Stack
-                          key={subscription.id}
-                          direction="row"
-                          alignItems="center"
-                          spacing={1.2}
-                        >
-                          <Avatar
-                            variant="rounded"
-                            sx={{
-                              bgcolor: "action.hover",
-                              color: "primary.main",
-                            }}
-                          >
-                            <EventRepeatRounded />
-                          </Avatar>
-                          <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography
-                              fontWeight={700}
-                              sx={{
-                                whiteSpace: { xs: "normal", sm: "nowrap" },
-                                overflowWrap: "anywhere",
-                                lineHeight: 1.35,
-                              }}
-                            >
-                              {subscription.name}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              {accountMap.get(subscription.account_id)?.name ??
-                                "Account"}{" "}
-                              ·{" "}
-                              {days < 0
-                                ? `Overdue by ${Math.abs(days)}d`
-                                : days === 0
-                                  ? "Due today"
-                                  : `Due ${shortDate(subscription.next_billing_date)}`}
-                            </Typography>
-                          </Box>
-                          <Typography fontWeight={600} variant="body2">
-                            {money(
-                              Number(subscription.amount),
-                              accountMap.get(subscription.account_id)
-                                ?.currency ?? "PHP",
-                            )}
-                          </Typography>
-                        </Stack>
-                      );
-                    })}
-                  </Stack>
-                ) : (
-                  <EmptyState
-                    title="No upcoming subscriptions"
-                    detail="Active recurring services will show their next billing dates here."
-                    href="/subscriptions"
-                    action="Manage subscriptions"
-                  />
-                )}
-                {dueSoonCount > 0 && (
-                  <Alert severity="info" sx={{ mt: 2 }}>
-                    {dueSoonCount}{" "}
-                    {dueSoonCount === 1 ? "payment is" : "payments are"} due in
-                    the next 7 days.
-                  </Alert>
-                )}
-                </Paper>
-                <Paper
-                  variant="outlined"
-                  sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
-                >
-                  <SectionTitle title="Savings goals" href="/goals" />
-                {activeGoals.length ? (
-                  <Stack spacing={1.8}>
-                    {activeGoals.slice(0, 4).map((goal) => {
-                      const percent =
-                        Number(goal.target_amount) > 0
-                          ? Math.min(
-                              100,
-                              (Number(goal.current_amount) /
-                                Number(goal.target_amount)) *
-                                100,
-                            )
-                          : 0;
-                      const currency =
-                        accountMap.get(goal.account_id)?.currency ?? "PHP";
-                      return (
-                        <Box key={goal.id}>
-                          <Stack
-                            direction="row"
-                            justifyContent="space-between"
-                            spacing={1}
-                          >
-                            <Typography fontWeight={700} noWrap>
-                              {goal.name}
-                            </Typography>
-                            <Typography variant="caption" fontWeight={600}>
-                              {percent.toFixed(0)}%
-                            </Typography>
-                          </Stack>
-                          <LinearProgress
-                            variant="determinate"
-                            value={percent}
-                            color="success"
-                            sx={{
-                              height: 8,
-                              borderRadius: 99,
-                              mt: 0.8,
-                              bgcolor: "action.hover",
-                            }}
-                          />
-                          <Typography variant="caption" color="text.secondary">
-                            {money(Number(goal.current_amount), currency)} of{" "}
-                            {money(Number(goal.target_amount), currency)}
-                          </Typography>
-                        </Box>
-                      );
-                    })}
-                  </Stack>
-                ) : (
-                  <EmptyState
-                    title="No active goals"
-                    detail="Give your savings a purpose by setting a target."
-                    href="/goals"
-                    action="Create a goal"
-                  />
-                )}
-                </Paper>
-              </Stack>
+                        <Grid size={{ xs: 12, lg: 5 }}>
+              <Paper
+                                variant="outlined"
+                                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
+                              >
+                                <SectionTitle title="Savings goals" href="/goals" />
+                              {activeGoals.length ? (
+                                <Stack spacing={1.8}>
+                                  {activeGoals.slice(0, 4).map((goal) => {
+                                    const percent =
+                                      Number(goal.target_amount) > 0
+                                        ? Math.min(
+                                            100,
+                                            (Number(goal.current_amount) /
+                                              Number(goal.target_amount)) *
+                                              100,
+                                          )
+                                        : 0;
+                                    const currency =
+                                      accountMap.get(goal.account_id)?.currency ?? "PHP";
+                                    return (
+                                      <Box key={goal.id}>
+                                        <Stack
+                                          direction="row"
+                                          justifyContent="space-between"
+                                          spacing={1}
+                                        >
+                                          <Typography fontWeight={700} noWrap>
+                                            {goal.name}
+                                          </Typography>
+                                          <Typography variant="caption" fontWeight={600}>
+                                            {percent.toFixed(0)}%
+                                          </Typography>
+                                        </Stack>
+                                        <LinearProgress
+                                          variant="determinate"
+                                          value={percent}
+                                          color="success"
+                                          sx={{
+                                            height: 8,
+                                            borderRadius: 99,
+                                            mt: 0.8,
+                                            bgcolor: "action.hover",
+                                          }}
+                                        />
+                                        <Typography variant="caption" color="text.secondary">
+                                          {money(Number(goal.current_amount), currency)} of{" "}
+                                          {money(Number(goal.target_amount), currency)}
+                                        </Typography>
+                                      </Box>
+                                    );
+                                  })}
+                                </Stack>
+                              ) : (
+                                <EmptyState
+                                  title="No active goals"
+                                  detail="Give your savings a purpose by setting a target."
+                                  href="/goals"
+                                  action="Create a goal"
+                                />
+                              )}
+                              </Paper>
             </Grid>
-            <Grid size={{ xs: 12 }}>
+<Grid size={{ xs: 12, lg: 7 }}>
               <Paper
                 variant="outlined"
                 sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
@@ -1726,7 +1630,104 @@ export function DashboardManager() {
                 )}
               </Paper>
             </Grid>
-          </Grid>
+<Grid size={{ xs: 12, lg: 5 }}>
+              <Paper
+                  variant="outlined"
+                  sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
+                >
+                  <SectionTitle
+                    title="Upcoming subscriptions"
+                  href="/subscriptions"
+                />
+                {upcomingSubscriptions.length ? (
+                  <Stack
+                    divider={
+                      <Box sx={{ borderBottom: 1, borderColor: "divider" }} />
+                    }
+                    spacing={1.4}
+                  >
+                    {upcomingSubscriptions.map((subscription) => {
+                      const days = now
+                        ? Math.round(
+                            (new Date(
+                              subscription.next_billing_date + "T00:00:00Z",
+                            ).getTime() -
+                              dateOnly(now).getTime()) /
+                              86400000,
+                          )
+                        : 0;
+                      return (
+                        <Stack
+                          key={subscription.id}
+                          direction="row"
+                          alignItems="center"
+                          spacing={1.2}
+                        >
+                          <Avatar
+                            variant="rounded"
+                            sx={{
+                              bgcolor: "action.hover",
+                              color: "primary.main",
+                            }}
+                          >
+                            <EventRepeatRounded />
+                          </Avatar>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
+                              fontWeight={700}
+                              sx={{
+                                whiteSpace: { xs: "normal", sm: "nowrap" },
+                                overflowWrap: "anywhere",
+                                lineHeight: 1.35,
+                              }}
+                            >
+                              {subscription.name}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {accountMap.get(subscription.account_id)?.name ??
+                                "Account"}{" "}
+                              ·{" "}
+                              {days < 0
+                                ? `Overdue by ${Math.abs(days)}d`
+                                : days === 0
+                                  ? "Due today"
+                                  : `Due ${shortDate(subscription.next_billing_date)}`}
+                            </Typography>
+                          </Box>
+                          <Typography fontWeight={600} variant="body2">
+                            {money(
+                              Number(subscription.amount),
+                              accountMap.get(subscription.account_id)
+                                ?.currency ?? "PHP",
+                            )}
+                          </Typography>
+                        </Stack>
+                      );
+                    })}
+                  </Stack>
+                ) : (
+                  <EmptyState
+                    title="No upcoming subscriptions"
+                    detail="Active recurring services will show their next billing dates here."
+                    href="/subscriptions"
+                    action="Manage subscriptions"
+                  />
+                )}
+                {dueSoonCount > 0 && (
+                  <Alert severity="info" sx={{ mt: 2 }}>
+                    {dueSoonCount}{" "}
+                    {dueSoonCount === 1 ? "payment is" : "payments are"} due in
+                    the next 7 days.
+                  </Alert>
+                )}
+                </Paper>
+                
+              
+            </Grid>
+                      </Grid>
           {isFeedbackAdmin && (
             <Paper variant="outlined" sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}>
               <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between" spacing={1.5} sx={{ mb: 2 }}>
