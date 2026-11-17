@@ -781,7 +781,7 @@ export function SettingsManager() {
                   </Typography>
                 </Box>
               </Stack>
-              <Stack spacing={1.5}>
+              <Stack spacing={2}>
                 <Box>
                   <Typography fontWeight={700}>
                     {preference === "system"
@@ -803,50 +803,63 @@ export function SettingsManager() {
                   }}
                   aria-label="Choose appearance"
                   sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
                     p: 0.5,
-                    gap: 0.5,
+                    gap: 0.75,
                     border: 1,
                     borderColor: "divider",
-                    borderRadius: 1,
+                    borderRadius: 1.5,
                     bgcolor: "action.hover",
                     "& .MuiToggleButtonGroup-grouped": {
-                      flex: 1,
                       minWidth: 0,
-                      border: 0,
-                      borderRadius: "9px !important",
-                      px: 1,
-                      py: 1.1,
+                      minHeight: 104,
+                      border: 1,
+                      borderColor: "transparent",
+                      borderRadius: "10px !important",
+                      px: 0.75,
+                      py: 1.25,
                       color: "text.secondary",
                       textTransform: "none",
                     },
                     "& .Mui-selected": {
                       bgcolor: "background.paper !important",
                       color: "primary.main",
+                      borderColor: "primary.main",
                       boxShadow: 1,
                     },
                   }}
                 >
                   <ToggleButton value="system" aria-label="System appearance">
-                    <Stack alignItems="center" spacing={0.45}>
-                      <ComputerOutlined fontSize="small" />
-                      <Typography variant="caption" fontWeight={700}>
+                    <Stack alignItems="center" spacing={0.8}>
+                      <ComputerOutlined fontSize="medium" />
+                      <Typography variant="body2" fontWeight={700}>
                         System
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Follow device
                       </Typography>
                     </Stack>
                   </ToggleButton>
                   <ToggleButton value="light" aria-label="Light appearance">
-                    <Stack alignItems="center" spacing={0.45}>
-                      <LightModeOutlined fontSize="small" />
-                      <Typography variant="caption" fontWeight={700}>
+                    <Stack alignItems="center" spacing={0.8}>
+                      <LightModeOutlined fontSize="medium" />
+                      <Typography variant="body2" fontWeight={700}>
                         Light
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Bright theme
                       </Typography>
                     </Stack>
                   </ToggleButton>
                   <ToggleButton value="dark" aria-label="Dark appearance">
-                    <Stack alignItems="center" spacing={0.45}>
-                      <DarkModeOutlined fontSize="small" />
-                      <Typography variant="caption" fontWeight={700}>
+                    <Stack alignItems="center" spacing={0.8}>
+                      <DarkModeOutlined fontSize="medium" />
+                      <Typography variant="body2" fontWeight={700}>
                         Dark
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Dim theme
                       </Typography>
                     </Stack>
                   </ToggleButton>
@@ -856,7 +869,13 @@ export function SettingsManager() {
           </Box>
           <Paper
             variant="outlined"
-            sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5 }}
+            sx={{
+              p: { xs: 2, md: 2.5 },
+              borderRadius: 1.5,
+              width: "100%",
+              maxWidth: 920,
+              mx: "auto",
+            }}
           >
             <Stack
               direction="row"
@@ -872,86 +891,117 @@ export function SettingsManager() {
                   Data backup & transfer
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Export selected transactions to CSV or import transactions
-                  from a spreadsheet.
+                  Export selected transactions or import them from a spreadsheet.
                 </Typography>
               </Box>
             </Stack>
-            <Stack spacing={2}>
-              <Alert severity="info">
-                Export income and expense transactions to a CSV file that opens
-                in Excel or Google Sheets. Transfers are not included; use the
-                import template to prepare compatible transaction files.
-              </Alert>
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={1.5}
-                flexWrap="wrap"
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Export income and expense transactions to a CSV file that opens
+              in Excel or Google Sheets. Transfers are not included.
+            </Alert>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
+                gap: 1.5,
+              }}
+            >
+              <Paper
+                variant="outlined"
+                sx={{ p: 2, borderRadius: 1.5, bgcolor: "background.default" }}
               >
-                <Button
-                  variant="contained"
-                  startIcon={
-                    exporting ? (
-                      <CircularProgress size={17} color="inherit" />
-                    ) : (
-                      <CloudDownloadOutlined />
-                    )
-                  }
-                  onClick={() => void openExportDialog()}
-                  disabled={exporting || importing}
-                >
-                  {exporting ? "Preparing export…" : "Export Transactions"}
-                </Button>
-                <Button
-                  variant="outlined"
-                  component="label"
-                  startIcon={
-                    importing ? (
-                      <CircularProgress size={17} />
-                    ) : (
-                      <CloudUploadOutlined />
-                    )
-                  }
-                  disabled={importing || exporting}
-                >
-                  {importing ? "Importing…" : "Import Transactions"}
-                  <input
-                    ref={fileRef}
-                    hidden
-                    type="file"
-                    accept=".csv,text/csv"
-                    onChange={importTransactions}
-                  />
-                </Button>
-                <Button
-                  color="inherit"
-                  onClick={() =>
-                    downloadFile(
-                      "budgetnest-transaction-import-template.csv",
-                      "\uFEFFaccount_name,currency,transaction_type,amount,category,description,transaction_date\r\n",
-                      "text/csv;charset=utf-8",
-                    )
-                  }
-                  disabled={importing || exporting}
-                >
-                  Download CSV template
-                </Button>
-              </Stack>
-              {importSummary && (
-                <Alert severity="success" icon={<CheckCircleOutlineRounded />}>
-                  {importSummary}
-                </Alert>
-              )}
-              <Typography variant="caption" color="text.secondary">
-                Import requirements: account_name, currency, transaction_type,
-                amount, category, description, transaction_date. Duplicate
-                income/expense rows are skipped. Maximum file size: 5 MB / 5,000
-                rows.
-              </Typography>
-            </Stack>
+                <Stack spacing={1.5} alignItems="flex-start" sx={{ height: "100%" }}>
+                  <CloudDownloadOutlined color="primary" fontSize="large" />
+                  <Box>
+                    <Typography fontWeight={700}>Export transactions</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Download your income and expense records as a filtered CSV file.
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flexGrow: 1 }} />
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    startIcon={
+                      exporting ? (
+                        <CircularProgress size={17} color="inherit" />
+                      ) : (
+                        <CloudDownloadOutlined />
+                      )
+                    }
+                    onClick={() => void openExportDialog()}
+                    disabled={exporting || importing}
+                  >
+                    {exporting ? "Preparing export…" : "Export transactions"}
+                  </Button>
+                </Stack>
+              </Paper>
+              <Paper
+                variant="outlined"
+                sx={{ p: 2, borderRadius: 1.5, bgcolor: "background.default" }}
+              >
+                <Stack spacing={1.5} alignItems="flex-start" sx={{ height: "100%" }}>
+                  <CloudUploadOutlined color="primary" fontSize="large" />
+                  <Box>
+                    <Typography fontWeight={700}>Import transactions</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Add transaction records from a compatible CSV spreadsheet.
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flexGrow: 1 }} />
+                  <Stack spacing={1} sx={{ width: "100%" }}>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      fullWidth
+                      startIcon={
+                        importing ? (
+                          <CircularProgress size={17} />
+                        ) : (
+                          <CloudUploadOutlined />
+                        )
+                      }
+                      disabled={importing || exporting}
+                    >
+                      {importing ? "Importing…" : "Choose CSV file"}
+                      <input
+                        ref={fileRef}
+                        hidden
+                        type="file"
+                        accept=".csv,text/csv"
+                        onChange={importTransactions}
+                      />
+                    </Button>
+                    <Button
+                      color="inherit"
+                      size="small"
+                      onClick={() =>
+                        downloadFile(
+                          "budgetnest-transaction-import-template.csv",
+                          "\uFEFFaccount_name,currency,transaction_type,amount,category,description,transaction_date\r\n",
+                          "text/csv;charset=utf-8",
+                        )
+                      }
+                      disabled={importing || exporting}
+                    >
+                      Download CSV template
+                    </Button>
+                  </Stack>
+                </Stack>
+              </Paper>
+            </Box>
+            {importSummary && (
+              <Alert severity="success" icon={<CheckCircleOutlineRounded />} sx={{ mt: 2 }}>
+                {importSummary}
+              </Alert>
+            )}
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2 }}>
+              Import requirements: account_name, currency, transaction_type,
+              amount, category, description, transaction_date. Duplicate
+              income/expense rows are skipped. Maximum file size: 5 MB / 5,000
+              rows.
+            </Typography>
           </Paper>
-        </>
-      )}
       <Dialog
         open={exportDialogOpen}
         onClose={() => !exporting && setExportDialogOpen(false)}
