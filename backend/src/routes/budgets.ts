@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { positiveMoneySchema } from "../lib/validation.js";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 const router = Router();
@@ -8,7 +9,7 @@ const budgetSchema = z.object({
   account_id: z.string().uuid(),
   name: z.string().trim().min(1).max(100),
   category: z.string().trim().min(1).max(80),
-  amount: z.number().finite().positive().max(999999999999.99),
+  amount: positiveMoneySchema,
   period: z.enum(["weekly", "monthly", "yearly", "custom"]),
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),

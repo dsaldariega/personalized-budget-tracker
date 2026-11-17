@@ -3,7 +3,7 @@ import {
   ArrowBackRounded, BackupOutlined, CloudOutlined, LockOutlined, PersonOutlineRounded,
   SecurityOutlined, StorageRounded,
 } from "@mui/icons-material";
-import { Box, Button, Paper, Stack, Typography } from "@mui/material";
+import { Box, Button, Grid, Paper, Stack, Typography } from "@mui/material";
 
 export const metadata: Metadata = { title: "Privacy Policy" };
 
@@ -49,9 +49,9 @@ const sections = [
     icon: <BackupOutlined />,
     title: "Your choices and control",
     paragraphs: [
-      "You can review, update, or delete supported financial records through the relevant BudgetNest features. Signed-in users can also use Settings to export their information.",
-      "The full JSON backup contains your BudgetNest records, while the transaction CSV is intended for supported income and expense data. Keep exported files somewhere safe because they may contain sensitive financial information.",
-      "Guest users can explore and use the available dashboard features without signing in. Cloud synchronization and account-based backup are available only after signing in."
+      "You can review, update, or delete supported financial records through the relevant BudgetNest features. Signed-in users can also use Settings to export selected income and expense transactions as a CSV file.",
+      "Transaction exports are available as CSV files containing the income and expense records that match your selected date range and filters. Keep exported files somewhere safe because they may contain sensitive financial information.",
+      "Guest users can explore and use the available dashboard features without signing in. Cloud synchronization is available only after signing in."
     ],
   },
   {
@@ -60,7 +60,7 @@ const sections = [
     paragraphs: [
       "Signed-in records remain associated with your BudgetNest account while the account is active, subject to the operation of the application and the services that support it.",
       "BudgetNest does not currently provide a self-service account deletion feature. If you want to request account deletion, use the feedback form on the About & Help page and clearly state that you want your account removed. A request does not delete the account automatically.",
-      "Before requesting deletion, export your information if you want to keep a copy. Deleting individual records in the app does not by itself remove your account."
+      "Before requesting deletion, export your transactions as a CSV if you want to keep a copy. Deleting individual records in the app does not by itself remove your account."
     ],
   },
 ];
@@ -84,21 +84,52 @@ export default function PrivacyPage() {
         </Typography>
       </Paper>
 
-      {sections.map(section => (
-        <Paper key={section.title} variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5 }}>
-          <Stack direction="row" spacing={1.2} alignItems="center" sx={{ mb: 1.5 }}>
-            <Box sx={{ width: 40, height: 40, borderRadius: 1.25, display: "grid", placeItems: "center", bgcolor: "action.hover", color: "primary.main" }}>
-              {section.icon}
-            </Box>
-            <Typography variant="h6" fontWeight={700}>{section.title}</Typography>
-          </Stack>
-          <Stack spacing={1.4}>
-            {section.paragraphs.map(paragraph => (
-              <Typography key={paragraph} variant="body2" color="text.secondary" lineHeight={1.85}>{paragraph}</Typography>
-            ))}
-          </Stack>
-        </Paper>
-      ))}
+      <Grid container spacing={2}>
+        {sections.map(section => (
+          <Grid key={section.title} size={{ xs: 12, md: 6 }}>
+            <Paper
+              variant="outlined"
+              sx={{
+                height: "100%",
+                p: { xs: 2.5, md: 3 },
+                borderRadius: 2,
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <Stack direction="row" spacing={1.2} alignItems="center" sx={{ mb: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 1.25,
+                    display: "grid",
+                    placeItems: "center",
+                    bgcolor: "action.hover",
+                    color: "primary.main",
+                    flexShrink: 0,
+                  }}
+                >
+                  {section.icon}
+                </Box>
+                <Typography variant="h6" fontWeight={700}>{section.title}</Typography>
+              </Stack>
+              <Stack spacing={1.4} sx={{ flexGrow: 1 }}>
+                {section.paragraphs.map(paragraph => (
+                  <Typography
+                    key={paragraph}
+                    variant="body2"
+                    color="text.secondary"
+                    lineHeight={1.8}
+                  >
+                    {paragraph}
+                  </Typography>
+                ))}
+              </Stack>
+            </Paper>
+          </Grid>
+        ))}
+      </Grid>
 
       <Paper sx={{ p: { xs: 2.5, md: 3 }, borderRadius: 1.5, bgcolor: "action.hover" }}>
         <Typography fontWeight={700}>Questions about privacy?</Typography>

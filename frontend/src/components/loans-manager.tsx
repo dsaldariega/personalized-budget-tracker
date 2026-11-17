@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   AddRounded, DeleteOutlineRounded, EditOutlined, MoreHorizRounded,
   PaymentsRounded, RefreshRounded, SearchRounded, TrendingDownRounded,
@@ -139,13 +139,13 @@ function LoanDialog({ open, accounts, initial, saving, onClose, onSave }: {
         <Stack spacing={2}>
           <TextField label="Loan name" placeholder="e.g. Personal loan, Car loan" value={form.name} onChange={e => setForm(v => ({ ...v, name: e.target.value }))} fullWidth required inputProps={{ maxLength: 100 }} />
           <TextField select label="Linked account" value={form.account_id} onChange={e => setForm(v => ({ ...v, account_id: e.target.value }))} fullWidth>{accounts.map(a => <MenuItem key={a.id} value={a.id}>{a.name} · {a.currency}</MenuItem>)}</TextField>
-          <TextField label="Principal amount" type="number" value={form.principal_amount} onChange={e => setForm(v => ({ ...v, principal_amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "0.01" }} InputProps={{ startAdornment: <Typography color="text.secondary" sx={{ mr: 1 }}>{currency}</Typography> }} />
+          <TextField label="Principal amount" type="number" value={form.principal_amount} onChange={e => setForm(v => ({ ...v, principal_amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "any" }} />
           <TextField select label="Interest calculation method" value={form.interest_type} onChange={e => setForm(v => ({ ...v, interest_type: e.target.value as InterestType }))} fullWidth>
             <MenuItem value="flat_rate">Flat Rate — fixed interest for the full term</MenuItem>
             <MenuItem value="reducing_balance">Reducing Balance — interest decreases as principal is repaid</MenuItem>
           </TextField>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <TextField label="Monthly interest rate (%)" type="number" value={form.monthly_interest_rate} onChange={e => setForm(v => ({ ...v, monthly_interest_rate: e.target.value }))} fullWidth required inputProps={{ min: "0", max: "100", step: "0.01" }} />
+            <TextField label="Monthly interest rate (%)" type="number" value={form.monthly_interest_rate} onChange={e => setForm(v => ({ ...v, monthly_interest_rate: e.target.value }))} fullWidth required inputProps={{ min: "0", max: "100", step: "any" }} />
             <TextField label="Term (months)" type="number" value={form.term_months} onChange={e => setForm(v => ({ ...v, term_months: e.target.value }))} fullWidth required inputProps={{ min: "1", max: "600", step: "1" }} />
           </Stack>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
@@ -209,7 +209,7 @@ function PaymentDialog({ open, loan, currency, remainingPrincipal, accruedIntere
       <DialogTitle sx={{ fontWeight: 700 }}>Record a loan payment</DialogTitle>
       <DialogContent><Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{loan?.name} · Outstanding principal {money(remainingPrincipal, currency)}</Typography>
         <Stack spacing={2}>
-          <TextField label="Total amount paid" type="number" value={form.amount} onChange={e => setForm(v => ({ ...v, amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "0.01" }} InputProps={{ startAdornment: <Typography color="text.secondary" sx={{ mr: 1 }}>{currency}</Typography> }} />
+          <TextField label="Total amount paid" type="number" value={form.amount} onChange={e => setForm(v => ({ ...v, amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "any" }} />
           <Paper variant="outlined" sx={{ p: 1.7, borderRadius: 1.25 }}>
             <Typography variant="caption" color="text.secondary">Estimated payment allocation</Typography>
             <Stack direction="row" justifyContent="space-between" sx={{ mt: 1 }}><Typography variant="body2" color="text.secondary">Interest portion</Typography><Typography fontWeight={600}>{money(interestPaid, currency)}</Typography></Stack>
@@ -250,16 +250,26 @@ export function LoansManager() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+  const loadController = useRef<AbortController | null>(null);
+
   const loadData = useCallback(async () => {
+    loadController.current?.abort();
+    const controller = new AbortController();
+    loadController.current = controller;
+    const { signal } = controller;
     setLoading(true); setError("");
     try {
-      const data = await apiRequest<{ accounts: Account[]; loans: Loan[]; payments: Payment[] }>("/loans");
+      const data = await apiRequest<{ accounts: Account[]; loans: Loan[]; payments: Payment[] }>("/loans", { signal });
+      if (signal.aborted) return;
       setAccounts(data.accounts); setLoans(data.loans); setPayments(data.payments);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to load loans.");
-    } finally { setLoading(false); }
+      if (!signal.aborted) setError(cause instanceof Error ? cause.message : "Unable to load loans.");
+    } finally { if (!signal.aborted) setLoading(false); }
   }, []);
-  useEffect(() => { void loadData(); }, [loadData]);
+  useEffect(() => {
+    void loadData();
+    return () => loadController.current?.abort();
+  }, [loadData]);
 
   function openCreate() { setEditing(null); setLoanForm({ ...emptyLoan(), account_id: accounts.find(a => !a.is_archived)?.id ?? "" }); setLoanDialog(true); }
   function openEdit(loan: Loan) {

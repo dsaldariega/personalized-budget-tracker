@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   AddRounded, DeleteOutlineRounded, EditOutlined, MoreHorizRounded,
   RefreshRounded, SavingsRounded, SearchRounded, TrendingUpRounded,
@@ -71,8 +71,8 @@ function GoalDialog({
               {accounts.map(a => <MenuItem key={a.id} value={a.id}>{a.name} · {a.currency}</MenuItem>)}
             </TextField>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-              <TextField label="Target amount" type="number" value={form.target_amount} onChange={e => setForm(v => ({ ...v, target_amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "0.01" }} InputProps={{ startAdornment: <Typography color="text.secondary" sx={{ mr: 1 }}>{accounts.find(a => a.id === form.account_id)?.currency ?? "¤"}</Typography> }} />
-              <TextField label="Already saved" type="number" value={form.current_amount} onChange={e => setForm(v => ({ ...v, current_amount: e.target.value }))} fullWidth inputProps={{ min: "0", step: "0.01" }} InputProps={{ startAdornment: <Typography color="text.secondary" sx={{ mr: 1 }}>{accounts.find(a => a.id === form.account_id)?.currency ?? "¤"}</Typography> }} />
+              <TextField label="Target amount" type="number" value={form.target_amount} onChange={e => setForm(v => ({ ...v, target_amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "any" }} />
+              <TextField label="Already saved" type="number" value={form.current_amount} onChange={e => setForm(v => ({ ...v, current_amount: e.target.value }))} fullWidth inputProps={{ min: "0", step: "any" }} />
             </Stack>
             <TextField label="Target date (optional)" type="date" value={form.target_date} onChange={e => setForm(v => ({ ...v, target_date: e.target.value }))} fullWidth InputLabelProps={{ shrink: true }} />
             <TextField select label="Status" value={form.status} onChange={e => setForm(v => ({ ...v, status: e.target.value as GoalStatus }))} fullWidth>
@@ -107,16 +107,26 @@ export function GoalsManager() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+  const loadController = useRef<AbortController | null>(null);
+
   const loadData = useCallback(async () => {
+    loadController.current?.abort();
+    const controller = new AbortController();
+    loadController.current = controller;
+    const { signal } = controller;
     setLoading(true); setError("");
     try {
-      const data = await apiRequest<{ accounts: Account[]; goals: Goal[] }>("/goals");
+      const data = await apiRequest<{ accounts: Account[]; goals: Goal[] }>("/goals", { signal });
+      if (signal.aborted) return;
       setAccounts(data.accounts); setGoals(data.goals);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to load savings goals.");
-    } finally { setLoading(false); }
+      if (!signal.aborted) setError(cause instanceof Error ? cause.message : "Unable to load savings goals.");
+    } finally { if (!signal.aborted) setLoading(false); }
   }, []);
-  useEffect(() => { void loadData(); }, [loadData]);
+  useEffect(() => {
+    void loadData();
+    return () => loadController.current?.abort();
+  }, [loadData]);
 
   function openCreate() {
     setEditing(null);

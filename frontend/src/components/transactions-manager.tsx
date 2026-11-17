@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   AddRounded,
   ArrowDownwardRounded,
@@ -294,15 +294,8 @@ function TransactionDialog({
               }
               fullWidth
               required
-              inputProps={{ min: "0.01", step: "0.01" }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    {accounts.find((a) => a.id === form.account_id)?.currency ??
-                      "¤"}
-                  </InputAdornment>
-                ),
-              }}
+              inputProps={{ min: "0.01", step: "any" }}
+              
             />
             {form.transaction_type !== "transfer" && (
               <TextField
@@ -389,28 +382,36 @@ export function TransactionsManager() {
   const [accountFilter, setAccountFilter] = useState("all");
   const [monthFilter, setMonthFilter] = useState("all");
 
+  const loadController = useRef<AbortController | null>(null);
+
   const loadData = useCallback(async () => {
+    loadController.current?.abort();
+    const controller = new AbortController();
+    loadController.current = controller;
+    const { signal } = controller;
     setLoading(true);
     setError("");
     try {
       const result = await apiRequest<{
         accounts: Account[];
         transactions: Transaction[];
-      }>("/transactions");
+      }>("/transactions", { signal });
+      if (signal.aborted) return;
       setAccounts(result.accounts ?? []);
       setTransactions(result.transactions ?? []);
     } catch (loadError) {
-      setError(
+      if (!signal.aborted) setError(
         loadError instanceof Error
           ? loadError.message
           : "Unable to load transactions.",
       );
     } finally {
-      setLoading(false);
+      if (!signal.aborted) setLoading(false);
     }
   }, []);
   useEffect(() => {
     void loadData();
+    return () => loadController.current?.abort();
   }, [loadData]);
 
   function openCreate() {

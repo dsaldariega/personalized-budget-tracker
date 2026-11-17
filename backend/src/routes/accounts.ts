@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { signedMoneySchema } from "../lib/validation.js";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 const router = Router();
@@ -7,8 +8,7 @@ const router = Router();
 const accountSchema = z.object({
   name: z.string().trim().min(1).max(80),
   account_type: z.enum(["cash", "bank", "e_wallet", "credit", "investment", "other"]),
-  currency: z.string().trim().regex(/^[A-Za-z]{3}$/).transform((value) => value.toUpperCase()),
-  opening_balance: z.number().finite(),
+  opening_balance: signedMoneySchema,
 });
 
 function context(res: import("express").Response) {
@@ -72,8 +72,17 @@ router.post("/", async (req, res) => {
   }
 
   const { supabase, user } = context(res);
+  const { data: profile, error: profileError } = await supabase.from("profiles")
+    .select("default_currency")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profileError) {
+    res.status(500).json({ error: "Unable to load your preferred currency.", details: profileError.message });
+    return;
+  }
+  const currency = profile?.default_currency ?? "PHP";
   const { data, error } = await supabase.from("accounts")
-    .insert({ ...parsed.data, user_id: user.id })
+    .insert({ ...parsed.data, currency, user_id: user.id })
     .select("id, name, account_type, currency, opening_balance, is_archived, created_at")
     .single();
 

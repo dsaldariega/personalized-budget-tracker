@@ -144,7 +144,7 @@ export function ThemeProvider({
           : {}),
         divider: dark ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.10)",
       },
-      shape: { borderRadius: 8 },
+      shape: { borderRadius: 10 },
       typography: {
         htmlFontSize: 16,
         fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
@@ -217,7 +217,7 @@ export function ThemeProvider({
               borderColor: dark
                 ? "rgba(255,255,255,0.10)"
                 : "rgba(15,23,42,0.08)",
-              borderRadius: 12,
+              borderRadius: 14,
               boxShadow: dark
                 ? "0 2px 10px rgba(0,0,0,0.18)"
                 : "0 2px 10px rgba(15,23,42,0.035)",
@@ -240,7 +240,7 @@ export function ThemeProvider({
           defaultProps: { disableRipple: true },
           styleOverrides: {
             root: {
-              borderRadius: 8,
+              borderRadius: 10,
               minHeight: 38,
               fontWeight: 600,
               paddingInline: 16,
@@ -253,10 +253,10 @@ export function ThemeProvider({
             },
           },
         },
-        MuiIconButton: { styleOverrides: { root: { borderRadius: 8 } } },
+        MuiIconButton: { styleOverrides: { root: { borderRadius: 10 } } },
         MuiChip: {
           styleOverrides: {
-            root: { borderRadius: 8, fontWeight: 600 },
+            root: { borderRadius: 9, fontWeight: 600 },
             label: { fontSize: "0.75rem" },
           },
         },
@@ -264,17 +264,25 @@ export function ThemeProvider({
           styleOverrides: {
             root: {
               minHeight: 40,
-              fontFamily: "inherit",
+              fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
               fontSize: "0.875rem",
               fontWeight: 500,
-              borderRadius: 8,
+              borderRadius: 10,
+            },
+          },
+        },
+        MuiMenu: {
+          styleOverrides: {
+            paper: {
+              borderRadius: 12,
+              fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
             },
           },
         },
         MuiSelect: {
           styleOverrides: {
             select: {
-              fontFamily: "inherit",
+              fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
               fontSize: "0.9375rem",
               fontWeight: 400,
               lineHeight: 1.6,
@@ -282,16 +290,63 @@ export function ThemeProvider({
             },
           },
         },
+        MuiNativeSelect: {
+          styleOverrides: {
+            select: {
+              fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
+            },
+          },
+        },
+        MuiAutocomplete: {
+          styleOverrides: {
+            option: {
+              fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
+              fontSize: "0.875rem",
+            },
+          },
+        },
+        MuiInputBase: {
+          styleOverrides: {
+            root: {
+              fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
+              fontSize: "0.9375rem",
+              lineHeight: 1.6,
+            },
+            input: {
+              fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
+            },
+          },
+        },
+        MuiFormLabel: {
+          styleOverrides: {
+            root: {
+              fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
+            },
+          },
+        },
+        MuiFormHelperText: {
+          styleOverrides: {
+            root: {
+              fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
+              fontSize: "0.75rem",
+              lineHeight: 1.45,
+            },
+          },
+        },
         MuiInputLabel: {
           styleOverrides: {
-            root: { fontFamily: "inherit", fontSize: "0.875rem" },
+            root: {
+              fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
+              fontSize: "0.875rem",
+              lineHeight: 1.4,
+            },
           },
         },
         MuiOutlinedInput: {
           styleOverrides: {
             root: {
               minHeight: 46,
-              borderRadius: 8,
+              borderRadius: 10,
               "&.MuiInputBase-sizeSmall": { minHeight: 38 },
               "&.MuiInputBase-multiline": { minHeight: "unset" },
               "&:hover .MuiOutlinedInput-notchedOutline": {
@@ -304,6 +359,9 @@ export function ThemeProvider({
               },
             },
             input: {
+              fontFamily: "var(--font-roboto), 'Helvetica Neue', Arial, sans-serif",
+              fontSize: "0.9375rem",
+              lineHeight: 1.6,
               padding: "11px 13px",
               "&.MuiInputBase-inputSizeSmall": { padding: "7.5px 11px" },
               "&::placeholder": { opacity: 0.62 },
@@ -344,7 +402,7 @@ export function ThemeProvider({
               maxHeight: "calc(100dvh - 32px)",
               overflow: "hidden",
               boxSizing: "border-box",
-              borderRadius: 12,
+              borderRadius: 16,
               border: "1px solid",
               borderColor: dark
                 ? "rgba(255,255,255,0.10)"
@@ -388,9 +446,8 @@ export function ThemeProvider({
             },
           },
         },
-        MuiMenu: { styleOverrides: { paper: { borderRadius: 8 } } },
         MuiAlert: {
-          styleOverrides: { root: { borderRadius: 10, alignItems: "center" } },
+          styleOverrides: { root: { borderRadius: 12, alignItems: "center" } },
         },
         MuiTabs: {
           styleOverrides: {
@@ -403,9 +460,9 @@ export function ThemeProvider({
           },
         },
         MuiTooltip: {
-          styleOverrides: { tooltip: { borderRadius: 7, fontSize: "0.75rem" } },
+          styleOverrides: { tooltip: { borderRadius: 8, fontSize: "0.75rem" } },
         },
-        MuiPaginationItem: { styleOverrides: { root: { borderRadius: 8 } } },
+        MuiPaginationItem: { styleOverrides: { root: { borderRadius: 10 } } },
       },
     });
   }, [mode]);

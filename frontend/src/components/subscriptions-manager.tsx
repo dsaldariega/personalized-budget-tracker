@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   AddRounded, AutorenewRounded, CalendarMonthRounded, DeleteOutlineRounded,
   EditOutlined, HistoryRounded, MoreHorizRounded, RefreshRounded, SearchRounded,
@@ -101,7 +101,7 @@ function SubscriptionDialog({
               {accounts.map(a => <MenuItem key={a.id} value={a.id}>{a.name} · {a.currency}{a.is_archived ? " (Archived)" : ""}</MenuItem>)}
             </TextField>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-              <TextField label="Billing amount" type="number" value={form.amount} onChange={e => setForm(v => ({ ...v, amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "0.01" }} InputProps={{ startAdornment: <Typography color="text.secondary" sx={{ mr: 1 }}>{accounts.find(a => a.id === form.account_id)?.currency ?? "¤"}</Typography> }} />
+              <TextField label="Billing amount" type="number" value={form.amount} onChange={e => setForm(v => ({ ...v, amount: e.target.value }))} fullWidth required inputProps={{ min: "0.01", step: "any" }} />
               <TextField select label="Billing frequency" value={form.billing_frequency} onChange={e => setForm(v => ({ ...v, billing_frequency: e.target.value as Frequency }))} fullWidth>
                 <MenuItem value="weekly">Weekly</MenuItem><MenuItem value="monthly">Monthly</MenuItem><MenuItem value="quarterly">Quarterly</MenuItem><MenuItem value="yearly">Yearly</MenuItem>
               </TextField>
@@ -151,20 +151,30 @@ export function SubscriptionsManager() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+  const loadController = useRef<AbortController | null>(null);
+
   const loadData = useCallback(async () => {
+    loadController.current?.abort();
+    const controller = new AbortController();
+    loadController.current = controller;
+    const { signal } = controller;
     setLoading(true); setError("");
     try {
-      const data = await apiRequest<{ accounts: Account[]; subscriptions: Subscription[]; payments: Payment[] }>("/subscriptions");
+      const data = await apiRequest<{ accounts: Account[]; subscriptions: Subscription[]; payments: Payment[] }>("/subscriptions", { signal });
+      if (signal.aborted) return;
       setAccounts(data.accounts ?? []);
       setSubscriptions(data.subscriptions ?? []);
       setPayments(data.payments ?? []);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to load subscriptions.");
+      if (!signal.aborted) setError(cause instanceof Error ? cause.message : "Unable to load subscriptions.");
     } finally {
-      setLoading(false);
+      if (!signal.aborted) setLoading(false);
     }
   }, []);
-  useEffect(() => { void loadData(); }, [loadData]);
+  useEffect(() => {
+    void loadData();
+    return () => loadController.current?.abort();
+  }, [loadData]);
 
   const accountById = useMemo(() => new Map(accounts.map(a => [a.id, a])), [accounts]);
   function openCreate() {
@@ -357,7 +367,7 @@ export function SubscriptionsManager() {
         <DialogTitle sx={{ fontWeight: 700 }}>Record subscription payment</DialogTitle>
         <DialogContent><Stack spacing={2} sx={{ pt: 1 }}>
           <Typography variant="body2" color="text.secondary">{paymentTarget?.name} · Billing date {paymentTarget ? dateLabel(paymentTarget.next_billing_date) : ""}</Typography>
-          <TextField label="Amount paid" type="number" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} fullWidth inputProps={{ min: "0.01", step: "0.01" }} />
+          <TextField label="Amount paid" type="number" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} fullWidth inputProps={{ min: "0.01", step: "any" }} />
           <TextField label="Payment date" type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} fullWidth InputLabelProps={{ shrink: true }} />
           <TextField label="Notes (optional)" value={paymentNotes} onChange={e => setPaymentNotes(e.target.value)} fullWidth multiline minRows={2} />
           <Alert severity="info">This records the payment against the current billing cycle and moves the next billing date forward by one cycle.</Alert>

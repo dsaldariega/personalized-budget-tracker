@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import { z } from "zod";
+import { positiveMoneySchema } from "../lib/validation.js";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 const router = Router();
@@ -8,7 +9,7 @@ const router = Router();
 const transactionSchema = z.object({
   account_id: z.string().uuid(),
   transaction_type: z.enum(["income", "expense"]),
-  amount: z.number().finite().positive(),
+  amount: positiveMoneySchema,
   category: z.string().trim().min(1).max(80),
   description: z.string().trim().max(240).nullable(),
   transaction_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -17,7 +18,7 @@ const transactionSchema = z.object({
 const transferSchema = z.object({
   account_id: z.string().uuid(),
   destination_account_id: z.string().uuid(),
-  amount: z.number().finite().positive(),
+  amount: positiveMoneySchema,
   description: z.string().trim().max(240).nullable(),
   transaction_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });

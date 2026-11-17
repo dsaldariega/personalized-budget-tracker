@@ -66,6 +66,14 @@ export function AuthForm({
 
     setSwitchingAuthMode(true);
     onSwitchAuthMode?.();
+
+    if (modal) {
+      window.setTimeout(() => {
+        setSwitchingAuthMode(false);
+      }, 240);
+      return;
+    }
+
     window.setTimeout(() => {
       const target = isRegister ? "/login" : "/register";
       const query = searchParams.toString();
@@ -206,20 +214,20 @@ export function AuthForm({
             boxShadow: modal ? "none" : 3,
           }}
         >
-          <Stack spacing={2.1}>
+          <Stack spacing={{ xs: 2, sm: 2.3 }}>
             <Box>
               <Typography
                 variant="h4"
                 fontWeight={700}
                 letterSpacing={-1.2}
-                sx={{ fontSize: { xs: 27, sm: 31 } }}
+                sx={{ fontSize: { xs: 27, sm: 34 }, lineHeight: 1.15 }}
               >
-                {isRegister ? "Create your account" : "Welcome back"}
+                {isRegister ? "Join BudgetNest!" : "Welcome Back!"}
               </Typography>
               <Typography color="text.secondary" sx={{ mt: 0.75 }}>
                 {isRegister
-                  ? "Set up your personal finance space in a minute."
-                  : "Sign in to pick up where you left off."}
+                  ? "Set up your personal finance space and keep your money organized in one place."
+                  : "Sign in to pick up where you left off and keep your financial picture in one place."}
               </Typography>
             </Box>
 

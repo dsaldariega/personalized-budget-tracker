@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import {
   AccountBalanceOutlined,
   AddRounded,
   ArchiveOutlined,
-  AttachMoneyRounded,
   AccountBalanceWalletOutlined,
   CreditCardOutlined,
   DeleteOutlineRounded,
@@ -30,7 +29,6 @@ import {
   Divider,
   FormControl,
   IconButton,
-  InputAdornment,
   InputLabel,
   Menu,
   MenuItem,
@@ -65,7 +63,6 @@ type Account = {
 type AccountForm = {
   name: string;
   account_type: AccountType;
-  currency: string;
   opening_balance: string;
 };
 
@@ -88,7 +85,6 @@ const accountTypes: { value: AccountType; label: string }[] = [
 const emptyForm: AccountForm = {
   name: "",
   account_type: "bank",
-  currency: "PHP",
   opening_balance: "0",
 };
 
@@ -139,18 +135,13 @@ function AccountDialog({
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const name = form.name.trim();
-    const currency = form.currency.trim().toUpperCase();
     const balance = Number(form.opening_balance);
 
     if (!name) return setFormError("Enter an account name.");
-    if (!/^[A-Z]{3}$/.test(currency))
-      return setFormError(
-        "Currency must be a 3-letter code, such as PHP or USD.",
-      );
     if (!Number.isFinite(balance))
       return setFormError("Enter a valid starting balance.");
 
-    onSave({ ...form, name, currency, opening_balance: String(balance) });
+    onSave({ ...form, name, opening_balance: String(balance) });
   }
 
   return (
@@ -208,19 +199,6 @@ function AccountDialog({
             </FormControl>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
               <TextField
-                label="Currency"
-                value={form.currency}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    currency: event.target.value.toUpperCase().slice(0, 3),
-                  }))
-                }
-                helperText="3-letter code, e.g. PHP"
-                fullWidth
-                inputProps={{ maxLength: 3 }}
-              />
-              <TextField
                 label="Starting balance"
                 type="number"
                 value={form.opening_balance}
@@ -231,14 +209,7 @@ function AccountDialog({
                   }))
                 }
                 fullWidth
-                inputProps={{ step: "0.01" }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      {form.currency || "¤"}
-                    </InputAdornment>
-                  ),
-                }}
+                inputProps={{ step: "any" }}
               />
             </Stack>
             {formError && <Alert severity="error">{formError}</Alert>}
@@ -263,7 +234,6 @@ function AccountDialog({
 
 export function AccountsManager() {
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [defaultCurrency, setDefaultCurrency] = useState("PHP");
   const [transactions, setTransactions] = useState<BalanceTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -279,36 +249,42 @@ export function AccountsManager() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+  const loadController = useRef<AbortController | null>(null);
+
   const loadAccounts = useCallback(async () => {
+    loadController.current?.abort();
+    const controller = new AbortController();
+    loadController.current = controller;
+    const { signal } = controller;
     setLoading(true);
     setError("");
     try {
       const result = await apiRequest<{
         accounts: Account[];
         transactions: BalanceTransaction[];
-        defaultCurrency: string;
-      }>("/accounts");
+      }>("/accounts", { signal });
+      if (signal.aborted) return;
       setAccounts(result.accounts);
       setTransactions(result.transactions);
-      setDefaultCurrency(result.defaultCurrency || "PHP");
     } catch (loadError) {
-      setError(
+      if (!signal.aborted) setError(
         loadError instanceof Error
           ? loadError.message
           : "Unable to load accounts.",
       );
     } finally {
-      setLoading(false);
+      if (!signal.aborted) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     void loadAccounts();
+    return () => loadController.current?.abort();
   }, [loadAccounts]);
 
   function openCreate() {
     setEditingAccount(null);
-    setFormSeed({ ...emptyForm, currency: defaultCurrency });
+    setFormSeed(emptyForm);
     setDialogOpen(true);
   }
 
@@ -317,7 +293,6 @@ export function AccountsManager() {
     setFormSeed({
       name: account.name,
       account_type: account.account_type,
-      currency: account.currency,
       opening_balance: String(account.opening_balance),
     });
     setActiveMenu(null);
@@ -332,7 +307,6 @@ export function AccountsManager() {
     const payload = {
       name: value.name,
       account_type: value.account_type,
-      currency: value.currency,
       opening_balance: Number(value.opening_balance),
     };
 
@@ -510,7 +484,7 @@ export function AccountsManager() {
                 height: 42,
               }}
             >
-              <AttachMoneyRounded />
+              <AccountBalanceWalletOutlined />
             </Avatar>
             <Box>
               <Typography variant="caption" color="text.secondary">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   AddRounded,
   CalendarMonthRounded,
@@ -358,15 +358,8 @@ function BudgetDialog({
               }
               fullWidth
               required
-              inputProps={{ min: "0.01", step: "0.01" }}
-              InputProps={{
-                startAdornment: (
-                  <Typography color="text.secondary" sx={{ mr: 1 }}>
-                    {accounts.find((a) => a.id === form.account_id)?.currency ??
-                      "¤"}
-                  </Typography>
-                ),
-              }}
+              inputProps={{ min: "0.01", step: "any" }}
+
             />
             <TextField
               select
@@ -462,7 +455,13 @@ export function BudgetsManager() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+  const loadController = useRef<AbortController | null>(null);
+
   const loadData = useCallback(async () => {
+    loadController.current?.abort();
+    const controller = new AbortController();
+    loadController.current = controller;
+    const { signal } = controller;
     setLoading(true);
     setError("");
     try {
@@ -470,20 +469,22 @@ export function BudgetsManager() {
         accounts: Account[];
         budgets: Budget[];
         expenses: Expense[];
-      }>("/budgets");
+      }>("/budgets", { signal });
+      if (signal.aborted) return;
       setAccounts(data.accounts);
       setBudgets(data.budgets);
       setExpenses(data.expenses);
     } catch (cause) {
-      setError(
+      if (!signal.aborted) setError(
         cause instanceof Error ? cause.message : "Unable to load budgets.",
       );
     } finally {
-      setLoading(false);
+      if (!signal.aborted) setLoading(false);
     }
   }, []);
   useEffect(() => {
     void loadData();
+    return () => loadController.current?.abort();
   }, [loadData]);
 
   function openCreate() {

@@ -400,14 +400,21 @@ export function DashboardManager() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [currencyFilter, setCurrencyFilter] = useState("all");
+  const [defaultCurrency, setDefaultCurrency] = useState("PHP");
+  const [currencyFilter, setCurrencyFilter] = useState("preferred");
   const [isFeedbackAdmin, setIsFeedbackAdmin] = useState(false);
   const [feedbackRows, setFeedbackRows] = useState<FeedbackEntry[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackError, setFeedbackError] = useState("");
   const loadRequestId = useRef(0);
+  const loadController = useRef<AbortController | null>(null);
+  const currentUserId = useRef<string | null>(null);
 
   const loadData = useCallback(async () => {
+    loadController.current?.abort();
+    const controller = new AbortController();
+    loadController.current = controller;
+    const { signal } = controller;
     const requestId = ++loadRequestId.current;
     setLoading(true);
     setError("");
@@ -422,6 +429,8 @@ export function DashboardManager() {
       } = await supabase.auth.getSession();
       user = session?.user ?? null;
     }
+    if (signal.aborted) return;
+    currentUserId.current = user?.id ?? null;
     setIsFeedbackAdmin(user?.email?.trim().toLowerCase() === "dsaldariega@gmail.com");
     if (!user) {
       try {
@@ -432,21 +441,22 @@ export function DashboardManager() {
           goalResult,
           subscriptionResult,
         ] = await Promise.all([
-          apiRequest<{ accounts: Account[] }>("/accounts"),
-          apiRequest<{ transactions: Transaction[] }>("/transactions"),
-          apiRequest<{ budgets: Budget[] }>("/budgets"),
-          apiRequest<{ goals: Goal[] }>("/goals"),
-          apiRequest<{ subscriptions: Subscription[] }>("/subscriptions"),
+          apiRequest<{ accounts: Account[]; defaultCurrency?: string }>("/accounts", { signal }),
+          apiRequest<{ transactions: Transaction[] }>("/transactions", { signal }),
+          apiRequest<{ budgets: Budget[] }>("/budgets", { signal }),
+          apiRequest<{ goals: Goal[] }>("/goals", { signal }),
+          apiRequest<{ subscriptions: Subscription[] }>("/subscriptions", { signal }),
         ]);
-        if (requestId !== loadRequestId.current) return;
+        if (requestId !== loadRequestId.current || signal.aborted) return;
         setAccounts(accountResult.accounts ?? []);
+        setDefaultCurrency(accountResult.defaultCurrency || "PHP");
         setTransactions(transactionResult.transactions ?? []);
         setBudgets(budgetResult.budgets ?? []);
         setGoals(goalResult.goals ?? []);
         setSubscriptions(subscriptionResult.subscriptions ?? []);
         setNow(new Date());
       } catch (loadError) {
-        if (requestId === loadRequestId.current) {
+        if (requestId === loadRequestId.current && !signal.aborted) {
           setError(
             loadError instanceof Error
               ? loadError.message
@@ -454,7 +464,7 @@ export function DashboardManager() {
           );
         }
       } finally {
-        if (requestId === loadRequestId.current) setLoading(false);
+        if (requestId === loadRequestId.current && !signal.aborted) setLoading(false);
       }
       return;
     }
@@ -462,8 +472,10 @@ export function DashboardManager() {
     // A signed-in session requires a configured Supabase client. Keep the
     // narrowed client in a local constant for use by the async query helpers.
     if (!supabase) {
-      setError("Authentication service is not configured.");
-      setLoading(false);
+      if (!signal.aborted) {
+        setError("Authentication service is not configured.");
+        setLoading(false);
+      }
       return;
     }
     const authenticatedSupabase = supabase;
@@ -479,7 +491,8 @@ export function DashboardManager() {
           )
           .eq("user_id", user.id)
           .order("transaction_date", { ascending: false })
-          .range(offset, offset + pageSize - 1);
+          .range(offset, offset + pageSize - 1)
+          .abortSignal(signal);
         if (result.error) return { data: null, error: result.error };
         const page = (result.data ?? []) as Transaction[];
         rows.push(...page);
@@ -495,7 +508,7 @@ export function DashboardManager() {
         goalResult,
         subscriptionResult,
       ] = await Promise.all([
-        apiRequest<{ accounts: Account[] }>("/accounts"),
+        apiRequest<{ accounts: Account[]; defaultCurrency?: string }>("/accounts", { signal }),
         fetchAllTransactions(),
         authenticatedSupabase
           .from("budgets")
@@ -503,14 +516,16 @@ export function DashboardManager() {
             "id,account_id,name,category,amount,period,start_date,end_date",
           )
           .eq("user_id", user.id)
-          .order("created_at", { ascending: false }),
+          .order("created_at", { ascending: false })
+          .abortSignal(signal),
         authenticatedSupabase
           .from("savings_goals")
           .select(
             "id,account_id,name,target_amount,current_amount,target_date,status",
           )
           .eq("user_id", user.id)
-          .order("created_at", { ascending: false }),
+          .order("created_at", { ascending: false })
+          .abortSignal(signal),
         authenticatedSupabase
           .from("subscriptions")
           .select(
@@ -518,10 +533,11 @@ export function DashboardManager() {
           )
           .eq("user_id", user.id)
           .eq("is_active", true)
-          .order("next_billing_date", { ascending: true }),
+          .order("next_billing_date", { ascending: true })
+          .abortSignal(signal),
       ]);
 
-      if (requestId !== loadRequestId.current) return;
+      if (requestId !== loadRequestId.current || signal.aborted) return;
       const failed = [
         transactionResult,
         budgetResult,
@@ -531,13 +547,14 @@ export function DashboardManager() {
       if (failed?.error) setError(failed.error.message);
 
       setAccounts(accountApiResult.accounts ?? []);
+      setDefaultCurrency(accountApiResult.defaultCurrency || "PHP");
       setTransactions((transactionResult.data ?? []) as Transaction[]);
       setBudgets((budgetResult.data ?? []) as Budget[]);
       setGoals((goalResult.data ?? []) as Goal[]);
       setSubscriptions((subscriptionResult.data ?? []) as Subscription[]);
       setNow(new Date());
     } catch (loadError) {
-      if (requestId === loadRequestId.current) {
+      if (requestId === loadRequestId.current && !signal.aborted) {
         setError(
           loadError instanceof Error
             ? loadError.message
@@ -545,25 +562,46 @@ export function DashboardManager() {
         );
       }
     } finally {
-      if (requestId === loadRequestId.current) setLoading(false);
+      if (requestId === loadRequestId.current && !signal.aborted) setLoading(false);
     }
   }, [supabase]);
 
   useEffect(() => {
     void loadData();
-    if (!supabase) return;
+    if (!supabase) {
+      return () => {
+        loadRequestId.current += 1;
+        loadController.current?.abort();
+      };
+    }
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-        // Defer Supabase reads until after its auth-state callback has completed.
-        queueMicrotask(() => void loadData());
-      }
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT") return;
+
+      const nextUserId = session?.user?.id ?? null;
+      if (nextUserId === currentUserId.current) return;
+
+      currentUserId.current = nextUserId;
+      // Only reload when the active user actually changes. Supabase can emit
+      // SIGNED_IN again when a tab becomes active, even for the same session.
+      // Defer Supabase reads until after its auth-state callback has completed.
+      queueMicrotask(() => void loadData());
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      loadRequestId.current += 1;
+      loadController.current?.abort();
+    };
   }, [loadData, supabase]);
+  useEffect(() => {
+    const handleDataChanged = () => void loadData();
+    window.addEventListener("budgetnest:data-changed", handleDataChanged);
+    return () => window.removeEventListener("budgetnest:data-changed", handleDataChanged);
+  }, [loadData]);
+
   useEffect(() => {
     if (!isFeedbackAdmin) {
       setFeedbackRows([]);
@@ -595,11 +633,15 @@ export function DashboardManager() {
     [accounts],
   );
   const selectedCurrency =
-    currencyFilter === "all" || !currencies.includes(currencyFilter)
-      ? currencies.length === 1
-        ? currencies[0]
-        : "all"
-      : currencyFilter;
+    currencyFilter === "preferred"
+      ? currencies.includes(defaultCurrency)
+        ? defaultCurrency
+        : currencies.length === 1
+          ? currencies[0]
+          : "all"
+      : currencyFilter === "all" || !currencies.includes(currencyFilter)
+        ? "all"
+        : currencyFilter;
   const activeAccounts = accounts.filter(
     (account) =>
       !account.is_archived &&
@@ -794,7 +836,6 @@ export function DashboardManager() {
         return days >= 0 && days <= 7;
       }).length
     : 0;
-  const defaultCurrency = currencies.length === 1 ? currencies[0] : "PHP";
 
   return (
     <Stack className="dashboard-page" spacing={3}>
@@ -867,12 +908,13 @@ export function DashboardManager() {
               </Select>
             </FormControl>
             {currencies.length > 1 && (
-              <FormControl size="small" sx={{ minWidth: 115 }}>
+              <FormControl size="small" sx={{ minWidth: 210 }}>
                 <Select
-                  value={selectedCurrency}
+                  value={currencyFilter}
                   onChange={(event) => setCurrencyFilter(event.target.value)}
                   aria-label="Currency filter"
                 >
+                  <MenuItem value="preferred">Preferred currency ({defaultCurrency})</MenuItem>
                   <MenuItem value="all">All currencies</MenuItem>
                   {currencies.map((currency) => (
                     <MenuItem key={currency} value={currency}>
@@ -949,7 +991,7 @@ export function DashboardManager() {
       ) : (
         <>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <Card sx={{ height: "100%" }}>
                 <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
                   <Stack
@@ -998,7 +1040,7 @@ export function DashboardManager() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <Card sx={{ height: "100%" }}>
                 <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
                   <Stack
@@ -1066,7 +1108,7 @@ export function DashboardManager() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <Card sx={{ height: "100%" }}>
                 <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
                   <Stack
@@ -1134,7 +1176,7 @@ export function DashboardManager() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <Card sx={{ height: "100%" }}>
                 <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
                   <Stack
@@ -1203,7 +1245,7 @@ export function DashboardManager() {
             </Grid>
           </Grid>
 
-          <Grid container spacing={2.5}>
+          <Grid container spacing={2} alignItems="stretch">
             <Grid size={{ xs: 12, lg: 8 }}>
               <Paper
                 variant="outlined"
@@ -1318,7 +1360,7 @@ export function DashboardManager() {
             <Grid size={{ xs: 12, lg: 7 }}>
               <Paper
                 variant="outlined"
-                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
+                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5, height: "100%" }}
               >
                 <SectionTitle title="Budget progress" href="/budgets" />
                 {budgetRows.length ? (
@@ -1416,168 +1458,73 @@ export function DashboardManager() {
                 )}
               </Paper>
             </Grid>
-            <Grid size={{ xs: 12, lg: 5 }}>
+                        <Grid size={{ xs: 12, lg: 5 }}>
               <Paper
-                variant="outlined"
-                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
-              >
-                <SectionTitle
-                  title="Upcoming subscriptions"
-                  href="/subscriptions"
-                />
-                {upcomingSubscriptions.length ? (
-                  <Stack
-                    divider={
-                      <Box sx={{ borderBottom: 1, borderColor: "divider" }} />
-                    }
-                    spacing={1.4}
-                  >
-                    {upcomingSubscriptions.map((subscription) => {
-                      const days = now
-                        ? Math.round(
-                            (new Date(
-                              subscription.next_billing_date + "T00:00:00Z",
-                            ).getTime() -
-                              dateOnly(now).getTime()) /
-                              86400000,
-                          )
-                        : 0;
-                      return (
-                        <Stack
-                          key={subscription.id}
-                          direction="row"
-                          alignItems="center"
-                          spacing={1.2}
-                        >
-                          <Avatar
-                            variant="rounded"
-                            sx={{
-                              bgcolor: "action.hover",
-                              color: "primary.main",
-                            }}
-                          >
-                            <EventRepeatRounded />
-                          </Avatar>
-                          <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography
-                              fontWeight={700}
-                              sx={{
-                                whiteSpace: { xs: "normal", sm: "nowrap" },
-                                overflowWrap: "anywhere",
-                                lineHeight: 1.35,
-                              }}
-                            >
-                              {subscription.name}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              {accountMap.get(subscription.account_id)?.name ??
-                                "Account"}{" "}
-                              ·{" "}
-                              {days < 0
-                                ? `Overdue by ${Math.abs(days)}d`
-                                : days === 0
-                                  ? "Due today"
-                                  : `Due ${shortDate(subscription.next_billing_date)}`}
-                            </Typography>
-                          </Box>
-                          <Typography fontWeight={600} variant="body2">
-                            {money(
-                              Number(subscription.amount),
-                              accountMap.get(subscription.account_id)
-                                ?.currency ?? "PHP",
-                            )}
-                          </Typography>
-                        </Stack>
-                      );
-                    })}
-                  </Stack>
-                ) : (
-                  <EmptyState
-                    title="No upcoming subscriptions"
-                    detail="Active recurring services will show their next billing dates here."
-                    href="/subscriptions"
-                    action="Manage subscriptions"
-                  />
-                )}
-                {dueSoonCount > 0 && (
-                  <Alert severity="info" sx={{ mt: 2 }}>
-                    {dueSoonCount}{" "}
-                    {dueSoonCount === 1 ? "payment is" : "payments are"} due in
-                    the next 7 days.
-                  </Alert>
-                )}
-              </Paper>
+                                variant="outlined"
+                                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5, height: "100%" }}
+                              >
+                                <SectionTitle title="Savings goals" href="/goals" />
+                              {activeGoals.length ? (
+                                <Stack spacing={1.8}>
+                                  {activeGoals.slice(0, 4).map((goal) => {
+                                    const percent =
+                                      Number(goal.target_amount) > 0
+                                        ? Math.min(
+                                            100,
+                                            (Number(goal.current_amount) /
+                                              Number(goal.target_amount)) *
+                                              100,
+                                          )
+                                        : 0;
+                                    const currency =
+                                      accountMap.get(goal.account_id)?.currency ?? "PHP";
+                                    return (
+                                      <Box key={goal.id}>
+                                        <Stack
+                                          direction="row"
+                                          justifyContent="space-between"
+                                          spacing={1}
+                                        >
+                                          <Typography fontWeight={700} noWrap>
+                                            {goal.name}
+                                          </Typography>
+                                          <Typography variant="caption" fontWeight={600}>
+                                            {percent.toFixed(0)}%
+                                          </Typography>
+                                        </Stack>
+                                        <LinearProgress
+                                          variant="determinate"
+                                          value={percent}
+                                          color="success"
+                                          sx={{
+                                            height: 8,
+                                            borderRadius: 99,
+                                            mt: 0.8,
+                                            bgcolor: "action.hover",
+                                          }}
+                                        />
+                                        <Typography variant="caption" color="text.secondary">
+                                          {money(Number(goal.current_amount), currency)} of{" "}
+                                          {money(Number(goal.target_amount), currency)}
+                                        </Typography>
+                                      </Box>
+                                    );
+                                  })}
+                                </Stack>
+                              ) : (
+                                <EmptyState
+                                  title="No active goals"
+                                  detail="Give your savings a purpose by setting a target."
+                                  href="/goals"
+                                  action="Create a goal"
+                                />
+                              )}
+                              </Paper>
             </Grid>
-            <Grid size={{ xs: 12, lg: 5 }}>
+<Grid size={{ xs: 12, lg: 7 }}>
               <Paper
                 variant="outlined"
-                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
-              >
-                <SectionTitle title="Savings goals" href="/goals" />
-                {activeGoals.length ? (
-                  <Stack spacing={1.8}>
-                    {activeGoals.slice(0, 4).map((goal) => {
-                      const percent =
-                        Number(goal.target_amount) > 0
-                          ? Math.min(
-                              100,
-                              (Number(goal.current_amount) /
-                                Number(goal.target_amount)) *
-                                100,
-                            )
-                          : 0;
-                      const currency =
-                        accountMap.get(goal.account_id)?.currency ?? "PHP";
-                      return (
-                        <Box key={goal.id}>
-                          <Stack
-                            direction="row"
-                            justifyContent="space-between"
-                            spacing={1}
-                          >
-                            <Typography fontWeight={700} noWrap>
-                              {goal.name}
-                            </Typography>
-                            <Typography variant="caption" fontWeight={600}>
-                              {percent.toFixed(0)}%
-                            </Typography>
-                          </Stack>
-                          <LinearProgress
-                            variant="determinate"
-                            value={percent}
-                            color="success"
-                            sx={{
-                              height: 8,
-                              borderRadius: 99,
-                              mt: 0.8,
-                              bgcolor: "action.hover",
-                            }}
-                          />
-                          <Typography variant="caption" color="text.secondary">
-                            {money(Number(goal.current_amount), currency)} of{" "}
-                            {money(Number(goal.target_amount), currency)}
-                          </Typography>
-                        </Box>
-                      );
-                    })}
-                  </Stack>
-                ) : (
-                  <EmptyState
-                    title="No active goals"
-                    detail="Give your savings a purpose by setting a target."
-                    href="/goals"
-                    action="Create a goal"
-                  />
-                )}
-              </Paper>
-            </Grid>
-            <Grid size={{ xs: 12, lg: 7 }}>
-              <Paper
-                variant="outlined"
-                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
+                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5, height: "100%" }}
               >
                 <SectionTitle
                   title="Recent transactions"
@@ -1684,7 +1631,104 @@ export function DashboardManager() {
                 )}
               </Paper>
             </Grid>
-          </Grid>
+<Grid size={{ xs: 12, lg: 5 }}>
+              <Paper
+                  variant="outlined"
+                  sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5, height: "100%" }}
+                >
+                  <SectionTitle
+                    title="Upcoming subscriptions"
+                  href="/subscriptions"
+                />
+                {upcomingSubscriptions.length ? (
+                  <Stack
+                    divider={
+                      <Box sx={{ borderBottom: 1, borderColor: "divider" }} />
+                    }
+                    spacing={1.4}
+                  >
+                    {upcomingSubscriptions.map((subscription) => {
+                      const days = now
+                        ? Math.round(
+                            (new Date(
+                              subscription.next_billing_date + "T00:00:00Z",
+                            ).getTime() -
+                              dateOnly(now).getTime()) /
+                              86400000,
+                          )
+                        : 0;
+                      return (
+                        <Stack
+                          key={subscription.id}
+                          direction="row"
+                          alignItems="center"
+                          spacing={1.2}
+                        >
+                          <Avatar
+                            variant="rounded"
+                            sx={{
+                              bgcolor: "action.hover",
+                              color: "primary.main",
+                            }}
+                          >
+                            <EventRepeatRounded />
+                          </Avatar>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
+                              fontWeight={700}
+                              sx={{
+                                whiteSpace: { xs: "normal", sm: "nowrap" },
+                                overflowWrap: "anywhere",
+                                lineHeight: 1.35,
+                              }}
+                            >
+                              {subscription.name}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {accountMap.get(subscription.account_id)?.name ??
+                                "Account"}{" "}
+                              ·{" "}
+                              {days < 0
+                                ? `Overdue by ${Math.abs(days)}d`
+                                : days === 0
+                                  ? "Due today"
+                                  : `Due ${shortDate(subscription.next_billing_date)}`}
+                            </Typography>
+                          </Box>
+                          <Typography fontWeight={600} variant="body2">
+                            {money(
+                              Number(subscription.amount),
+                              accountMap.get(subscription.account_id)
+                                ?.currency ?? "PHP",
+                            )}
+                          </Typography>
+                        </Stack>
+                      );
+                    })}
+                  </Stack>
+                ) : (
+                  <EmptyState
+                    title="No upcoming subscriptions"
+                    detail="Active recurring services will show their next billing dates here."
+                    href="/subscriptions"
+                    action="Manage subscriptions"
+                  />
+                )}
+                {dueSoonCount > 0 && (
+                  <Alert severity="info" sx={{ mt: 2 }}>
+                    {dueSoonCount}{" "}
+                    {dueSoonCount === 1 ? "payment is" : "payments are"} due in
+                    the next 7 days.
+                  </Alert>
+                )}
+                </Paper>
+                
+              
+            </Grid>
+                      </Grid>
           {isFeedbackAdmin && (
             <Paper variant="outlined" sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}>
               <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between" spacing={1.5} sx={{ mb: 2 }}>
@@ -1694,11 +1738,13 @@ export function DashboardManager() {
                     <Typography fontWeight={700}>User feedback</Typography>
                     <Typography variant="caption" color="text.secondary">Feedback submitted by BudgetNest users</Typography>
                   </Box>
-                  <Chip size="small" label={feedbackRows.length} />
                 </Stack>
-                <Button variant="outlined" size="small" startIcon={<FileDownloadOutlined />} onClick={() => exportFeedbackCsv(feedbackRows)} disabled={feedbackLoading || feedbackRows.length === 0} sx={{ textTransform: "none", alignSelf: { xs: "flex-start", sm: "center" } }}>
-                  Export CSV
-                </Button>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}>
+                  <Chip size="small" label={`${feedbackRows.length} submissions`} />
+                  <Button variant="outlined" size="small" startIcon={<FileDownloadOutlined />} onClick={() => exportFeedbackCsv(feedbackRows)} disabled={feedbackLoading || feedbackRows.length === 0} sx={{ textTransform: "none" }}>
+                    Export CSV
+                  </Button>
+                </Stack>
               </Stack>
               {feedbackError && <Alert severity="error" sx={{ mb: 2 }}>{feedbackError}</Alert>}
               {feedbackLoading ? (
