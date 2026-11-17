@@ -991,7 +991,7 @@ export function DashboardManager() {
       ) : (
         <>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <Card sx={{ height: "100%" }}>
                 <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
                   <Stack
@@ -1040,7 +1040,7 @@ export function DashboardManager() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <Card sx={{ height: "100%" }}>
                 <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
                   <Stack
@@ -1108,7 +1108,7 @@ export function DashboardManager() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <Card sx={{ height: "100%" }}>
                 <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
                   <Stack
@@ -1176,7 +1176,7 @@ export function DashboardManager() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <Card sx={{ height: "100%" }}>
                 <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
                   <Stack
