@@ -140,10 +140,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       setAuthReady(true);
       return;
     }
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      setAuthReady(true);
-    });
+    supabase.auth.getUser()
+      .then(({ data }) => {
+        setUser(data.user);
+        setAuthReady(true);
+      })
+      .catch((error) => {
+        console.error("Unable to restore the current session:", error);
+        setAuthReady(true);
+      });
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -303,6 +308,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   if (pathname === "/login" || pathname === "/register") return <>{children}</>;
+
+  // Avoid briefly rendering the guest shell while Supabase restores a saved session.
+  if (!authReady) {
+    return (
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          bgcolor: "background.default",
+        }}
+      >
+        <CircularProgress size={28} aria-label="Restoring your session" />
+      </Box>
+    );
+  }
 
   const sidebar = (
     <Box
