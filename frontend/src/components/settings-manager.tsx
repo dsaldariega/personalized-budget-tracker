@@ -873,8 +873,6 @@ export function SettingsManager() {
               p: { xs: 2, md: 2.5 },
               borderRadius: 1.5,
               width: "100%",
-              maxWidth: 920,
-              mx: "auto",
             }}
           >
             <Stack
