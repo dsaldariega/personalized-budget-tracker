@@ -866,7 +866,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </DialogContent>
         </Dialog>
         <Dialog
-          scroll="body"
+          scroll="paper"
           open={welcomeOpen}
           onClose={() => {
             window.sessionStorage.setItem("budgetnest-welcome-dismissed", "1");
@@ -888,7 +888,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             },
           }}
         >
-          <DialogContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
+          <DialogContent
+            sx={{
+              p: 0,
+              "&:last-child": { pb: 0 },
+              scrollbarWidth: "none",
+              "&::-webkit-scrollbar": {
+                width: 0,
+                height: 0,
+              },
+            }}
+          >
             {(() => {
               const slides =
                 welcomeMode === "signed-out"
