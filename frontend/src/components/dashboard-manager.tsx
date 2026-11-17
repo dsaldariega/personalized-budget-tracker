@@ -1245,7 +1245,8 @@ export function DashboardManager() {
             </Grid>
           </Grid>
 
-          <Grid container spacing={2} alignItems="stretch"><Grid size={{ xs: 12, lg: 8 }}>
+          <Grid container spacing={2} alignItems="stretch">
+            <Grid size={{ xs: 12, lg: 8 }}>
               <Paper
                 variant="outlined"
                 sx={{
@@ -1359,7 +1360,7 @@ export function DashboardManager() {
             <Grid size={{ xs: 12, lg: 7 }}>
               <Paper
                 variant="outlined"
-                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
+                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5, height: "100%" }}
               >
                 <SectionTitle title="Budget progress" href="/budgets" />
                 {budgetRows.length ? (
@@ -1460,7 +1461,7 @@ export function DashboardManager() {
                         <Grid size={{ xs: 12, lg: 5 }}>
               <Paper
                                 variant="outlined"
-                                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
+                                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5, height: "100%" }}
                               >
                                 <SectionTitle title="Savings goals" href="/goals" />
                               {activeGoals.length ? (
@@ -1523,7 +1524,7 @@ export function DashboardManager() {
 <Grid size={{ xs: 12, lg: 7 }}>
               <Paper
                 variant="outlined"
-                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
+                sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5, height: "100%" }}
               >
                 <SectionTitle
                   title="Recent transactions"
@@ -1633,7 +1634,7 @@ export function DashboardManager() {
 <Grid size={{ xs: 12, lg: 5 }}>
               <Paper
                   variant="outlined"
-                  sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5 }}
+                  sx={{ p: { xs: 2, md: 2.8 }, borderRadius: 1.5, height: "100%" }}
                 >
                   <SectionTitle
                     title="Upcoming subscriptions"
