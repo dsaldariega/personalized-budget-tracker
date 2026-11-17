@@ -882,7 +882,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               sx: {
                 borderRadius: { xs: 1.5, sm: 2 },
                 overflow: "hidden",
-                mx: { xs: 1.5, sm: 2 },
                 maxHeight: "min(680px, calc(100vh - 32px))",
               },
             },
@@ -942,7 +941,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Stack sx={{ minHeight: { xs: 500, sm: 540 } }}>
                   <Box
                     sx={{
-                      px: { xs: 3, sm: 5 },
+                      px: { xs: 3, sm: 3 },
                       pt: { xs: 2, sm: 3 },
                       pb: { xs: 1, sm: 2 },
                     }}
@@ -967,7 +966,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
                   <Box
                     sx={{
-                      px: { xs: 3, sm: 5 },
+                      px: { xs: 3, sm: 3 },
                       flex: 1,
                       display: "flex",
                       alignItems: "center",
@@ -1099,7 +1098,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
                   <Box
                     sx={{
-                      px: { xs: 3, sm: 5 },
+                      px: { xs: 3, sm: 3 },
                       pt: 3,
                       pb: { xs: 3, sm: 4 },
                     }}
