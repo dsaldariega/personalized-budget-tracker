@@ -840,7 +840,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           onClose={() => undefined}
           maxWidth="xs"
           fullWidth
-          PaperProps={{ sx: { borderRadius: 1.5, mx: 2 } }}
+          slotProps={{
+            paper: {
+              sx: {
+                borderRadius: 1.5,
+                mx: 2,
+              },
+            },
+          }}
         >
           <DialogContent sx={{ py: 4, px: 3 }}>
             <Stack alignItems="center" spacing={2}>
@@ -859,7 +866,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </DialogContent>
         </Dialog>
         <Dialog
-          scroll="paper"
+          scroll="body"
           open={welcomeOpen}
           onClose={() => {
             window.sessionStorage.setItem("budgetnest-welcome-dismissed", "1");
@@ -871,13 +878,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             backdrop: {
               sx: { bgcolor: "rgba(0, 0, 0, 0.68)" },
             },
-          }}
-          PaperProps={{
-            sx: {
-              borderRadius: { xs: 1.5, sm: 2 },
-              overflow: "hidden",
-              mx: { xs: 1.5, sm: 2 },
-              maxHeight: "min(680px, calc(100vh - 32px))",
+            paper: {
+              sx: {
+                borderRadius: { xs: 1.5, sm: 2 },
+                overflow: "hidden",
+                mx: { xs: 1.5, sm: 2 },
+                maxHeight: "min(680px, calc(100vh - 32px))",
+              },
             },
           }}
         >
